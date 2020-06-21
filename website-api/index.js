@@ -29,7 +29,7 @@ async function main() {
     app.get('/api/top/daily',async(req,res) => {
         try {
             //TODO: add top_gamemode
-            const [rows, fields] = await pool.execute("SELECT steamid,last_alias,minutes_played FROM `stats` ORDER BY `survivor_damage_give` DESC LIMIT 10")
+            const [rows, fields] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `survivor_damage_give` DESC LIMIT 10")
             res.json(rows);
         }catch(err) {
             console.error('[/api/top/daily]',err.message);

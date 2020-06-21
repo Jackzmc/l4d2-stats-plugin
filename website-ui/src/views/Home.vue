@@ -24,14 +24,20 @@
       </div>
       <div class="column is-4">
         <div class="box">
-          <h4 class='title is-4'>Categories</h4>
+          <h5 class='title is-5'>Categories</h5>
         </div>
         <div class="box">
-          <h4 class='title is-4'>Find Player</h4>
+          <h5 class='title is-5'>Find Player</h5>
           <form @submit.prevent="searchUser">
-            <b-field label="Enter Username or Steam ID">
-              <b-input v-model="search" placeholder="STEAM_1:0:49243767 or gabelogannewell" />
+          <b-field label="Enter Username or Steam ID">
+            <b-field>
+              <b-input v-model="search" placeholder="STEAM_1:0:49243767"  icon="search">
+              </b-input>
+              <p class="control">
+                <input type="submit" class="button is-info" value="Search"/>
+              </p>
             </b-field>
+          </b-field>
           </form>
         </div>
       </div>

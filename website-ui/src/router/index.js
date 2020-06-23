@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+
 import Home from '../views/Home.vue'
+import Leaderboard from '../views/Leaderboard'
 
 Vue.use(VueRouter)
 
@@ -12,14 +14,46 @@ const routes = [
     name: 'Home',
     component: Home
   },
+  {
+    path: '/leaderboard',
+    alias: '/top',
+    name: 'Leaderboard',
+    meta: {
+      title_part: 'Leaderboards'
+    },
+    component: Leaderboard
+  },
+  {
+    path: '/maps/:map?',
+    name: 'Maps',
+    meta: {
+      title_part: 'Maps'
+    },
+    component: () => import(/* webpackChunkName: "maps" */ '../views/Maps'),
+  },
   // {
   //   path: '/maps/:map',
-  //   name: 'Maps',
+  //   name: 'Map Information',
   //   meta: {
   //     title_part: 'Maps'
   //   },
-  //   component: () => import(/* webpackChunkName: "maps" */ '../views/Maps')
+  //   component: () => import(/* webpackChunkName: "maps" */ '../views/MapsDetails')
   // },
+  {
+    path: '/search/:query',
+    name: 'Search',
+    meta: {
+      title_part: 'Search'
+    },
+    component: () => import(/* webpackChunkName: "search" */ '../views/Search.vue')
+  },
+  {
+    path: '/faq',
+    name: 'FAQ',
+    meta: {
+    },
+    component: () => import(/* webpackChunkName: "faq" */ '../views/FAQ.vue')
+  },
   {
     path: '/user/:user',
     name: 'User',
@@ -33,14 +67,14 @@ const routes = [
         // UserProfile will be rendered inside User's <router-view>
         // when /user/:id/profile is matched
         path: 'overview',
-        meta: { title_part: 'Profile Overview'},
+        meta: { keep_title: true },
         component: () => import('@/components/user/overview')
       },
       {
         // UserPosts will be rendered inside User's <router-view>
         // when /user /:id/posts is matched
         path: 'campaign',
-        meta: { title_part: 'Campaign Stats'},
+        meta: { keep_title: true },
         component: () => import('@/components/user/campaign')
       },
       {
@@ -51,7 +85,7 @@ const routes = [
   },
   {
     path: '*',
-    meta: {title_part: 'Page Not Found'},
+    meta: { title_part: 'Page Not Found' },
     name: 'PageNotFound',
     component: () => import(/* webpackChunkName: "error_404" */ '../views/404.vue') 
   }
@@ -67,8 +101,17 @@ router.afterEach((to) => {
   // Use next tick to handle router history correctly
   // see: https://github.com/vuejs/vue-router/issues/914#issuecomment-384477609
   Vue.nextTick(() => {
-    if(to.meta.title_part) document.title = `${to.meta.title_part} - ${DEFAULT_TITLE}`
-    document.title = to.meta.title || DEFAULT_TITLE;
+    if(!to.meta.keep_title) {
+      if(to.meta.title) document.title =  to.meta.title || DEFAULT_TITLE;
+      else {
+        const part = to.meta.title_part || to.name;
+        if(part) {
+          document.title = `${part} - ${DEFAULT_TITLE}`
+        }else{
+          document.title = DEFAULT_TITLE;
+        }
+      }
+    }
   });
 });
 

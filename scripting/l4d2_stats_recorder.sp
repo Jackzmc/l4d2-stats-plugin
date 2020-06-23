@@ -11,6 +11,8 @@
 
 #include <sourcemod>
 #include <sdktools>
+#include <geoip>
+#include <sdkhooks>
 //#include <sdkhooks>
 
 public Plugin myinfo = 
@@ -22,7 +24,7 @@ public Plugin myinfo =
 	url = PLUGIN_URL
 };
 static Database g_db;
-char steamidcache[MAXPLAYERS+1][18];
+static char steamidcache[MAXPLAYERS+1][32];
 bool lateLoaded = false, bVersus, bRealism;
 
 //Stats that need to be only sent periodically. (note: possibly deaths?)
@@ -39,6 +41,10 @@ static int damageToTank[MAXPLAYERS+1];
 static int damageWitch[MAXPLAYERS+1];
 static int witchKills[MAXPLAYERS+1];
 static int startedPlaying[MAXPLAYERS+1];
+static int points[MAXPLAYERS+1];
+static int upgradePacksDeployed[MAXPLAYERS+1];
+static int finaleTimeStart;
+
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	if(late) {
@@ -46,8 +52,11 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	}
 }
 //TODO: player_use (Check laser sights usage)
-//TODO: Witch startles, infected class kills
+//TODO: Witch startles
 //TODO: Versus as infected stats
+//TODO: Move kills to queue stats not on demand
+//TODO: map_stats record fastest timestamp
+
 public void OnPluginStart()
 {
 	EngineVersion g_Game = GetEngineVersion();
@@ -63,9 +72,9 @@ public void OnPluginStart()
 	if(lateLoaded) {
 		for(int i=1; i<MaxClients;i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i)) {
-				char steamid[18];
+				char steamid[32];
 				GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid));
-				steamidcache[i] = steamid;
+				strcopy(steamidcache[i], 32, steamid);
 				startedPlaying[i] = GetTime();
 			}
 		}
@@ -91,6 +100,10 @@ public void OnPluginStart()
 	HookEvent("upgrade_pack_used", Event_UpgradePackUsed);
 	HookEvent("finale_win", Event_FinaleWin);
 	HookEvent("witch_killed", Event_WitchKilled);
+	HookEvent("finale_start", Event_FinaleStart);
+	HookEvent("gauntlet_finale_start", Event_FinaleStart);
+	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
+
 
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 	RegConsoleCmd("sm_debug_cache", Command_DebugCache);
@@ -141,9 +154,8 @@ public void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[
 
 public void OnClientAuthorized(int client, const char[] auth) {
 	if(!IsFakeClient(client)) {
-		strcopy(steamidcache[client], 18, auth);
+		strcopy(steamidcache[client], 32, auth);
 		CreateDBUser(client, steamidcache[client]);
-		IncrementStat(client, "connections", 1);
 		startedPlaying[client] = GetTime();
 	}
 }
@@ -151,6 +163,8 @@ public void OnClientDisconnect(int client) {
 	//Check if any pending stats to send.
 	if(!IsFakeClient(client)) {
 		FlushQueuedStats(client);
+		steamidcache[client][0] = '\0';
+		points[client] = 0;
 	}
 }
 
@@ -170,13 +184,12 @@ bool ConnectDB() {
 		return true;
     }
 }
-void CreateDBUser(int client, const char steamid[18]) {
-	char query[255], escaped_id[37];
-	g_db.Escape(steamid, escaped_id, 37);
-	Format(query, sizeof(query), "SELECT steamid,last_alias FROM stats WHERE steamid='%s'", escaped_id);
+void CreateDBUser(int client, const char steamid[32]) {
+	char query[127];
+	Format(query, sizeof(query), "SELECT steamid,last_alias,points FROM stats WHERE steamid='%s'", steamid);
 	g_db.Query(DBC_CheckUserExistance, query, GetClientUserId(client));
 }
-void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriority = false) {
+void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriority = false, bool retry = true) {
 	if (steamidcache[client][0] && !IsFakeClient(client)) {
 		if(g_db == INVALID_HANDLE) {
 			LogError("Database handle is invalid.");
@@ -187,17 +200,20 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 		char query[255];
 		g_db.Escape(name, escaped_name, escaped_name_size);
 		Format(query, sizeof(query), "UPDATE stats SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, steamidcache[client]);
-		PrintToServer("[Debug] Updated Stat %s (+%d) for %s", name, amount, steamidcache[client]);
+		PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
 		g_db.Query(DBC_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
 	}else{
-		#if defined debug
-		LogError("Incrementing stat (%s) for client %d failure: No steamid", name, client);
-		#endif
 		if(!IsFakeClient(client)) {
+			#if defined debug
+			LogError("Incrementing stat (%s) for client %N (%d) [%s] failure: No steamid or is bot", name, client, client, steamidcache[client]);
+			#endif
 			//attempt to fetch it
-			char steamid[18];
+			char steamid[32];
 			GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
 			steamidcache[client] = steamid;
+			if(retry) {
+				IncrementStat(client, name, amount, lowPriority, false);
+			}
 		}
 	}
 }
@@ -211,22 +227,23 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 			case 2: strcopy(difficultyName, sizeof(difficultyName), "advanced");
 			case 3: strcopy(difficultyName, sizeof(difficultyName), "expert");
 		}
+		int time = GetTime() - finaleTimeStart;
 
-		Format(query, sizeof(query), "INSERT INTO stats_maps (steamid, map_name, wins, `difficulty_%s`, realism)\nVALUES ('%s', '%s', 1, 1, %d)\n ON DUPLICATE KEY UPDATE wins=wins+1,`difficulty_%s`=`difficulty_%s`+1,realism=realism+%d", 
-			difficultyName, steamidcache[client], mapname, realism_amount, difficultyName, difficultyName, realism_amount);
+		Format(query, sizeof(query), "INSERT INTO stats_maps (steamid, map_name, wins, `difficulty_%s`, realism, best_time)\nVALUES ('%s', '%s', 1, 1, %d, %d)\n ON DUPLICATE KEY UPDATE wins=wins+1,`difficulty_%s`=`difficulty_%s`+1,realism=realism+%d,best_time=GREATEST(best_time,VALUES(best_time))", 
+			difficultyName, steamidcache[client], mapname, realism_amount, time, difficultyName, difficultyName, realism_amount);
 		PrintToServer("[Debug] Updated Map Stat %s for %s", mapname, steamidcache[client]);
 		g_db.Query(DBC_Generic, query, _);
 	}else{
 		#if defined debug
-		LogError("Incrementing stat (%s) for client %d failure: No steamid", mapname, client);
+		LogError("Incrementing stat (%s) for client %d error: No steamid", mapname, client);
 		#endif
 	}
 }
 public void FlushQueuedStats(int client) {
 	//Update stats (don't bother checking if 0.)
-	char query[512];
+	char query[1024];
 	int minutes_played = (GetTime() - startedPlaying[client]) / 60;
-	Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d WHERE steamid='%s'",
+	Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d WHERE steamid='%s'",
 		damageSurvivorGiven[client],
 		damageSurvivorRec[client], 
 		damageInfectedGiven[client], 
@@ -239,13 +256,14 @@ public void FlushQueuedStats(int client) {
 		damageToTank[client],
 		damageWitch[client],
 		minutes_played,
+		witchKills[client],
+		points[client],
+		upgradePacksDeployed[client],
 		steamidcache[client][0]
 	);
 	g_db.Query(DBC_FlushQueuedStats, query, client);
 	//And clear them.
-	
 
-	steamidcache[client][0] = '\0';
 }
 /////////////////////////////////
 //DATABASE CALLBACKS
@@ -256,21 +274,31 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
         return;
     }
 	int client = GetClientOfUserId(data); 
-	char alias[33];
+	char alias[33], ip[40], country_name[45];
 	GetClientName(client, alias, sizeof(alias));
+	GetClientIP(client, ip, sizeof(ip));
+	GeoipCountry(ip, country_name, sizeof(country_name));
+
 	if(results.RowCount == 0) {
 		//user does not exist in db, create now
 		
 		char query[255]; 
-		Format(query, sizeof(query), "INSERT INTO `stats` (`steamid`, `last_alias`, `last_join_date`) VALUES ('%s', '%s', NOW())", steamidcache[client], alias);
+		Format(query, sizeof(query), "INSERT INTO `stats` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', NOW(), NOW(), '%s')", steamidcache[client], alias, country_name);
 		g_db.Query(DBC_Generic, query);
 		PrintToServer("Created new database entry for %N (%s)", client, steamidcache[client]);
 	}else{
 		//User does exist, check if alias is outdated and update if needed
+		results.FetchRow();
+		int field_num;
+		if(results.FieldNameToNum("points", field_num)) {
+			points[client] = results.FetchInt(field_num);
+		}
 		char safe_alias[67], query[255];
 		db.Escape(alias, safe_alias, 67);
 
-		Format(query, sizeof(query), "UPDATE `stats` SET `last_alias`='%s', `last_join_date`=NOW() WHERE `steamid`='%s'",safe_alias, steamidcache[client]);
+		int connections_amount = lateLoaded ? 0 : 1;
+
+		Format(query, sizeof(query), "UPDATE `stats` SET `last_alias`='%s', `last_join_date`=NOW(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'",safe_alias, country_name, connections_amount, steamidcache[client]);
 		g_db.Query(DBC_Generic, query);
 	}
 }
@@ -283,7 +311,7 @@ public void DBC_Generic(Database db, DBResultSet results, const char[] error, an
 }
 public void DBC_FlushQueuedStats(Database db, DBResultSet results, const char[] error, any data) {
 	if(db == null || results == null) {
-		LogError("DBC_FlushQueued returne derror: %S", error);
+		LogError("DBC_FlushQueuedStats returned error: %s", error);
 	}else{
 		int client = data;
 		meleeKills[client] = 0;
@@ -297,6 +325,8 @@ public void DBC_FlushQueuedStats(Database db, DBResultSet results, const char[] 
 		doorOpens[client] = 0;
 		damageToTank[client] = 0;
 		damageWitch[client] = 0;
+		witchKills[client] = 0;
+		upgradePacksDeployed[client] = 0;
 		startedPlaying[client] = GetTime();
 	}
 }
@@ -328,42 +358,13 @@ public Action Command_DebugCache(int client, int args) {
 // EVENTS 
 ////////////////////////////
 
-public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
-	int client = GetClientOfUserId(event.GetInt("userid"));
-	if(client > 0) {
-		int attacker = GetClientOfUserId(event.GetInt("attacker"));
-		int victim_team = GetClientTeam(client);
-
-		if(!IsFakeClient(client)) {
-			if(victim_team == 2) {
-				IncrementStat(client, "survivor_deaths", 1);
-			}else if(victim_team == 3) {
-				IncrementStat(client, "infected_deaths", 1);
-			}
-		}
-
-		if(attacker > 0 && !IsFakeClient(attacker)) {
-			int attacker_team = GetClientTeam(attacker);
-			if(attacker_team == 2 && victim_team == 3) {
-				int victim_class = GetEntProp(client, Prop_Send, "m_zombieClass");
-				char class[8], statname[16];
-				GetInfectedClassName(victim_class, class, sizeof(class));
-				Format(statname, sizeof(statname), "kills_%s", class);
-				IncrementStat(attacker, statname, 1);
-
-			}
-		}
-	}
-	
-}
 public void Event_InfectedHurt(Event event, const char[] name, bool dontBroadcast) {
-	//TODO: Record damage done to a tank, and a witch.
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int dmg = event.GetInt("amount");
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		damageSurvivorGiven[attacker] += dmg;
 		int target_id = event.GetInt("entityid");
-		char entity_name[32];
+		char entity_name[16];
 		GetEntityClassname(target_id, entity_name, sizeof(entity_name));
 		if(StrEqual(entity_name, "witch", false)) {
 			damageWitch[attacker]++;
@@ -376,8 +377,12 @@ public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadca
 		bool headshot = event.GetBool("headshot");
 		if(headshot) {
 			infectedHeadshots[attacker]++;
+			points[attacker]+=2;
+		}else{
+			points[attacker]++;
 		}
 		infectedKills[attacker]++;
+		
 	}
 }
 public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast) {
@@ -407,10 +412,45 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 			damageInfectedGiven[attacker] += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
+			points[attacker]--;
 			damageSurvivorFF[attacker] += dmg;
 		}
 	}
 }
+public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	if(client > 0) {
+		int attacker = GetClientOfUserId(event.GetInt("attacker"));
+		int victim_team = GetClientTeam(client);
+
+		if(!IsFakeClient(client)) {
+			if(victim_team == 2) {
+				IncrementStat(client, "survivor_deaths", 1);
+			}else if(victim_team == 3) {
+				IncrementStat(client, "infected_deaths", 1);
+			}
+		}
+
+		if(attacker > 0 && !IsFakeClient(attacker)) {
+			int attacker_team = GetClientTeam(attacker);
+			if(attacker_team == 2 && victim_team == 3) {
+				int victim_class = GetEntProp(client, Prop_Send, "m_zombieClass");
+				char class[8], statname[16];
+				if(GetInfectedClassName(victim_class, class, sizeof(class))) {
+					Format(statname, sizeof(statname), "kills_%s", class);
+					IncrementStat(attacker, statname, 1);
+					points[attacker] += 5; //special kill
+
+				}
+			}else if(attacker_team == 2 && victim_team == 2) {
+				IncrementStat(attacker, "ff_kills", 1);
+				points[attacker] -= 30; //30 point lose for killing teammate
+			}
+		}
+	}
+	
+}
+
 public void Event_ItemPickup(Event event, const char[] name, bool dontBroadcast) {
 	char statname[72], item[64];
 
@@ -430,21 +470,24 @@ public void Event_PlayerIncap(Event event, const char[] name, bool dontBroadcast
 }
 public void Event_ItemUsed(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	if(!IsFakeClient(client)) {
+	if(client > 0 && !IsFakeClient(client)) {
 		if(StrEqual(name, "heal_success", true)) {
 			int subject = GetClientOfUserId(event.GetInt("subject"));
 			if(subject == client) {
 				IncrementStat(client, "heal_self", 1);
 			}else{
+				points[client] += 10;
 				IncrementStat(client, "heal_others", 1);
 			}
 		}else if(StrEqual(name, "revive_success", true)) {
 			int subject = GetClientOfUserId(event.GetInt("subject"));
 			if(subject != client) {
 				IncrementStat(client, "revived_others", 1);
+				points[client] += 3;
 				IncrementStat(subject, "revived", 1);
 			}
 		}else if(StrEqual(name, "defibrillator_used", true)) {
+			points[client]+=9;
 			IncrementStat(client, "defibs_used", 1);
 		}else{
 			IncrementStat(client, name, 1);
@@ -455,6 +498,7 @@ public void Event_MeleeKill(Event event, const char[] name, bool dontBroadcast) 
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
 		meleeKills[client]++;
+		points[client]++;
 	}
 }
 public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast) {
@@ -463,11 +507,14 @@ public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast)
 	bool melee_only = event.GetBool("melee_only");
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		if(solo) {
+			points[attacker]+=100;
 			IncrementStat(attacker, "tanks_killed_solo", 1);
 		}
 		if(melee_only) {
+			points[attacker]+=150;
 			IncrementStat(attacker, "tanks_killed_melee", 1);
 		}
+		points[attacker]+=200;
 		IncrementStat(attacker, "tanks_killed", 1);
 	}
 }
@@ -480,8 +527,11 @@ public void Event_DoorOpened(Event event, const char[] name, bool dontBroadcast)
 }
 
 public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroadcast) {
-	int upgradeid = event.GetInt("upgradeid");
-	PrintToServer("upgradepackused: %d", upgradeid);
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	if(client > 0 && !IsFakeClient(client)) {
+		upgradePacksDeployed[client]++;
+		points[client]+=3;
+	}
 }
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	char map_name[128];
@@ -493,21 +543,35 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 			if(team == 2) {
 				IncrementMapStat(i, map_name, difficulty);
 				IncrementStat(i, "finales_won",1);
+				points[i]+=400;
 			}
 		}
 	}
 }
 public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
-	int userid = GetClientOfUserId(event.GetInt("userid"));
-	if(userid > 0 && !IsFakeClient(userid)) {
-		witchKills[userid]++;
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	if(client > 0 && !IsFakeClient(client)) {
+		witchKills[client]++;
+		points[client]+=100;
 	}
+}
+
+public void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
+	finaleTimeStart = GetTime();
+}
+public void Event_GrenadeDenonate(Event event, const char[] name, bool dontBroadcast) {
+	PrintToServer("Event fired: %s", name);
+}
+void OnEntityDestroyed(int entity) {
+	char class[64];
+	GetEntityClassname(entity, class, sizeof(class));
+	PrintToServer("class: %s", class);
 }
 
 ////////////////////////////
 // STOCKS
 ///////////////////////////
-public void GetInfectedClassName(int type, char[] buffer, int bufferSize) {
+public bool GetInfectedClassName(int type, char[] buffer, int bufferSize) {
 	switch(type) {
 		case 1: strcopy(buffer, bufferSize, "smoker");
 		case 2: strcopy(buffer, bufferSize, "boomer");
@@ -515,5 +579,7 @@ public void GetInfectedClassName(int type, char[] buffer, int bufferSize) {
 		case 4: strcopy(buffer, bufferSize, "spitter");
 		case 5: strcopy(buffer, bufferSize, "jockey");
 		case 6: strcopy(buffer, bufferSize, "charger");
+		default: return false;
 	}
+	return true;
 }

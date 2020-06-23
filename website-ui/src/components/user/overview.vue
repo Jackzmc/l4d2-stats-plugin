@@ -2,50 +2,52 @@
 <div class="columns">
     <div class="column">
         <h2 class='title is-2'>Stats Overview</h2>
-        <h6 class="title is-6" id="playerstats">Player Information</h6>
+        <h5 class="title is-5" id="playerstats">Player Information</h5>
         <table class="table is-fullwidth is-bordered">
             <tbody>
             <tr>
                 <th>SteamID</th>
                 <td>
                 <p>
-                {{user.steamid}}&nbsp;
-                <a :href="'https://steamdb.info/calculator/' + communityID">[SteamDB]</a>&nbsp;
-                <a :href="'https://steamcommunity.com/profiles/' + communityID">[Steam Community]</a>
+                    {{user.steamid}}&nbsp;
+                    <span class="is-pulled-right">
+                    <a :href="'https://steamdb.info/calculator/' + communityID">[SteamDB]</a>&nbsp;
+                    <a :href="'https://steamcommunity.com/profiles/' + communityID">[Steam Community]</a>
+                    </span>
                 </p>
                 </td>
             </tr>
             <tr>
                 <th>Creation Date</th>
-                <td>{{user.created_date | formatDateAndRel}}</td>
+                <td v-html="$options.filters.formatDateAndRel(user.created_date)"></td>
             </tr>
             <tr>
                 <th>Last Played</th>
-                <td>{{user.last_join_date | formatDateAndRel}}</td>
+                <td v-html="$options.filters.formatDateAndRel(user.last_join_date)"></td>
             </tr>
             <tr>
                 <th>Last Location</th>
-                <td>{{user.last_location}}</td>
+                <td>{{user.country}}</td>
             </tr>
             <tr>
                 <th>Connections</th>
-                <td>{{user.connections}}</td>
+                <td style="color: blue">{{user.connections | formatNumber}}</td>
             </tr>
             <tr>
                 <th>Time Played</th>
-                <td>{{user.minutes_played | formatMinutes}}</td>
+                <td style="color: blue">{{user.minutes_played | formatMinutes}}</td>
             </tr>
             </tbody>
         </table>
         <hr>
-        <h6 class="title is-6">Kills</h6>
+        <h5 id="kills" class="title is-5">Kills</h5>
         <div class="columns">
             <div class="column">
             <table class="table is-fullwidth is-bordered">
                 <thead>
-                <tr>
+                <tr class="has-background-white-ter">
                     <th>Class</th>
-                    <th align="center">Kills As Survivor</th>
+                    <th align="center">Kills</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -69,14 +71,17 @@
                     <td>Charger</td>
                     <td class="tvalue">{{user.kills_charger}}</td>
                 </tr>
-
+                <tr>
+                    <td>Jockey</td>
+                    <td class="tvalue">{{user.kills_jockey}}</td>
+                </tr>
                 </tbody>
             </table>
             </div>
             <div class="column">
             <table class="table is-fullwidth is-bordered">
                 <thead>
-                <tr>
+                <tr class="has-background-white-ter">
                     <th>Class</th>
                     <th align="center">Kills</th>
                 </tr>
@@ -84,23 +89,27 @@
                 <tbody>
                 <tr>
                     <td>Tank</td>
-                    <td class="tvalue">{{user.tanks_killed}}</td>
+                    <td class="tvalue">{{user.tanks_killed | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Tank (Solo)</td>
-                    <td class="tvalue">{{user.tanks_killed_solo}}</td>
+                    <td class="tvalue">{{user.tanks_killed_solo | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Tank (Melee Only)</td>
-                    <td class="tvalue">{{user.tanks_killed_melee}}</td>
+                    <td class="tvalue">{{user.tanks_killed_melee | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Witch</td>
-                    <td class="tvalue">{{user.kills_witch}}</td>
+                    <td class="tvalue">{{user.kills_witch | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Commons</td>
-                    <td class="tvalue">{{user.common_kills}}</td>
+                    <td class="tvalue">{{user.common_kills | formatNumber}}</td>
+                </tr>
+                <tr>
+                    <td>Teammates</td>
+                    <td class="tvalue">{{user.ff_kills | formatNumber}}</td>
                 </tr>
                 </tbody>
             </table>
@@ -108,14 +117,14 @@
         </div>
         
         <hr>
-        <h6 id="survivorstats" class="title is-6">Survivor Stats</h6>
+        <h5 id="survivorstats" class="title is-5">Survivor Stats</h5>
         <div class="columns">
             <div class="column is-4">
             <p><u>Damage Dealt</u></p>
             <br>
             <table class="table is-bordered is-fullwidth">
                 <thead>
-                <tr>
+                <tr class="has-background-white-ter">
                     <th>Type</th>
                     <th align="center">Damage</th>
                 </tr>
@@ -149,7 +158,7 @@
             <br>
             <table class="table is-bordered is-fullwidth">
                 <thead>
-                <tr>
+                <tr class="has-background-white-ter">
                     <th>Item</th>
                     <th align="center">Uses</th>
                 </tr>
@@ -169,7 +178,7 @@
                 </tr>
                 <tr>
                     <td>Ammo Packs</td>
-                    <td class="tvalue">{{user.ammo_packs_used | formatNumber}}</td>
+                    <td class="tvalue">{{user.packs_used | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Kits (Self)</td>
@@ -187,7 +196,7 @@
             <br>
             <table class="table is-bordered is-fullwidth">
                 <thead>
-                <tr>
+                <tr class="has-background-white-ter">
                     <th>Stat</th>
                     <th align="center">Value</th>
                 </tr>
@@ -225,7 +234,7 @@
         <h5 id="throwables" class="title is-5">Throwable Statistics</h5>
         <table class="table is-bordered is-fullwidth">
             <thead>
-            <tr>
+            <tr class="has-background-white-ter">
                 <th>Throwable</th>
                 <th align="center">Damage</th>
                 <th align="center">Kills</th>
@@ -235,27 +244,21 @@
             <tbody>
             <tr>
                 <td>Molotov</td>
-                <td class="tvalue"></td>
-                <td class="tvalue"></td>
-                <td class="tvalue"></td>
+                <td class="tvalue">{{user.damage_molotov | formatNumber}}</td>
+                <td class="tvalue">{{user.kills_molotov | formatNumber}}</td>
+                <td class="tvalue">{{user.throws_molotov  | formatNumber}}</td>
             </tr>
             <tr>
                 <td>Puke</td>
+                <td class="has-text-centered">-</td>
                 <td class="tvalue"></td>
-                <td class="tvalue"></td>
-                <td class="tvalue"></td>
+                <td class="tvalue">{{user.throws_puke | formatNumber}}</td>
             </tr>
             <tr>
                 <td>Pipe</td>
-                <td class="tvalue"></td>
-                <td class="tvalue"></td>
-                <td class="tvalue"></td>
-            </tr>
-            <tr>
-                <td>Gascan</td>
-                <td class="tvalue"></td>
-                <td class="tvalue"></td>
-                <td class="tvalue"></td>
+                <td class="has-text-centered">-</td>
+                <td class="tvalue">{{user.kills_pipe | formatNumber}}</td>
+                <td class="tvalue">{{user.throws_pipe | formatNumber}}</td>
             </tr>
             </tbody>
         </table>
@@ -288,6 +291,8 @@
 <script>
 import {format, formatDuration, formatDistanceToNow} from 'date-fns'
 import SteamID from 'steamid'
+import NoMapImage from '@/assets/no_map_image.png'
+
 export default {
     props: ['user'],
     computed: {
@@ -298,9 +303,16 @@ export default {
             return this.user.steamid ? new SteamID(this.user.steamid).getSteamID64() : null
         },
         mapUrl() {
-            const chapterid = 1;
-            return `https://steamcommunity-a.akamaihd.net/public/images/gamestats/550/c${chapterid}.jpg`
+            if(this.selected) {
+                const official_map = this.selected.map_name && /(c\dm\d_)(.*)/.test(this.selected.map_name);
+                if(official_map) {
+                    const chapter = parseInt(this.selected.map_name.substring(1,3).replace('m',''))
+                    if(chapter <= 6) return `https://steamcommunity-a.akamaihd.net/public/images/gamestats/550/c${chapter}.jpg`
+                }
+            }
+            return NoMapImage
         }
+        
     },
     filters:{
         formatDate(inp) {
@@ -310,11 +322,14 @@ export default {
             const _date = new Date(inp)
             const date = format(_date, "yyyy-MM-dd 'at' HH:mm 'UTC'");
             const rel = formatDistanceToNow(_date)
-            return `${date} (${rel} ago)`
+            return `${date} <em class='is-pulled-right'>(${rel} ago)</em>`
         },
         formatMinutes(min) {
             return formatDuration({minutes: min})
         }
+    },
+    mounted() {
+        document.title = `Overview - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
     }
 }
 </script>
@@ -322,5 +337,6 @@ export default {
 <style scoped>
 .tvalue {
   text-align: center;
+  color: blue;
 }
 </style>

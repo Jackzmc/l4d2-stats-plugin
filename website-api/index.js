@@ -2,10 +2,11 @@ require('dotenv').config();
 const app = require('express')();
 
 const WEB_PORT = process.env.WEB_PORT||8081;
-const SPLIT_STATS_ROOTS = ['survivor','infected','pickups','tanks','damage','kills']
 app.listen(WEB_PORT,() => {
     console.info('[Server] Listening on :' + WEB_PORT)
 })
+
+//TODO: record random player of the day
 
 async function main() {
     const mysql = require('mysql2/promise');
@@ -19,20 +20,36 @@ async function main() {
     //const [rows, fields] = await connection.execute('SELECT * FROM `table` WHERE `name` = ? AND `age` > ?', ['Morty', 14]);
     app.get('/api/top',async(req,res) => {
         try {
-            const [rows, fields] = await pool.execute("SELECT * FROM `stats` ORDER BY `survivor_damage_give` DESC LIMIT 10")
-            res.json(rows);
+            const [rows, fields] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `points` DESC LIMIT 10")
+            const [count] = await pool.execute("SELECT COUNT(*) AS total FROM `stats` ");
+            console.log(count)
+            res.json({
+                users: rows,
+                total_users: count[0].total
+            });
         }catch(err) {
             console.error('[/api/top]',err.message);
             res.status(500).json({error:"Internal Server Error"})
         }
     })
-    app.get('/api/top/daily',async(req,res) => {
+    app.get('/api/search/:user',async(req,res) => {
         try {
             //TODO: add top_gamemode
-            const [rows, fields] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `survivor_damage_give` DESC LIMIT 10")
+            const [rows, fields] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` WHERE `steamid`=? OR SOUNDEX(`last_alias`) = SOUNDEX(?)",[ req.params.user, req.params.user ])
             res.json(rows);
         }catch(err) {
-            console.error('[/api/top/daily]',err.message);
+            console.error('[/api/search/:user]',err.message);
+            res.status(500).json({error:"Internal Server Error"})
+        }
+    })
+    app.get('/api/maps/',async(req,res) => {
+        try {
+            const [rows, fields] = await pool.execute("SELECT map_name,wins FROM `stats_maps` ORDER BY `wins` DESC ")
+            res.json({
+                maps: rows
+            })
+        }catch(err) {
+            console.error('[/api/maps]',err.message);
             res.status(500).json({error:"Internal Server Error"})
         }
     })
@@ -64,11 +81,26 @@ async function main() {
                     maps: map_rows
                 })
             }else{
-                res.json({user:null,maps:[]})
+                res.json({user:null,maps:[],not_found:true})
             }
         }catch(err) {
-            console.error('[/api/top]',err.message);
+            console.error('[/api/user/:user]',err.message);
             res.status(500).json({error:"Internal Server Error"})
+        }
+    })
+    app.get('/api/user/:user/campaign',async(req,res) => {
+        try {
+            const [rows, fields] = await pool.execute("SELECT SUM(`wins`) AS wins, SUM(`difficulty_easy`) AS easy, SUM(`difficulty_normal`) AS normal, SUM(`difficulty_advanced`) AS advanced, SUM(`difficulty_expert`) AS expert, SUM(`realism`) AS realism FROM `stats_maps` WHERE `steamid`=?",[req.params.user])
+            if(rows.length > 0) {
+                let stats = {};
+                for(const key in rows[0]) stats[key] = parseInt(rows[0][key])
+                res.json({campaign: stats})
+            }else{
+                res.json({camapign: {}, not_found: true})
+            }
+        }catch(err) {
+            console.error('/api/user/:user/campaign',err.message)
+            res.status(500).json({error:'Internal Server Error'})
         }
     })
 };

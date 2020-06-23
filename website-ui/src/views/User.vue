@@ -10,7 +10,7 @@
           {{user ? user.last_alias : 'Unknown User'}}
         </h1>
         <h4 class="subtitle is-4">
-          {{user.points||0}} points
+          {{user.points||0 | formatNumber}} points
         </h4>
       </div>
     </div>
@@ -46,13 +46,12 @@
     <router-view :user="user" :maps="maps"></router-view>
   </div>
   <br>
+  <br>
 </div>
 </template>
 
 <script>
 import Axios from 'axios'
-import {format, formatDuration, formatDistanceToNow} from 'date-fns'
-import SteamID from 'steamid'
 
 export default {
   data() {
@@ -61,20 +60,6 @@ export default {
       maps: [],
       error: null,
       not_found: false,
-    }
-  },
-  components: {
-  },
-  computed: {
-    disabled() {
-      return this.error || this.not_found
-    },
-    communityID() {
-      return this.user.steamid ? new SteamID(this.user.steamid).getSteamID64() : null
-    },
-    mapUrl() {
-      const chapterid = 1;
-      return `https://steamcommunity-a.akamaihd.net/public/images/gamestats/550/c${chapterid}.jpg`
     }
   },
   mounted() {
@@ -87,37 +72,15 @@ export default {
         if(response.data.user) {
           this.user = response.data.user
           this.maps = response.data.maps || []
+          document.title = `${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
         }else{
           this.not_found = true;
-          this.page = -1;
         }
       })
       .catch(err => {
         this.err = err.message;
-        this.page = -1;
         console.error('Fetch error',err)
       })
-    },
-    setPage(int) {
-      if(!this.disabled) {
-        this.page = int;
-        if(int == 0) this.$router.push('overview')
-        else if(int == 1) this.$router.push('campaign')
-      }
-    }
-  },
-  filters:{
-    formatDate(inp) {
-      return format(new Date(inp), "yyyy-MM-dd 'at' HH:mm")
-    },
-    formatDateAndRel(inp) {
-      const _date = new Date(inp)
-      const date = format(_date, "yyyy-MM-dd 'at' HH:mm");
-      const rel = formatDistanceToNow(_date)
-      return `${date} (${rel} ago)`
-    },
-    formatMinutes(min) {
-      return formatDuration({minutes: min})
     }
   }
 }
@@ -128,5 +91,8 @@ export default {
 <style scoped>
 [v-cloak] {
   display: none;
+}
+.hero {
+  background: linear-gradient(180deg, #008cff 0%, #3a47d5 100%);
 }
 </style>

@@ -13,7 +13,7 @@
     <div class="container is-fluid">
       <div class="columns">
         <div class="column">
-            <b-table @select="onMapSelect" :data="maps" :selected.sync="selected" @details-open="onDetailsOpen" @details-close="details = null">
+            <b-table :loading="loading" @select="onMapSelect" :data="maps" :selected.sync="selected" @details-open="onDetailsOpen" @details-close="details = null">
                 <template slot-scope="props">
                     <b-table-column width="20" >
                         <a href="#"><b-icon icon="angle-right" /></a>
@@ -68,11 +68,13 @@ export default {
         return {
             maps:[],
             details: null,
-            selected: null
+            selected: null,
+            loading: true
         }
     },
     methods: {
         fetchMaps() {
+            this.loading = true;
             Axios.get(`/api/maps`)
             .then(res => {
                 this.maps = res.data.maps;
@@ -93,7 +95,7 @@ export default {
                     actionText: 'Retry',
                     onAction: () => this.fetchMaps()
                 })
-            })
+            }).finally(() => this.loading = false)
         },
         onDetailsOpen(obj) {
             this.details = obj;

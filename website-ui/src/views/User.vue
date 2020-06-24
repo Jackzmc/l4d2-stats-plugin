@@ -31,19 +31,21 @@
     </div>
   </section>
   <br>
-  <div v-if="error">
-    <b-message title="Error Ocurred" type="is-danger" aria-close-label="Close message">
+  <div v-if="error" class="container">
+    <b-message title="Error Ocurred" type="is-danger" aria-close-label="Close message" :closable="false">
       <strong>An error occurred while trying to acquire user.</strong>
       <p>{{this.error}}</p>
     </b-message>
   </div>
-  <div v-else-if="not_found">
-    <b-message title="User not found" type="is-warning" aria-close-label="Close message">
+  <div v-else-if="not_found" class="container">
+    <b-message title="User not found" type="is-warning" aria-close-label="Close message" :closable="false">
       Could not find any users with the steamid or username of <strong>{{$route.params.user}}</strong>
     </b-message>
   </div>
   <div class="container" v-if="user.steamid">
-    <router-view :user="user" :maps="maps"></router-view>
+    <transition name="slide" :duration="300">
+      <router-view :user="user" :maps="maps"></router-view>
+    </transition>
   </div>
   <br>
   <br>
@@ -52,6 +54,7 @@
 
 <script>
 import Axios from 'axios'
+import 'vue2-animate/dist/vue2-animate.min.css'
 
 export default {
   data() {
@@ -64,6 +67,10 @@ export default {
   },
   mounted() {
     this.fetchUser();
+  },
+  watch: {
+    // call again the method if the route changes
+    '$route': 'fetchUser'
   },
   methods: {
     fetchUser() {

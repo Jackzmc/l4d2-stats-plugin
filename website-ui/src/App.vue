@@ -16,6 +16,9 @@
             <b-navbar-item tag="router-link" to="/maps">
                 Maps List
             </b-navbar-item>
+            <b-navbar-item tag="router-link" to="/times" disabled>
+                Times
+            </b-navbar-item>
             <b-navbar-item tag="router-link" to="/faq">
                 FAQ
             </b-navbar-item>
@@ -62,10 +65,11 @@ export default {
   },
   methods: {
     searchUser() {
+      if(this.search.trim().length == 0) return;
       if(this.$route.name === "Search") {
-        this.$router.replace(`/search/${this.search}`)
+        this.$router.replace(`/search/${this.search.trim()}`)
       }else{
-        this.$router.push(`/search/${this.search}`)
+        this.$router.push(`/search/${this.search.trim()}`)
       }
     }
   }

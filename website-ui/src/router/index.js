@@ -29,30 +29,27 @@ const routes = [
     meta: {
       title_part: 'Maps'
     },
-    component: () => import(/* webpackChunkName: "maps" */ '../views/Maps'),
+    component: () => import(/* webpackChunkName: "maps" */ '@/views/Maps'),
   },
-  // {
-  //   path: '/maps/:map',
-  //   name: 'Map Information',
-  //   meta: {
-  //     title_part: 'Maps'
-  //   },
-  //   component: () => import(/* webpackChunkName: "maps" */ '../views/MapsDetails')
-  // },
   {
     path: '/search/:query',
     name: 'Search',
     meta: {
       title_part: 'Search'
     },
-    component: () => import(/* webpackChunkName: "search" */ '../views/Search.vue')
+    component: () => import(/* webpackChunkName: "search" */ '@/views/Search.vue')
   },
   {
     path: '/faq',
     name: 'FAQ',
     meta: {
     },
-    component: () => import(/* webpackChunkName: "faq" */ '../views/FAQ.vue')
+    component: () => import(/* webpackChunkName: "faq" */ '@/views/FAQ.vue')
+  },
+  {
+    path: '/times',
+    name: 'Times',
+    component: () => import(/* webpackChunkName: "times" */ '@/views/Times.vue')
   },
   {
     path: '/user/:user',
@@ -61,7 +58,7 @@ const routes = [
     // route level code-splitting
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "user" */ '../views/User.vue'),
+    component: () => import(/* webpackChunkName: "user" */ '@/views/User.vue'),
     children: [
       {
         // UserProfile will be rendered inside User's <router-view>
@@ -79,7 +76,7 @@ const routes = [
       },
       {
         path: '*',
-        component: () => import('@/views/404')
+        component: () => import(/* webpackChunkName: "error_404" */ '@/views/404.vue') 
       }
     ]
   },
@@ -87,7 +84,7 @@ const routes = [
     path: '*',
     meta: { title_part: 'Page Not Found' },
     name: 'PageNotFound',
-    component: () => import(/* webpackChunkName: "error_404" */ '../views/404.vue') 
+    component: () => import(/* webpackChunkName: "error_404" */ '@/views/404.vue') 
   }
 ]
 

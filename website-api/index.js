@@ -20,9 +20,8 @@ async function main() {
     //const [rows, fields] = await connection.execute('SELECT * FROM `table` WHERE `name` = ? AND `age` > ?', ['Morty', 14]);
     app.get('/api/top',async(req,res) => {
         try {
-            const [rows, fields] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `points` DESC LIMIT 10")
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `points` DESC LIMIT 10")
             const [count] = await pool.execute("SELECT COUNT(*) AS total FROM `stats` ");
-            console.log(count)
             res.json({
                 users: rows,
                 total_users: count[0].total
@@ -35,7 +34,7 @@ async function main() {
     app.get('/api/search/:user',async(req,res) => {
         try {
             //TODO: add top_gamemode
-            const [rows, fields] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` WHERE `steamid`=? OR SOUNDEX(`last_alias`) = SOUNDEX(?)",[ req.params.user, req.params.user ])
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` WHERE `steamid`=? OR SOUNDEX(`last_alias`) = SOUNDEX(?)",[ req.params.user, req.params.user ])
             res.json(rows);
         }catch(err) {
             console.error('[/api/search/:user]',err.message);
@@ -44,7 +43,7 @@ async function main() {
     })
     app.get('/api/maps/',async(req,res) => {
         try {
-            const [rows, fields] = await pool.execute("SELECT map_name,wins FROM `stats_maps` ORDER BY `wins` DESC ")
+            const [rows] = await pool.execute("SELECT map_name,wins FROM `stats_maps` ORDER BY `wins` DESC ")
             res.json({
                 maps: rows
             })
@@ -55,7 +54,7 @@ async function main() {
     })
     app.get('/api/user/:user',async(req,res) => {
         try {
-            const [rows, fields] = await pool.execute("SELECT * FROM `stats` WHERE `last_alias` = ? OR `steamid` = ?", [req.params.user, req.params.user])
+            const [rows] = await pool.execute("SELECT * FROM `stats` WHERE `last_alias` = ? OR `steamid` = ?", [req.params.user, req.params.user])
             if(rows.length > 0) {
 
                 const [map_rows] = await pool.execute("SELECT map_name,difficulty_easy,difficulty_normal,difficulty_advanced,difficulty_expert,realism,wins  FROM `stats_maps` WHERE `steamid`= ?",[rows[0].steamid])
@@ -90,7 +89,7 @@ async function main() {
     })
     app.get('/api/user/:user/campaign',async(req,res) => {
         try {
-            const [rows, fields] = await pool.execute("SELECT SUM(`wins`) AS wins, SUM(`difficulty_easy`) AS easy, SUM(`difficulty_normal`) AS normal, SUM(`difficulty_advanced`) AS advanced, SUM(`difficulty_expert`) AS expert, SUM(`realism`) AS realism FROM `stats_maps` WHERE `steamid`=?",[req.params.user])
+            const [rows] = await pool.execute("SELECT SUM(`wins`) AS wins, SUM(`difficulty_easy`) AS easy, SUM(`difficulty_normal`) AS normal, SUM(`difficulty_advanced`) AS advanced, SUM(`difficulty_expert`) AS expert, SUM(`realism`) AS realism FROM `stats_maps` WHERE `steamid`=?",[req.params.user])
             if(rows.length > 0) {
                 let stats = {};
                 for(const key in rows[0]) stats[key] = parseInt(rows[0][key])
@@ -103,10 +102,8 @@ async function main() {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
+    app.get('/api/*',(req,res) => {
+        res.status(404).json({error:'PageNotFound'})
+    })
 };
 main();
-/* Routes 
-/api/top
-/api/user/:user
-/api/maps/:user
-*/

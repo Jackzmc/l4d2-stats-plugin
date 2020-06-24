@@ -21,3 +21,11 @@
     </div>
 </div>
 </template>
+
+<script>
+export default {
+    metaInfo: [
+        { name: 'og:title', content: "L4D2 Stats Plugin"}
+    ]
+}
+</script>

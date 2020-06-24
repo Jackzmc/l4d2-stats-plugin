@@ -13,34 +13,12 @@
       </div>
     </section>
     <br>
-    <div class="container">
+    <div class="container is-fluid">
       <div class="columns">
         <div class="column">
-          <b-table :data="top_today" striped sticky-header>
-            <template slot-scope="props">
-              <b-table-column width="20">
-                <router-link :to="'/user/' + props.row.steamid" icon-right="angle-right">
-                  <b-icon icon="angle-right" />
-                </router-link>
-              </b-table-column>
-              <b-table-column field="last_alias" label="Player" >
-                <router-link :to="'/user/' + props.row.steamid">
-                  <strong>{{ props.row.last_alias }}</strong>
-                </router-link>
-              </b-table-column>
-              <b-table-column field="points" label="Points" >
-                <span class="has-text-info">{{ props.row.points | formatNumber }}</span>
-              </b-table-column>
-              <b-table-column field="top_gamemode" label="Top Gamemode" >
-                  {{ props.row.top_gamemode }}
-              </b-table-column>
-              <b-table-column field="minutes_played" label="Total Playtime" >
-                  <span class="has-text-info">{{ props.row.minutes_played | formatMinutes }}</span>
-              </b-table-column>
-            </template>
-          </b-table>
+          <ProfileList :data="top_today" striped sticky-header :loading="loading" />
         </div>
-        <div class="column is-4">
+        <div class="column is-3">
           <div class="box">
             <form @submit.prevent="searchUser">
             <b-field label="Enter Username or Steam ID">
@@ -74,16 +52,19 @@
 // @ is an alias to /src
 import Axios from 'axios'
 import {formatDuration} from 'date-fns'
+import ProfileList from '@/components/ProfileList'
 export default {
-  name: 'Home',
+  name: 'Leaderboard',
   components: {
+    ProfileList
   },
   data() {
     return {
       top_today: [],
       failure: false,
       players_total: 0,
-      search: ''
+      search: '',
+      loading: true
     }
   },
   mounted() {
@@ -91,6 +72,7 @@ export default {
   },
   methods: {
     refreshTop() {
+      this.loading = true;
       Axios.get('/api/top')
       .then((r) => {
         this.top_today = r.data.users;
@@ -107,10 +89,11 @@ export default {
             actionText: 'Retry',
             onAction: () => this.refreshTop()
         })
-      })
+      }).finally(() => this.loading = false)
     },
     searchUser() {
-      this.$router.push(`/search/${this.search}`)
+      if(this.search.trim().length > 0)
+        this.$router.push(`/search/${this.search.trim()}`)
     }
   },
   filters: {
@@ -132,6 +115,9 @@ export default {
     formatMinutes(min) {
       return formatDuration({minutes: min})
     }
-  }
+  },
+  metaInfo: [
+    { name: 'og:title', content: "Leaderboards - L4D2 Stats Plugin"}
+  ]
 }
 </script>

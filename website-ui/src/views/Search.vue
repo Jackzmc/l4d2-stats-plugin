@@ -1,46 +1,26 @@
 <template>
+<div>
+    <section class="hero is-dark">
+        <div class="hero-body">
+            <div class="container">
+            <h1 class="title">
+                Search results for '{{this.query}}'
+            </h1>
+            <p class="subtitle is-4">{{size}} result{{size | pluralMode}}</p>
+            </div>
+        </div>
+    </section>
+    <br>
     <div class="container">
-        <h4 class="title is-4">Search results for '{{$route.params.query}}'</h4>
-        <p class="subtitle is-5">Found {{size}} results</p>
-        <br>
-        <b-table :data="results">
-            <template slot-scope="props">
-                <b-table-column width="20">
-                    <b-tooltip label="Click to access their profile">
-                        <router-link :to="'/user/' + props.row.steamid" icon-right="angle-right"><b-icon icon="angle-right" /></router-link>
-                    </b-tooltip>
-                </b-table-column>
-                <b-table-column field="last_alias" label="Player" >
-                    <b-tooltip label="Click to access their profile">
-                        <router-link :to="'/user/' + props.row.steamid">{{ props.row.last_alias }}</router-link>
-                    </b-tooltip>
-                </b-table-column>
-                <b-table-column field="points" label="Points" >
-                    {{ props.row.points | formatNumber }}
-                </b-table-column>
-                <b-table-column field="top_gamemode" label="Top Gamemode" >
-                    {{ props.row.top_gamemode }}
-                </b-table-column>
-                <b-table-column field="minutes_played" label="Total Playtime" >
-                    {{ props.row.minutes_played | formatMinutes }}
-                </b-table-column>
-            </template>
-            <template slot="empty">
-                <section class="section">
-                    <div class="content has-text-grey has-text-centered">
-                        <p>Could not find any recorded users matching your query.</p>
-                        <br>
-                        <b-button type="is-info" tag="router-link" to="/">Return Home</b-button>
-                    </div>
-                </section>
-            </template>
-        </b-table>
+        <ProfileList :data="results" search />
     </div>
+</div>
 </template>
 
 <script>
 import Axios from 'axios'
 import {formatDuration} from 'date-fns'
+import ProfileList from '@/components/ProfileList'
 export default {
     mounted() {
         this.search();
@@ -51,9 +31,18 @@ export default {
             size: 0
         }
     },
+    components: {
+        ProfileList
+    },
+    computed: {
+        query() {
+            return this.$route.params.query.trim()
+        }
+    },
     methods:{
         search() {
-            Axios.get(`/api/search/${this.$route.params.query}`)
+            if(this.query.length == 0) return;
+            Axios.get(`/api/search/${this.query}`)
             .then(res => {
                 this.results = res.data;
                 this.size = res.data.length;
@@ -94,7 +83,11 @@ export default {
         },
         formatMinutes(min) {
             return formatDuration({minutes: min})
+        },
+        pluralMode(inp) {
+            const number = parseInt(inp);
+            return (number == 1) ? "" : "s" 
         }
-    }
+    },
 }
 </script>

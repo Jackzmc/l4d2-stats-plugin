@@ -28,8 +28,25 @@
             <b-navbar-item>
               <form @submit.prevent="searchUser">
               <b-field>
-                <b-input v-model="search" placeholder="Search for user..."  icon="search">
-                </b-input>
+                  <b-autocomplete
+                    v-debounce:400ms="onSearchAutocomplete"
+                    v-model="search.query"
+                    placeholder="Search for user..."  
+                    icon="search"
+                    :data="search.autocomplete"
+                    clearable
+                    field="last_alias"
+                    @select="onSearchSelect"
+                    @enter.native="searchUser"
+                    clear-on-select
+                    expanded
+                    :loading="search.loading"
+                    >
+                    <template slot="empty">No users were found</template>
+                    <template  v-slot:default="props">
+                      <b>{{props.option.last_alias}}</b> ({{props.option.steamid}})
+                    </template>
+                  </b-autocomplete>
                 <p class="control">
                   <input type="submit" class="button is-info" value="Search"/>
                 </p>
@@ -46,34 +63,59 @@
 </template>
 
 <script>
+import Axios from 'axios'
 export default {
   computed: {
     title() {
-      return process.env.VUE_APP_SITE_NAME || 'L4D2 Stats Plugin';
+      return process.env.VUE_APP_SITE_NAME
     },
     version() {
       return `v${process.env.VUE_APP_VERSION}`
     }
   },
-  mounted() {
-    document.title = process.env.VUE_APP_SITE_NAME;
-  },
   data() {
     return {
-      search: null
+      search: {
+        query: null,
+        last_autocomplete: null,
+        autocomplete: [],
+        loading: false
+      },
     }
   },
   methods: {
     searchUser() {
-      if(this.search.trim().length == 0) return;
+      const query = this.search.query.trim();
+      if(query.length == 0) return;
       if(this.$route.name === "Search") {
-        this.$router.replace(`/search/${this.search.trim()}`)
+        this.$router.replace(`/search/${query}`)
       }else{
-        this.$router.push(`/search/${this.search.trim()}`)
+        this.$router.push(`/search/${query}`)
+      }
+    },
+    onSearchAutocomplete() {
+      this.loading = true;
+      const query = this.search.query.trim();
+      if(query.length == 0 || this.search.last_autocomplete == query) return;
+      Axios.get(`/api/search/${query}`)
+      .then(res => {
+          this.search.autocomplete = res.data;
+          this.search.last_autocomplete = query;
+      }) 
+      .catch(err => {
+          console.error('Failed to fetch autocomplete results', err)
+      })
+      .finally(() => this.loading = false)
+    },
+    onSearchSelect(obj) {
+      if(obj) {
+        this.$router.push('/user/' + obj.steamid)
       }
     }
   }
 }
+
+
 </script>
 
 <style>

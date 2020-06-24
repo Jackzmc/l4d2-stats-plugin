@@ -51,7 +51,6 @@
 <script>
 // @ is an alias to /src
 import Axios from 'axios'
-import {formatDuration} from 'date-fns'
 import ProfileList from '@/components/ProfileList'
 export default {
   name: 'Leaderboard',
@@ -94,26 +93,6 @@ export default {
     searchUser() {
       if(this.search.trim().length > 0)
         this.$router.push(`/search/${this.search.trim()}`)
-    }
-  },
-  filters: {
-    humanReadable(minutes) {
-      let hours = Math.floor(minutes / 60);  
-      const days = Math.floor(hours / 24);
-      minutes = minutes % 60;
-      const min_text = minutes == 1 ? 'minute' : 'minutes'
-      const hour_text = hours == 1 ? 'hour' : 'hours'
-      if(days >= 1) {
-        hours = hours % 24; 
-        return `${days} days, ${hours} ${hour_text}`
-      }else if(hours >= 1) {
-        return `${hours} ${hour_text}, ${minutes} ${min_text}` 
-      }else{
-        return `${minutes} ${min_text}`
-      }
-    },
-    formatMinutes(min) {
-      return formatDuration({minutes: min})
     }
   },
   metaInfo: [

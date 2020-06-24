@@ -35,7 +35,7 @@
             </tr>
             <tr>
                 <th>Time Played</th>
-                <td style="color: blue">{{user.minutes_played | formatMinutes}}</td>
+                <td style="color: blue">{{user.minutes_played | humanReadable}}</td>
             </tr>
             </tbody>
         </table>
@@ -289,7 +289,7 @@
 </template>
 
 <script>
-import {format, formatDuration, formatDistanceToNow} from 'date-fns'
+import {format, formatDistanceToNow} from 'date-fns'
 import SteamID from 'steamid'
 import NoMapImage from '@/assets/no_map_image.png'
 
@@ -324,9 +324,22 @@ export default {
             const rel = formatDistanceToNow(_date)
             return `${date} <em class='is-pulled-right'>(${rel} ago)</em>`
         },
-        formatMinutes(min) {
-            return formatDuration({minutes: min})
-        }
+        humanReadable(minutes) {
+            let hours = Math.floor(minutes / 60);  
+            const days = Math.floor(hours / 24);
+            minutes = minutes % 60;
+            const day_text = days == 1 ? 'day' : 'days'
+            const min_text = minutes == 1 ? 'minute' : 'minutes'
+            const hour_text = hours == 1 ? 'hour' : 'hours'
+            if(days >= 1) {
+                hours = hours % 24; 
+                return `${days} ${day_text}, ${hours} ${hour_text}`
+            }else if(hours >= 1) {
+                return `${hours} ${hour_text}, ${minutes} ${min_text}` 
+            }else{
+                return `${minutes} ${min_text}`
+            }
+        },
     },
     mounted() {
         document.title = `Overview - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`

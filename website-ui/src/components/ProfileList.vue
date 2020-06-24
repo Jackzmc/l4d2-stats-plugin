@@ -22,7 +22,7 @@
                 {{ props.row.top_gamemode }}
             </b-table-column>
             <b-table-column field="minutes_played" label="Total Playtime" >
-                <span style="color: blue">{{ props.row.minutes_played | formatMinutes }}</span>
+                <span style="color: blue">{{ props.row.minutes_played | humanReadable }}</span>
             </b-table-column>
         </template>
         <template slot="empty">
@@ -39,3 +39,32 @@
         </template>
     </b-table>
 </template>
+
+
+<script>
+import {formatDuration} from 'date-fns'
+
+export default {
+    filters: {
+        humanReadable(minutes) {
+            let hours = Math.floor(minutes / 60);  
+            const days = Math.floor(hours / 24);
+            minutes = minutes % 60;
+            const day_text = days == 1 ? 'day' : 'days'
+            const min_text = minutes == 1 ? 'minute' : 'minutes'
+            const hour_text = hours == 1 ? 'hour' : 'hours'
+            if(days >= 1) {
+                hours = hours % 24; 
+                return `${days} ${day_text}, ${hours} ${hour_text}`
+            }else if(hours >= 1) {
+                return `${hours} ${hour_text}, ${minutes} ${min_text}` 
+            }else{
+                return `${minutes} ${min_text}`
+            }
+        },
+        formatMinutes(min) {
+            return formatDuration({minutes: parseInt(min)})
+        }
+    },
+}
+</script>

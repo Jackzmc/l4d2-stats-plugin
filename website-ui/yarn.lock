@@ -8592,6 +8592,11 @@ vm-browserify@^1.0.1:
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-1.1.2.tgz#78641c488b8e6ca91a75f511e7a3b32a86e5dda0"
   integrity sha512-2ham8XPWTONajOR0ohOKOHXkm3+gaBmGut3SRuu75xLd/RRaY6vqgh8NBYYk7+RW3u5AtzPQZG8F10LHkl0lAQ==
 
+vue-debounce@^2.5.7:
+  version "2.5.7"
+  resolved "https://registry.yarnpkg.com/vue-debounce/-/vue-debounce-2.5.7.tgz#4e2aee484ea46be343242639ea56ddcd96ab3431"
+  integrity sha512-weyMz0ee6xHLCJ+HrvfkVUQqBsH7Jx359yLTmfnmpb8fDUD3HZEwd2ZHoq+sZjcYR7JcW7B9FlqjJA2IJXqscg==
+
 vue-eslint-parser@^7.0.0:
   version "7.1.0"
   resolved "https://registry.yarnpkg.com/vue-eslint-parser/-/vue-eslint-parser-7.1.0.tgz#9cdbcc823e656b087507a1911732b867ac101e83"

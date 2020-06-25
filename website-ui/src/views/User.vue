@@ -75,8 +75,11 @@ export default {
   },
   methods: {
     fetchUser() {
+      this.error = null;
+      this.not_found = false;
       try {
         const steamid = new SteamID(this.$route.params.user);
+
         if(!steamid.isValid()) {
           this.error = "Specified user's ID is not a valid steamID. Possible formats are: 76561198058753262 or STEAM_0:0:23071901"
           return

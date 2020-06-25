@@ -292,7 +292,7 @@
 </template>
 
 <script>
-import {format, formatDistanceToNow} from 'date-fns'
+import {formatDistanceToNow} from 'date-fns'
 import SteamID from 'steamid'
 import NoMapImage from '@/assets/no_map_image.png'
 import linkanchor from '@/components/linkanchor'
@@ -319,13 +319,9 @@ export default {
         
     },
     filters:{
-        formatDate(inp) {
-            return format(new Date(inp), "yyyy-MM-dd 'at' HH:mm 'UTC'")
-        },
         formatDateAndRel(inp) {
-            const _date = new Date(inp)
-            const date = format(_date, "yyyy-MM-dd 'at' HH:mm 'UTC'");
-            const rel = formatDistanceToNow(_date)
+            const date = new Date(inp).toLocaleString()
+            const rel = formatDistanceToNow(new Date(inp))
             return `${date} <em class='is-pulled-right'>(${rel} ago)</em>`
         },
         humanReadable(minutes) {

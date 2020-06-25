@@ -13,7 +13,7 @@
     <div class="container has-text-left">
         <div class="column">
             <h5 class="title is-5">What is this?</h5>
-            <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nostrum, optio officia quibusdam architecto earum deserunt et mollitia, voluptatibus alias harum accusamus reiciendis a magnam fugit, obcaecati adipisci tempore sunt itaque.</p>
+            <p>This is a plugin you can install on any sourcemod l4d2 server, and it will record all the statistics you see on a user's page. This includes kills, deaths, damage and more. This plugin sends the database to a MySQL database which then you can view on this webpage. </p>
             <hr>
             <h5 class="title is-5">How are points calculated?</h5>
             <b-collapse :open="false" class="card" animation="slide">
@@ -34,19 +34,21 @@
                 <div class="card-content">
                     <div class="content">
                         <ul>
-                            <li><span class="has-text-success">+1</span> per common killed/melee_kill?</li>
+                            <li><span class="has-text-success">+1</span> per common killed (any damage type)</li>
                             <li><span class="has-text-success">+2</span> per common headshot</li>
-                            <li><span class="has-text-danger">-20</span> for teammate kill</li>
-                            <li><span class="has-text-danger">-1</span> per teammate dmg (event or num??)</li>
                             <li><span class="has-text-success">+50</span> per infected kill</li>
                             <li><span class="has-text-success">+200</span> per tank kill</li>
-                            <li><span class="has-text-success">+50</span> per tank kill solo (added to above)</li>
-                            <li><span class="has-text-success">+50</span> per tank kill melee (added to above)</li>
+                            <li><span class="has-text-success">+50</span> per tank kill solo (in addition to tank kill)</li>
+                            <li><span class="has-text-success">+50</span> per tank kill melee (in addition to tank kill))</li>
                             <li><span class="has-text-success">+100</span> per witch kill</li>
-                            <li>+? per heal teammate</li>
-                            <li>+? per revive teammate</li>
+                            <li><span class="has-text-success">+10</span> per heal teammate</li>
+                            <li><span class="has-text-success">+3</span> per revive teammate</li>
+                            <li><span class="has-text-success">+9</span> per teammate defibbed</li>
                             <li><span class="has-text-success">+3</span> per ammo pack deploy</li>
                             <li><span class="has-text-success">+300</span> per finale win</li>
+                            <br>
+                            <li><span class="has-text-danger">-20</span> for teammate kill</li>
+                            <li><span class="has-text-danger">-1</span> per teammate dmg</li>
                         </ul>
                     </div>
                 </div>

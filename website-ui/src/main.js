@@ -5,16 +5,27 @@ import router from './router'
 import Buefy from 'buefy'
 import 'buefy/dist/buefy.css'
 
+import Axios from 'axios'
+import { cacheAdapterEnhancer} from 'axios-extensions';
+import vueDebounce from 'vue-debounce'
+
+
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faCog, faSearch, faSyncAlt, faAngleLeft, faAngleRight, faCaretDown, faCaretUp, faTimesCircle } from '@fortawesome/free-solid-svg-icons'
-library.add(faCog, faSearch, faSyncAlt, faAngleLeft, faAngleRight, faCaretDown, faCaretUp, faTimesCircle);
+import { faCog, faSearch, faSyncAlt, faAngleLeft, faAngleRight, faCaretDown, faCaretUp, faTimesCircle, faLink } from '@fortawesome/free-solid-svg-icons'
 
-import vueDebounce from 'vue-debounce'
-Vue.use(vueDebounce)
+library.add(faCog, faSearch, faSyncAlt, faAngleLeft, faAngleRight, faCaretDown, faCaretUp, faTimesCircle, faLink);
 
 Vue.component('font-awesome-icon', FontAwesomeIcon)
+Vue.use(vueDebounce)
 Vue.use(Buefy, { defaultIconPack: 'fas', defaultIconComponent: 'font-awesome-icon' })
+Vue.prototype.$http = Axios.create({
+	baseURL: '/',
+	headers: { 'Cache-Control': 'no-cache' },
+	// disable the default cache
+	adapter: cacheAdapterEnhancer(Axios.defaults.adapter, { enabledByDefault: false })
+});
+
 
 Vue.config.productionTip = false
 Vue.filter('formatNumber', (num) => {

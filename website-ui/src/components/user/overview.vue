@@ -2,7 +2,7 @@
 <div class="columns">
     <div class="column">
         <h2 class='title is-2'>Stats Overview</h2>
-        <h5 class="title is-5" id="playerstats">Player Information</h5>
+        <linkanchor id="playerstats" text="Player Information" />
         <table class="table is-fullwidth is-bordered">
             <tbody>
             <tr>
@@ -10,9 +10,9 @@
                 <td>
                 <p>
                     {{user.steamid}}&nbsp;
-                    <span class="is-pulled-right">
-                    <a :href="'https://steamdb.info/calculator/' + communityID">[SteamDB]</a>&nbsp;
-                    <a :href="'https://steamcommunity.com/profiles/' + communityID">[Steam Community]</a>
+                    <span class="is-pulled-right buttons">
+                    <b-button tag="a" size="is-small" type="is-info" :href="'https://steamdb.info/calculator/' + communityID">SteamDB</b-button>
+                    <b-button tag="a" size="is-small" type="is-info" :href="'https://steamcommunity.com/profiles/' + communityID">Community Profile</b-button>
                     </span>
                 </p>
                 </td>
@@ -40,7 +40,7 @@
             </tbody>
         </table>
         <hr>
-        <h5 id="kills" class="title is-5">Kills</h5>
+        <linkanchor id="kills" text="Kills" />
         <div class="columns">
             <div class="column">
             <table class="table is-fullwidth is-bordered">
@@ -117,7 +117,7 @@
         </div>
         
         <hr>
-        <h5 id="survivorstats" class="title is-5">Survivor Stats</h5>
+        <linkanchor id="survivorstats" text="Survivor Statistics" />
         <div class="columns">
             <div class="column is-4">
             <p><u>Damage Dealt</u></p>
@@ -231,7 +231,7 @@
             </div>
         </div>
         <hr>
-        <h5 id="throwables" class="title is-5">Throwable Statistics</h5>
+        <linkanchor id="throwables" text="Throwable Statistics" />
         <table class="table is-bordered is-fullwidth">
             <thead>
             <tr class="has-background-white-ter">
@@ -263,19 +263,21 @@
             </tbody>
         </table>
         <hr>
-        <h5 id="times" class="title is-5">Times</h5>
+        <linkanchor id="times" text="Times" />
         <p>This statistic has no data recorded.</p>
     </div>
     <div class="column is-4">
         <div class="box">
             <h5 class="title is-5">Sections</h5>
-            <ul>
-            <li><a href="#playerinfo">Player Information</a></li>
-            <li><a href="#kills">Kills</a></li>
-            <li><a href="#survivorstats">Survivor Stats</a></li>
-            <li><a href="#throwables">Throwable Stats</a></li>
-            <li><a href="#times">Times</a></li>
-            </ul>
+            <div class="content has-text-left">
+                <ul>
+                <li><a href="#playerinfo">Player Information</a></li>
+                <li><a href="#kills">Kills</a></li>
+                <li><a href="#survivorstats">Survivor Stats</a></li>
+                <li><a href="#throwables">Throwable Stats</a></li>
+                <li><a href="#times">Times</a></li>
+                </ul>
+            </div>
         </div>
         <div class="box">
             <h5 class="title is-5">Best Map</h5>
@@ -285,6 +287,7 @@
             <p>Fastest Time: 5s</p>
         </div>
     </div>
+    <br>
 </div>
 </template>
 
@@ -292,6 +295,7 @@
 import {format, formatDistanceToNow} from 'date-fns'
 import SteamID from 'steamid'
 import NoMapImage from '@/assets/no_map_image.png'
+import linkanchor from '@/components/linkanchor'
 
 export default {
     props: ['user'],
@@ -343,6 +347,9 @@ export default {
     },
     mounted() {
         document.title = `Overview - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
+    },
+    components: {
+        linkanchor
     }
 }
 </script>

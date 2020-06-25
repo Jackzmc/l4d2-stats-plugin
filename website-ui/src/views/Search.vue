@@ -18,7 +18,6 @@
 </template>
 
 <script>
-import Axios from 'axios'
 import {formatDuration} from 'date-fns'
 import ProfileList from '@/components/ProfileList'
 export default {
@@ -42,7 +41,7 @@ export default {
     methods:{
         search() {
             if(this.query.length == 0) return;
-            Axios.get(`/api/search/${this.query}`)
+            this.$http.get(`/api/search/${this.query}`,{cache:true})
             .then(res => {
                 this.results = res.data;
                 this.size = res.data.length;

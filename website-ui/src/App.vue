@@ -58,12 +58,13 @@
             </b-navbar-item>
         </template>
     </b-navbar>
-    <router-view/>
+    <keep-alive :max="5">
+      <router-view :key="$route.fullPath"/>
+    </keep-alive>
   </div>
 </template>
 
 <script>
-import Axios from 'axios'
 export default {
   computed: {
     title() {
@@ -97,7 +98,7 @@ export default {
       this.loading = true;
       const query = this.search.query.trim();
       if(query.length == 0 || this.search.last_autocomplete == query) return;
-      Axios.get(`/api/search/${query}`)
+      this.$http.get(`/api/search/${query}`,{cache:true})
       .then(res => {
           this.search.autocomplete = res.data;
           this.search.last_autocomplete = query;

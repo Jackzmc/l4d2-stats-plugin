@@ -61,7 +61,6 @@
 </template>
 
 <script>
-import Axios from 'axios'
 import NoMapImage from '@/assets/no_map_image.png'
 export default {
     data() {
@@ -75,7 +74,7 @@ export default {
     methods: {
         fetchMaps() {
             this.loading = true;
-            Axios.get(`/api/maps`)
+            this.$http.get(`/api/maps`,{cache:true})
             .then(res => {
                 this.maps = res.data.maps;
                 if(this.$route.params.map) {

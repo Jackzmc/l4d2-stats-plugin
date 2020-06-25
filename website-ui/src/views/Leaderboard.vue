@@ -50,7 +50,6 @@
 
 <script>
 // @ is an alias to /src
-import Axios from 'axios'
 import ProfileList from '@/components/ProfileList'
 export default {
   name: 'Leaderboard',
@@ -72,7 +71,7 @@ export default {
   methods: {
     refreshTop() {
       this.loading = true;
-      Axios.get('/api/top')
+      this.$http.get('/api/top',{cache:true})
       .then((r) => {
         this.top_today = r.data.users;
         this.players_total = r.data.total_users;

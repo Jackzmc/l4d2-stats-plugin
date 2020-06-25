@@ -7,7 +7,7 @@
     <div v-cloak class="hero-body">
       <div class="container has-text-centered">
         <h1 class="title is-1">
-          {{user ? user.last_alias : 'Unknown User'}}
+          {{user.steamid ? user.last_alias : 'Unknown User'}}
         </h1>
         <h4 class="subtitle is-4">
           {{user.points||0 | formatNumber}} points
@@ -22,9 +22,9 @@
           <ul>
             <router-link tag="li" to="overview"><a>Overview</a></router-link>
             <router-link tag="li" to="campaign"><a>Campaign</a></router-link>
-            <router-link tag="li" to="versus"><a>Versus</a></router-link>
+            <!-- <router-link tag="li" to="versus"><a>Versus</a></router-link>
             <router-link tag="li" to="survival"><a>Survival</a></router-link>
-            <router-link tag="li" to="scavenge"><a>Scavenge</a></router-link>
+            <router-link tag="li" to="scavenge"><a>Scavenge</a></router-link> -->
           </ul>
         </div>
       </nav>
@@ -43,8 +43,10 @@
     </b-message>
   </div>
   <div class="container" v-if="user.steamid">
-    <transition name="slide" :duration="300">
-      <router-view :user="user" :maps="maps"></router-view>
+    <transition name="slide" :duration="200">
+      <keep-alive>
+        <router-view :user="user" :maps="maps" :key="$route.fullPath"></router-view>
+      </keep-alive>
     </transition>
   </div>
   <br>
@@ -53,9 +55,8 @@
 </template>
 
 <script>
-import Axios from 'axios'
 import 'vue2-animate/dist/vue2-animate.min.css'
-
+import SteamID from 'steamid';
 export default {
   data() {
     return {
@@ -74,20 +75,30 @@ export default {
   },
   methods: {
     fetchUser() {
-      Axios.get(`/api/user/${this.$route.params.user}`)
-      .then(response => {
-        if(response.data.user) {
-          this.user = response.data.user
-          this.maps = response.data.maps || []
-          document.title = `${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
-        }else{
-          this.not_found = true;
+      try {
+        const steamid = new SteamID(this.$route.params.user);
+        if(!steamid.isValid()) {
+          this.error = "Specified user's ID is not a valid steamID. Possible formats are: 76561198058753262 or STEAM_0:0:23071901"
+          return
         }
-      })
-      .catch(err => {
-        this.err = err.message;
-        console.error('Fetch error',err)
-      })
+        const id = steamid.getSteam2RenderedID(true);
+        this.$http.get(`/api/user/${id}`,{cache:true})
+        .then(response => {
+          if(response.data.user) {
+            this.user = response.data.user
+            this.maps = response.data.maps || []
+            document.title = `${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
+          }else{
+            this.not_found = true;
+          }
+        })
+        .catch(err => {
+          this.err = err.message;
+          console.error('Fetch error',err)
+        })
+      }catch(err) {
+        this.error = err.message
+      }
     }
   }
 }

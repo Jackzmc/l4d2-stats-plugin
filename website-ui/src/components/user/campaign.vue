@@ -88,7 +88,6 @@
 
 <script>
 import {formatDuration} from 'date-fns'
-import Axios from 'axios'
 export default {
     props: ['user', 'maps'],
     data() {
@@ -127,7 +126,7 @@ export default {
     methods: {
         fetchTotals() {
             this.loading = true;
-            Axios.get(`/api/user/${this.user.steamid}/campaign`)
+            this.$http.get(`/api/user/${this.user.steamid}/campaign`,{cache:true})
             .then(r => {
                 this.totals = r.data.campaign;
             })

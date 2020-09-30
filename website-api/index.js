@@ -34,10 +34,11 @@ async function main() {
     app.get('/api/search/:user',async(req,res) => {
         try {
             //TODO: add top_gamemode
-            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` WHERE `steamid`=? OR SOUNDEX(`last_alias`) = SOUNDEX(?)",[ req.params.user, req.params.user ])
+            const searchQuery = `%${req.params.user}%`;
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` WHERE `last_alias` LIKE ?", [ searhQuery ])
             res.json(rows);
         }catch(err) {
-            console.error('[/api/search/:user]',err.message);
+            console.error('[/api/search/:user]', err.message);
             res.status(500).json({error:"Internal Server Error"})
         }
     })

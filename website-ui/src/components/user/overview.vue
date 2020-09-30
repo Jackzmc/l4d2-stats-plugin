@@ -19,11 +19,11 @@
             </tr>
             <tr>
                 <th>Creation Date</th>
-                <td v-html="$options.filters.formatDateAndRel(user.created_date)"></td>
+                <td v-html="$options.filters.formatDateAndRel(user.created_date*1000)"></td>
             </tr>
             <tr>
                 <th>Last Played</th>
-                <td v-html="$options.filters.formatDateAndRel(user.last_join_date)"></td>
+                <td v-html="$options.filters.formatDateAndRel(user.last_join_date*1000)"></td>
             </tr>
             <tr>
                 <th>Last Location</th>
@@ -255,7 +255,7 @@
             <tr>
                 <td>Puke</td>
                 <td class="has-text-centered">-</td>
-                <td class="tvalue"></td>
+                <td class="tvalue">-</td>
                 <td class="tvalue">{{user.throws_puke | formatNumber}}</td>
             </tr>
             <tr>

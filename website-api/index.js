@@ -35,7 +35,7 @@ async function main() {
         try {
             //TODO: add top_gamemode
             const searchQuery = `%${req.params.user}%`;
-            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` WHERE `last_alias` LIKE ?", [ searhQuery ])
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` WHERE `last_alias` LIKE ?", [ searchQuery ])
             res.json(rows);
         }catch(err) {
             console.error('[/api/search/:user]', err.message);

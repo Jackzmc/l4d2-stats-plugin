@@ -168,6 +168,7 @@ bool ConnectDB() {
 		return false;
     } else {
 		PrintToServer("Connected to database stats");
+		SQL_SetCharset(g_db, "utf8mb4");
 		return true;
     }
 }
@@ -554,6 +555,7 @@ public void Event_GrenadeDenonate(Event event, const char[] name, bool dontBroad
 		//Somehow have to check if molotov or gr
 	}
 }
+
 public void OnEntityCreated(int entity) {
 	char class[32];
 	GetEntityClassname(entity, class, sizeof(class));

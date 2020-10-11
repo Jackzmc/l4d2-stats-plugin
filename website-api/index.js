@@ -18,9 +18,12 @@ async function main() {
     });
     // query database
     //const [rows, fields] = await connection.execute('SELECT * FROM `table` WHERE `name` = ? AND `age` > ?', ['Morty', 14]);
-    app.get('/api/top',async(req,res) => {
+    app.get('/api/top/:page?',async(req,res) => {
         try {
-            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `points` DESC LIMIT 10")
+            const selectedPage = req.params.page || 0;
+            const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(req.params.page) - 1);
+            const offset = pageNumber * 10;
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `points` DESC LIMIT ?,10", [offset])
             const [count] = await pool.execute("SELECT COUNT(*) AS total FROM `stats` ");
             res.json({
                 users: rows,

@@ -168,6 +168,7 @@ bool ConnectDB() {
 		return false;
     } else {
 		PrintToServer("Connected to database stats");
+		SQL_FastQuery(database, "SET NAMES \"UTF8mb4\"");  
 		SQL_SetCharset(g_db, "utf8mb4");
 		return true;
     }
@@ -233,6 +234,11 @@ public void FlushQueuedStats(int client) {
 	//Update stats (don't bother checking if 0.)
 	char query[1023];
 	int minutes_played = (GetTime() - startedPlaying[client]) / 60;
+	//Incase somehow startedPlaying[client] not set (plugin reloaded?), defualt to 0
+	if(minutes_played >= 2147483646) {
+		startedPlaying[client] = GetTime();
+		minutes_played = 0;
+	}
 	Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_pipe=kills_pipe+%d WHERE steamid='%s'",
 		damageSurvivorGiven[client], //survivor_damage_give
 		GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),  //survivor_damage_rec

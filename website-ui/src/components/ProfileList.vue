@@ -1,5 +1,11 @@
 <template>
-    <b-table v-bind="$attrs">
+    <b-table 
+        v-bind="$attrs" 
+        ref="profileList" 
+        :default-sort="[points, minutes_played]"
+
+        @page-change="page => $emit('page-change', page)" 
+    >
         <template slot-scope="props">
             <b-table-column width="20">
                 <b-tooltip label="Click to access their profile">

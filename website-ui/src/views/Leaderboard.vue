@@ -16,7 +16,20 @@
     <div class="container is-fluid">
       <div class="columns">
         <div class="column">
-          <ProfileList :data="top_today" striped sticky-header :loading="loading" />
+          <ProfileList 
+            height="100%" 
+            :data="top_today"
+            :loading="loading" 
+
+            striped sticky-header 
+            paginated 
+            backend-pagination 
+            :current-page="top_page" 
+            per-page=10
+            :total="players_total" 
+
+            @page-change="onTopPageChange" 
+          />
         </div>
         <div class="column is-3">
           <div class="box">
@@ -59,6 +72,7 @@ export default {
   data() {
     return {
       top_today: [],
+      top_page: 1,
       failure: false,
       players_total: 0,
       search: '',
@@ -70,8 +84,9 @@ export default {
   },
   methods: {
     refreshTop() {
+      console.debug('Loading users for page' + this.top_page)
       this.loading = true;
-      this.$http.get('/api/top',{cache:true})
+      this.$http.get(`/api/top/${this.top_page}`, { cache: true })
       .then((r) => {
         this.top_today = r.data.users;
         this.players_total = r.data.total_users;
@@ -88,6 +103,10 @@ export default {
             onAction: () => this.refreshTop()
         })
       }).finally(() => this.loading = false)
+    },
+    onTopPageChange(page) {
+      this.top_page = page;
+      this.refreshTop();
     },
     searchUser() {
       if(this.search.trim().length > 0)

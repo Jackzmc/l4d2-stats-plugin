@@ -324,9 +324,14 @@ export default {
     },
     filters:{
         formatDateAndRel(inp) {
-            const date = new Date(inp).toLocaleString()
-            const rel = formatDistanceToNow(new Date(inp))
-            return `${date} <em class='is-pulled-right'>(${rel} ago)</em>`
+            if(inp <= 0 || isNaN(inp)) return ""
+            try {
+                const date = new Date(inp).toLocaleString()
+                const rel = formatDistanceToNow(new Date(inp))
+                return `${date} <em class='is-pulled-right'>(${rel} ago)</em>`
+            }catch(err) {
+                return "???"
+            }
         },
         humanReadable(minutes) {
             let hours = Math.floor(minutes / 60);  

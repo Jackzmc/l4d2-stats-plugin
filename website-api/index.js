@@ -11,10 +11,10 @@ app.listen(WEB_PORT,() => {
 async function main() {
     const mysql = require('mysql2/promise');
     const pool = mysql.createPool({
-        host:process.env.MYSQL_HOST||'localhost', 
-        user: process.env.MYSQL_USER||'root', 
+        host: process.env.MYSQL_HOST || 'localhost', 
+        user: process.env.MYSQL_USER || 'root', 
         password: process.env.MYSQL_PASSWORD,
-        database: process.env.MYSQL_DB||'test'
+        database: process.env.MYSQL_DB || 'test'
     });
     // query database
     //const [rows, fields] = await connection.execute('SELECT * FROM `table` WHERE `name` = ? AND `age` > ?', ['Morty', 14]);
@@ -23,7 +23,7 @@ async function main() {
             const selectedPage = req.params.page || 0;
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(req.params.page) - 1);
             const offset = pageNumber * 10;
-            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `points` DESC LIMIT ?,10", [offset])
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `points` DESC, `minutes_played` DESC LIMIT ?,10", [offset])
             const [count] = await pool.execute("SELECT COUNT(*) AS total FROM `stats` ");
             res.json({
                 users: rows,

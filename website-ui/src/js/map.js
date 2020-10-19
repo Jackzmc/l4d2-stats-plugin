@@ -19,7 +19,7 @@ const OFFICIAL_IMAGES_BY_CHAPTER = {
     "c2m": "c2_dark_carnival.png",
     "c3m": "c3_swamp_fever.jpeg",
     "c4m": "c4_hard_rain.jpeg",
-    "c5m": "c5_the_parish",
+    "c5m": "c5_the_parish.jpeg",
     "c6m": "c6_the_passing.jpeg",
     "c7m": "c7_the_sacrifice.jpeg",
     "c8m": "c8_no_mercy.jpeg",

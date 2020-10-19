@@ -369,7 +369,6 @@ public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadca
 		bool using_minigun = event.GetBool("minigun");
 		char wpn_name[32];
 		GetClientWeapon(attacker, wpn_name, sizeof(wpn_name));
-		PrintToChatAll("Infected died by %s. wpn id = %d", wpn_name, event.GetInt("weapon_id"));
 
 		if(headshot) {
 			points[attacker]+=2;

@@ -96,16 +96,16 @@
                     <td class="tvalue">{{user.tanks_killed_solo | formatNumber}}</td>
                 </tr>
                 <tr>
-                    <td>Tank (Melee Only)</td>
-                    <td class="tvalue">{{user.tanks_killed_melee | formatNumber}}</td>
-                </tr>
-                <tr>
                     <td>Witch</td>
                     <td class="tvalue">{{user.kills_witch | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Commons</td>
                     <td class="tvalue">{{user.common_kills | formatNumber}}</td>
+                </tr>
+                <tr>
+                    <td>Teammates</td>
+                    <td class="tvalue">{{user.ff_kills | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Minigun</td>

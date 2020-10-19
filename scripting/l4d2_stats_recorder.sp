@@ -35,6 +35,8 @@ static int upgradePacksDeployed[MAXPLAYERS+1];
 static int finaleTimeStart;
 static int molotovDamage[MAXPLAYERS+1];
 static int pipeKills[MAXPLAYERS+1];
+static int molotovKills[MAXPLAYERS+1];
+static int minigunKills[MAXPLAYERS+1];
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	if(late) {
@@ -96,7 +98,6 @@ public void OnPluginStart()
 
 
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
-	RegConsoleCmd("sm_debug_cache", Command_DebugCache);
 
 	CreateTimer(60.0, Timer_FlushStats, _, TIMER_REPEAT);
 }
@@ -168,7 +169,7 @@ bool ConnectDB() {
 		return false;
     } else {
 		PrintToServer("Connected to database stats");
-		SQL_FastQuery(database, "SET NAMES \"UTF8mb4\"");  
+		SQL_FastQuery(g_db, "SET NAMES \"UTF8mb4\"");  
 		SQL_SetCharset(g_db, "utf8mb4");
 		return true;
     }
@@ -218,7 +219,8 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 			case 2: strcopy(difficultyName, sizeof(difficultyName), "advanced");
 			case 3: strcopy(difficultyName, sizeof(difficultyName), "expert");
 		}
-		int time = GetTime() - finaleTimeStart;
+		//Prevent subtraction of 0, if finaleTimeStart not set.
+		int time = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
 
 		Format(query, sizeof(query), "INSERT INTO stats_maps (steamid, map_name, wins, `difficulty_%s`, realism, best_time)\nVALUES ('%s', '%s', 1, 1, %d, %d)\n ON DUPLICATE KEY UPDATE wins=wins+1,`difficulty_%s`=`difficulty_%s`+1,realism=realism+%d,best_time=GREATEST(%d,VALUES(best_time))", 
 			difficultyName, steamidcache[client], mapname, realism_amount, time, difficultyName, difficultyName, realism_amount, time);
@@ -239,7 +241,7 @@ public void FlushQueuedStats(int client) {
 		startedPlaying[client] = GetTime();
 		minutes_played = 0;
 	}
-	Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_pipe=kills_pipe+%d WHERE steamid='%s'",
+	Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d WHERE steamid='%s'",
 		damageSurvivorGiven[client], //survivor_damage_give
 		GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),  //survivor_damage_rec
 		damageInfectedGiven[client],  //infected_damage_give
@@ -256,7 +258,9 @@ public void FlushQueuedStats(int client) {
 		points[client], //points
 		upgradePacksDeployed[client], //packs_used
 		molotovDamage[client], //damage_molotov
-		pipeKills[client], //kills_pipe
+		pipeKills[client], //kills_pipe,
+		molotovKills[client],
+		minigunKills[client],
 		steamidcache[client][0]
 	);
 	g_db.Query(DBC_FlushQueuedStats, query, client);
@@ -325,6 +329,8 @@ public void DBC_FlushQueuedStats(Database db, DBResultSet results, const char[] 
 		upgradePacksDeployed[client] = 0;
 		molotovDamage[client] = 0;
 		pipeKills[client] = 0;
+		molotovKills[client] = 0;
+		minigunKills[client] = 0;
 		startedPlaying[client] = GetTime();
 	}
 }
@@ -339,15 +345,6 @@ public Action Command_DebugStats(int client, int args) {
 	ReplyToCommand(client, "m_checkpointDamageTaken %d", GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"));
 	ReplyToCommand(client, "m_checkpointZombieKills: %d", zombiekills);
 	ReplyToCommand(client, "points = %d", points[client]);
-	return Plugin_Handled;
-}
-public Action Command_DebugCache(int client, int args) {
-	ReplyToCommand(client, "Cache:");
-	for(int i=1; i<=MaxClients;i++) {
-		if(IsClientConnected(i) && IsClientInGame(i)) {
-			ReplyToCommand(client, "#%d (%N) steamid: %s", i, i, steamidcache[i]); 
-		}
-	}
 	return Plugin_Handled;
 }
 
@@ -367,16 +364,21 @@ public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadca
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		bool blast = event.GetBool("blast");
 		bool headshot = event.GetBool("headshot");
+		bool using_minigun = event.GetBool("minigun");
 		char wpn_name[32];
 		GetClientWeapon(attacker, wpn_name, sizeof(wpn_name));
+		PrintToChatAll("Infected died by %s. wpn id = %d", wpn_name, event.GetInt("weapon_id"));
 
 		if(headshot) {
 			points[attacker]+=2;
 		}else{
 			points[attacker]++;
 		}
-
-		if(blast) pipeKills[attacker]++;
+		if(using_minigun) {
+			minigunKills[attacker]++;
+		}else if(blast) {
+			pipeKills[attacker]++;
+		}
 	}
 }
 public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast) {
@@ -432,7 +434,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 					points[attacker] += 5; //special kill
 				}
 				if(StrEqual(wpn_name, "inferno", true) || StrEqual(wpn_name, "entityflame", true)) {
-					IncrementStat(attacker, "kills_molotov", 1);
+					molotovKills[attacker]++;
 				}
 			}else if(victim_team == 2) {
 				IncrementStat(attacker, "ff_kills", 1);
@@ -496,18 +498,17 @@ public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast)
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	int solo = event.GetBool("solo") ? 1 : 0;
 	int melee_only = event.GetBool("melee_only") ? 1 : 0;
+
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		if(solo) {
-			points[attacker]+=100;
+			points[attacker] += 100;
 			IncrementStat(attacker, "tanks_killed_solo", 1);
 		}
 		if(melee_only) {
-			points[attacker]+=150;
+			points[attacker] += 150;
 			IncrementStat(attacker, "tanks_killed_melee", 1);
 		}
-		points[attacker]+=200;
-		char query[256];
-		Format(query, sizeof(query), "UPDATE `stats` SET tanks_killed=tanks_killed+1, tanks_killed_solo=tanks_killed_solo+%d, tanks_killed_melee=tanks_killed_melee+%d WHERE `steamid` = '%s'", solo, melee_only);
+		points[attacker] += 200;
 		IncrementStat(attacker, "tanks_killed", 1);
 	}
 }
@@ -530,13 +531,14 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 	char map_name[128];
 	int difficulty = event.GetInt("difficulty");
 	event.GetString("map_name", map_name, sizeof(map_name));
+
 	for(int i=1; i <= MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
 			int team = GetClientTeam(i);
 			if(team == 2) {
 				IncrementMapStat(i, map_name, difficulty);
-				IncrementStat(i, "finales_won",1);
-				points[i]+=400;
+				IncrementStat(i, "finales_won", 1);
+				points[i] += 400;
 			}
 		}
 	}

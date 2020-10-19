@@ -241,31 +241,33 @@ public void FlushQueuedStats(int client) {
 		startedPlaying[client] = GetTime();
 		minutes_played = 0;
 	}
-	Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d WHERE steamid='%s'",
-		damageSurvivorGiven[client], //survivor_damage_give
-		GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),  //survivor_damage_rec
-		damageInfectedGiven[client],  //infected_damage_give
-		damageInfectedRec[client],  //infected_damage_rec
-		damageSurvivorFF[client],  //survivor_ff
-		GetEntProp(client, Prop_Send, "m_checkpointZombieKills"),  //common_kills
-		GetEntProp(client, Prop_Send, "m_checkpointHeadshots"),  //common_headshots
-		GetEntProp(client, Prop_Send, "m_checkpointMeleeKills"), //melee_kills
-		doorOpens[client], //door_opens
-		GetEntProp(client, Prop_Send, "m_checkpointDamageToTank"), //damage_to_tank
-		GetEntProp(client, Prop_Send, "m_checkpointDamageToWitch"), //damage_witch
-		minutes_played, //minutes_played
-		witchKills[client], //kills_witch
-		points[client], //points
-		upgradePacksDeployed[client], //packs_used
-		molotovDamage[client], //damage_molotov
-		pipeKills[client], //kills_pipe,
-		molotovKills[client],
-		minigunKills[client],
-		steamidcache[client][0]
-	);
-	g_db.Query(DBC_FlushQueuedStats, query, client);
-	//And clear them.
-
+	//Prevent points from being reset by not recording until user has gotten a point. 
+	if(points[client] > 0) {
+		Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d WHERE steamid='%s'",
+			damageSurvivorGiven[client], //survivor_damage_give
+			GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),  //survivor_damage_rec
+			damageInfectedGiven[client],  //infected_damage_give
+			damageInfectedRec[client],  //infected_damage_rec
+			damageSurvivorFF[client],  //survivor_ff
+			GetEntProp(client, Prop_Send, "m_checkpointZombieKills"),  //common_kills
+			GetEntProp(client, Prop_Send, "m_checkpointHeadshots"),  //common_headshots
+			GetEntProp(client, Prop_Send, "m_checkpointMeleeKills"), //melee_kills
+			doorOpens[client], //door_opens
+			GetEntProp(client, Prop_Send, "m_checkpointDamageToTank"), //damage_to_tank
+			GetEntProp(client, Prop_Send, "m_checkpointDamageToWitch"), //damage_witch
+			minutes_played, //minutes_played
+			witchKills[client], //kills_witch
+			points[client], //points
+			upgradePacksDeployed[client], //packs_used
+			molotovDamage[client], //damage_molotov
+			pipeKills[client], //kills_pipe,
+			molotovKills[client],
+			minigunKills[client],
+			steamidcache[client][0]
+		);
+		g_db.Query(DBC_FlushQueuedStats, query, client);
+		//And clear them.
+	}
 }
 /////////////////////////////////
 //DATABASE CALLBACKS

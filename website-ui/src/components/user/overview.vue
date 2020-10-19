@@ -108,8 +108,8 @@
                     <td class="tvalue">{{user.common_kills | formatNumber}}</td>
                 </tr>
                 <tr>
-                    <td>Teammates</td>
-                    <td class="tvalue">{{user.ff_kills | formatNumber}}</td>
+                    <td>Minigun</td>
+                    <td class="tvalue">{{user.kills_minigun | formatNumber}}</td>
                 </tr>
                 </tbody>
             </table>

@@ -62,6 +62,7 @@
 
 <script>
 import NoMapImage from '@/assets/no_map_image.png'
+import { getMapName, getMapImage} from '../js/map'
 export default {
     data() {
         return {
@@ -113,11 +114,9 @@ export default {
     computed: {
         mapUrl() {
             if(this.selected) {
-                const official_map = this.selected.map_name && /(c\dm\d_)(.*)/.test(this.selected.map_name);
-                if(official_map) {
-                    const chapter = parseInt(this.selected.map_name.substring(1,3).replace('m',''))
-                    if(chapter <= 6) return `https://steamcommunity-a.akamaihd.net/public/images/gamestats/550/c${chapter}.jpg`
-                }
+                const imageUrl = getMapImage(this.selected.map_name);
+                console.log(this.selected.map_name, imageUrl)
+                return imageUrl ? `/img/${imageUrl}` : NoMapImage;
             }
             return NoMapImage
         }
@@ -127,22 +126,7 @@ export default {
     },
     filters: {
         formatMap(str) {
-            switch(str.substring(0,3)) {
-                case "c1m": return "Dead Center"
-                case "c2m": return "Dark Carnival"
-                case "c3m": return "Swamp Fever"
-                case "c4m": return "Hard Rain"
-                case "c5m": return "The Parish"
-                case "c6m": return "The Passing"
-                case "c7m": return "The Sacrifice"
-                case "c8m": return "No Mercy"
-                case "c9m": return "Death Toll"
-                case "c10": return "Crash Course"
-                case "c11": return "Dead Air"
-                case "c12": return "Blood Harvest"
-                case "c13": return "Cold Stream"
-                default: return str;
-            }
+            return getMapName(str)
         },
     }
 }

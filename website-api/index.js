@@ -47,7 +47,7 @@ async function main() {
     })
     app.get('/api/maps/',async(req,res) => {
         try {
-            const [rows] = await pool.execute("SELECT map_name,wins FROM `stats_maps` ORDER BY `wins` DESC ")
+            const [rows] = await pool.execute("SELECT map_name,wins FROM `stats_maps` GROUP BY map_name ORDER BY `wins` DESC ")
             res.json({
                 maps: rows
             })

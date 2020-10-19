@@ -87,7 +87,8 @@
 </template>
 
 <script>
-import {formatDuration} from 'date-fns'
+import { formatDuration } from 'date-fns'
+import { getMapName } from '../../js/map'
 export default {
     props: ['user', 'maps'],
     data() {
@@ -98,22 +99,7 @@ export default {
     },
     filters: {
         formatMap(str) {
-            switch(str.substring(0,3)) {
-                case "c1m": return "Dead Center"
-                case "c2m": return "Dark Carnival"
-                case "c3m": return "Swamp Fever"
-                case "c4m": return "Hard Rain"
-                case "c5m": return "The Parish"
-                case "c6m": return "The Passing"
-                case "c7m": return "The Sacrifice"
-                case "c8m": return "No Mercy"
-                case "c9m": return "Death Toll"
-                case "c10": return "Crash Course"
-                case "c11": return "Dead Air"
-                case "c12": return "Blood Harvest"
-                case "c13": return "Cold Stream"
-                default: return str;
-            }
+            return getMapName(str)
         },
         formatMS(inp) {
             return formatDuration({seconds: inp / 1000})

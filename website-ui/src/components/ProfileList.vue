@@ -9,14 +9,14 @@
         <template slot-scope="props">
             <b-table-column width="20">
                 <b-tooltip label="Click to access their profile">
-                    <router-link :to="'/user/' + props.row.steamid" icon-right="angle-right">
+                    <router-link :to="getUserLink(props.row)" icon-right="angle-right">
                         <b-icon icon="angle-right" />
                     </router-link>
                 </b-tooltip>
             </b-table-column>
             <b-table-column field="last_alias" label="Player" >
                 <b-tooltip label="Click to access their profile">
-                    <router-link :to="'/user/' + props.row.steamid">
+                    <router-link :to="getUserLink(props.row)">
                         <strong>{{ props.row.last_alias }}</strong>
                     </router-link>
                 </b-tooltip>
@@ -28,7 +28,7 @@
                 {{ props.row.top_gamemode }}
             </b-table-column>
             <b-table-column field="minutes_played" label="Total Playtime" >
-                <span style="color: blue">{{ props.row.minutes_played | humanReadable }}</span>
+                <span style="color: blue">{{ humanReadable(props.row.minutes_played) }}</span>
             </b-table-column>
         </template>
         <template slot="empty">
@@ -48,10 +48,10 @@
 
 
 <script>
-import {formatDuration} from 'date-fns'
+import { formatDuration } from 'date-fns'
 
 export default {
-    filters: {
+    methods: {
         humanReadable(minutes) {
             let hours = Math.floor(minutes / 60);  
             const days = Math.floor(hours / 24);
@@ -70,6 +70,9 @@ export default {
         },
         formatMinutes(min) {
             return formatDuration({minutes: parseInt(min)})
+        },
+        getUserLink({steamid}) {
+            return `/user/${steamid}`
         }
     },
 }

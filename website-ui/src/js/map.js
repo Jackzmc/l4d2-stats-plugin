@@ -16,7 +16,7 @@ const OFFICIAL_MAPS_BY_CHAPTER = {
 }
 const OFFICIAL_IMAGES_BY_CHAPTER = {
     "c1m": "c1_dead_center.jpeg",
-    "c2m": "c2_dark_carnival.png",
+    "c2m": "c2_dark_carnival.jpeg",
     "c3m": "c3_swamp_fever.jpeg",
     "c4m": "c4_hard_rain.jpeg",
     "c5m": "c5_the_parish.jpeg",
@@ -28,6 +28,7 @@ const OFFICIAL_IMAGES_BY_CHAPTER = {
     "c11": "c11_dead_air.jpeg",
     "c12": "c12_blood_harvest.jpeg",
     "c13": "c13_cold_stream.png",
+    "c14": "c14_last_stand.jpg"
 }
 
 /*const CUSTOM_MAP_NAMES = {

@@ -16,10 +16,10 @@
             <b-table :loading="loading" @select="onMapSelect" :data="maps" :selected.sync="selected" @details-open="onDetailsOpen" @details-close="details = null">
                 <template slot-scope="props">
                     <b-table-column width="20" >
-                        <a href="#"><b-icon icon="angle-right" /></a>
+                        <router-link :to="getCampaignDetailLink(props.row.map_name)"><b-icon icon="angle-right" /></router-link>
                     </b-table-column>
                     <b-table-column field="map_name" label="Map" >
-                        <router-link :to="'/maps/' + props.row.map_name">
+                        <router-link :to="getCampaignDetailLink(props.row.map_name)">
                             <strong>{{ props.row.map_name | formatMap }}</strong>
                         </router-link>
                     </b-table-column>
@@ -46,13 +46,12 @@
         </div>
         <div v-if="selected" class="column is-4">
             <div class="box">
-                <h5 class="title is-5">Map Information</h5>
-                <figure class="image is-2by1">
+                <router-link :to="getCampaignDetailLink(selected.map_name)">
+                <figure class="image is-4by5">
                     <img :src="mapUrl" />
                 </figure>
-                <br>
-                <h6 class="title is-6">{{ selected.map_name | formatMap }}</h6>
-                <p class="subtitle is-6">{{ selected.map_name}}</p>
+                 </router-link>
+                <b-button type="is-info" tag="router-link" size="is-large" expanded :to="getCampaignDetailLink(selected.map_name)">View</b-button>
             </div>
         </div>
       </div>
@@ -75,7 +74,7 @@ export default {
     methods: {
         fetchMaps() {
             this.loading = true;
-            this.$http.get(`/api/maps`,{cache:true})
+            this.$http.get(`/api/maps`, { cache: true })
             .then(res => {
                 this.maps = res.data.maps;
                 if(this.$route.params.map) {
@@ -100,8 +99,12 @@ export default {
         onDetailsOpen(obj) {
             this.details = obj;
         },
-        onMapSelect(sel) {
-            this.$router.replace(`/maps/${sel.map_name}`)
+        onMapSelect() {
+            //this.$router.replace(`/maps/${sel.map_name}`)
+        },
+        getCampaignDetailLink(mapName) {
+            const id = getMapName(mapName).toLowerCase().replace(/\s/, '-');
+            return `/maps/${id}/details`
         }
     },
     watch: {

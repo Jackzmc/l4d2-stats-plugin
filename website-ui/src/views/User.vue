@@ -8,6 +8,7 @@
       <div class="container has-text-centered">
         <h1 class="title is-1">
           {{user.steamid ? user.last_alias : 'Unknown User'}}
+          <router-link style="color: white" :to="getShareLink()"><b-icon icon="share" /></router-link>
         </h1>
         <h4 class="subtitle is-4">
           {{user.points||0 | formatNumber}} points
@@ -16,7 +17,7 @@
     </div>
 
     <!-- Hero footer: will stick at the bottom -->
-    <div class="hero-foot">
+    <div class="hero-foot" v-if="!error&&!not_found">
       <nav class="tabs is-boxed is-fullwidth">
         <div class="container">
           <ul>
@@ -56,7 +57,6 @@
 
 <script>
 import 'vue2-animate/dist/vue2-animate.min.css'
-import SteamID from 'steamid';
 export default {
   data() {
     return {
@@ -78,14 +78,7 @@ export default {
       this.error = null;
       this.not_found = false;
       try {
-        const steamid = new SteamID(this.$route.params.user);
-
-        if(!steamid.isValid()) {
-          this.error = "Specified user's ID is not a valid steamID. Possible formats are: 76561198058753262 or STEAM_0:0:23071901"
-          return
-        }
-        const id = steamid.getSteam2RenderedID(true);
-        this.$http.get(`/api/user/${id}`,{cache:true})
+        this.$http.get(`/api/user/${this.$route.params.user.toLowerCase()}`, { cache: true })
         .then(response => {
           if(response.data.user) {
             this.user = response.data.user
@@ -102,6 +95,11 @@ export default {
       }catch(err) {
         this.error = err.message
       }
+    },
+    getShareLink() {
+      const stripped_part = this.user.last_alias.replace(/\s/,'+').replace(/[^0-9a-z+]/gi,'');
+      const safe_alias = encodeURIComponent(stripped_part)
+      return `/user/${safe_alias}`
     }
   }
 }

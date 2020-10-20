@@ -62,12 +62,14 @@ public void OnPluginStart()
 	}
 
 	if(lateLoaded) {
-		for(int i=1; i<MaxClients;i++) {
+		for(int i = 1; i < MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i)) {
 				char steamid[32];
 				GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid));
 				strcopy(steamidcache[i], 32, steamid);
 				startedPlaying[i] = GetTime();
+				//Recreate user (grabs points, so it won't reset)
+				CreateDBUser(client, steamidcache[client]);
 			}
 		}
 	}

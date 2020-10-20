@@ -246,25 +246,25 @@ public void FlushQueuedStats(int client) {
 	//Prevent points from being reset by not recording until user has gotten a point. 
 	if(points[client] > 0) {
 		Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d WHERE steamid='%s'",
-			damageSurvivorGiven[client], //survivor_damage_give
-			GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),  //survivor_damage_rec
-			damageInfectedGiven[client],  //infected_damage_give
-			damageInfectedRec[client],  //infected_damage_rec
-			damageSurvivorFF[client],  //survivor_ff
-			GetEntProp(client, Prop_Send, "m_checkpointZombieKills"),  //common_kills
-			GetEntProp(client, Prop_Send, "m_checkpointHeadshots"),  //common_headshots
-			GetEntProp(client, Prop_Send, "m_checkpointMeleeKills"), //melee_kills
-			doorOpens[client], //door_opens
-			GetEntProp(client, Prop_Send, "m_checkpointDamageToTank"), //damage_to_tank
+			damageSurvivorGiven[client], 								//survivor_damage_give
+			GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),   //survivor_damage_rec
+			damageInfectedGiven[client],  							    //infected_damage_give
+			damageInfectedRec[client],   								//infected_damage_rec
+			damageSurvivorFF[client],    								//survivor_ff
+			GetEntProp(client, Prop_Send, "m_checkpointZombieKills"), 	//common_kills
+			GetEntProp(client, Prop_Send, "m_checkpointHeadshots"),   	//common_headshots
+			GetEntProp(client, Prop_Send, "m_checkpointMeleeKills"),  	//melee_kills
+			doorOpens[client], 											//door_opens
+			GetEntProp(client, Prop_Send, "m_checkpointDamageToTank"),  //damage_to_tank
 			GetEntProp(client, Prop_Send, "m_checkpointDamageToWitch"), //damage_witch
-			minutes_played, //minutes_played
-			witchKills[client], //kills_witch
-			points[client], //points
-			upgradePacksDeployed[client], //packs_used
-			molotovDamage[client], //damage_molotov
-			pipeKills[client], //kills_pipe,
-			molotovKills[client],
-			minigunKills[client],
+			minutes_played, 											//minutes_played
+			witchKills[client], 										//kills_witch
+			points[client], 											//points
+			upgradePacksDeployed[client], 								//packs_used
+			molotovDamage[client], 										//damage_molotov
+			pipeKills[client], 											//kills_pipe,
+			molotovKills[client],										//kills_molotov
+			minigunKills[client],										//kills_minigun
 			steamidcache[client][0]
 		);
 		g_db.Query(DBC_FlushQueuedStats, query, client);
@@ -420,8 +420,6 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 		if(!IsFakeClient(victim)) {
 			if(victim_team == 2) {
 				IncrementStat(victim, "survivor_deaths", 1);
-			}else if(victim_team == 3) {
-				IncrementStat(victim, "infected_deaths", 1);
 			}
 		}
 
@@ -439,6 +437,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 				if(StrEqual(wpn_name, "inferno", true) || StrEqual(wpn_name, "entityflame", true)) {
 					molotovKills[attacker]++;
 				}
+				IncrementStat(victim, "infected_deaths", 1);
 			}else if(victim_team == 2) {
 				IncrementStat(attacker, "ff_kills", 1);
 				points[attacker] -= 30; //30 point lost for killing teammate
@@ -619,22 +618,4 @@ stock bool GetInfectedClassName(int type, char[] buffer, int bufferSize) {
 		default: return false;
 	}
 	return true;
-}
-//entity abs origin code from here
-//http://forums.alliedmods.net/showpost.php?s=e5dce96f11b8e938274902a8ad8e75e9&p=885168&postcount=3
-stock void GetEntityAbsOrigin(int entity, float origin[3]) {
-	if (entity && IsValidEntity(entity)
-	&& (GetEntSendPropOffs(entity, "m_vecOrigin") != -1)
-	&& (GetEntSendPropOffs(entity, "m_vecMins") != -1)
-	&& (GetEntSendPropOffs(entity, "m_vecMaxs") != -1))
-	{
-		float mins[3], maxs[3];
-		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", origin);
-		GetEntPropVector(entity, Prop_Send, "m_vecMins", mins);
-		GetEntPropVector(entity, Prop_Send, "m_vecMaxs", maxs);
-		
-		origin[0] += (mins[0] + maxs[0]) * 0.5;
-		origin[1] += (mins[1] + maxs[1]) * 0.5;
-		origin[2] += (mins[2] + maxs[2]) * 0.5;
-	}
 }

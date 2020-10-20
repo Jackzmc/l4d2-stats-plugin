@@ -32,6 +32,11 @@ const routes = [
     component: () => import(/* webpackChunkName: "maps" */ '@/views/Maps'),
   },
   {
+    path: '/maps/:map/details',
+    name: 'MapDetails',
+    component: () => import(/* webpackChunkName: "mapsdetails" */ '@/views/MapDetails'),
+  },
+  {
     path: '/search/:query',
     name: 'Search',
     meta: {

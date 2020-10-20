@@ -56,6 +56,36 @@ async function main() {
             res.status(500).json({error:"Internal Server Error"})
         }
     })
+    app.get('/api/maps/:map',async(req,res) => {
+        try {
+            const [rows] = await pool.execute("SELECT * FROM `stats_maps` WHERE `map_name` = ? ", [req.params.map.toLowerCase()])
+            let bestMap = { best_time: -1};
+            let totals = {
+                wins: 0,
+                easy: 0, 
+                normal: 0,
+                advanced: 0,
+                expert: 0,
+                realism: 0
+            }
+            rows.forEach(map => {
+                if(bestMap.best_time < map.best_time) {
+                    bestMap = map;
+                }
+                for(const total in totals) {
+                    if(map[total] > 0)
+                        totals[total] += map[total]
+                }
+            })
+            res.json({
+                best: bestMap,
+                totals
+            })
+        }catch(err) {
+            console.error('[/api/maps]',err.message);
+            res.status(500).json({error:"Internal Server Error"})
+        }
+    })
     app.get('/api/user/:user',async(req,res) => {
         const user = req.params.user.replace(/\+-/,' ')
 

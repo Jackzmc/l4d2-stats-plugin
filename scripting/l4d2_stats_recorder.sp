@@ -62,6 +62,7 @@ public void OnPluginStart()
 	}
 
 	if(lateLoaded) {
+		//If plugin late loaded, grab all real user's steamids again, then recreate user
 		for(int i = 1; i < MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i)) {
 				char steamid[32];
@@ -77,6 +78,7 @@ public void OnPluginStart()
 	ConVar hGamemode = FindConVar("mp_gamemode");
 	hGamemode.AddChangeHook(CVC_GamemodeChange);
 
+	//Hook all events to track statistics
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("player_hurt", Event_PlayerHurt);
 	//HookEvent("item_pickup", Event_ItemPickup);
@@ -103,6 +105,8 @@ public void OnPluginStart()
 
 	CreateTimer(60.0, Timer_FlushStats, _, TIMER_REPEAT);
 }
+
+//When plugin is being unloaded: flush all user's statistics.
 public void OnPluginEnd() {
 	for(int i=1; i<=MaxClients;i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
@@ -171,11 +175,13 @@ bool ConnectDB() {
 		return false;
     } else {
 		PrintToServer("Connected to database stats");
+		//I don't think first query necessarily but sets SQL to use utf-8 to allow unicode symbols.
 		SQL_FastQuery(g_db, "SET NAMES \"UTF8mb4\"");  
 		SQL_SetCharset(g_db, "utf8mb4");
 		return true;
     }
 }
+//Setups a user, this tries to fetch user by steamid
 void CreateDBUser(int client, const char steamid[32]) {
 	if(client > 0 && !IsFakeClient(client)) {
 		char query[128];
@@ -183,21 +189,26 @@ void CreateDBUser(int client, const char steamid[32]) {
 		g_db.Query(DBC_CheckUserExistance, query, GetClientUserId(client));
 	}
 }
+//Increments a statistic by X amount
 void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriority = false, bool retry = true) {
-	if (steamidcache[client][0] && !IsFakeClient(client)) {
-		if(g_db == INVALID_HANDLE) {
-			LogError("Database handle is invalid.");
-			return;
-		}
-		int escaped_name_size = 2*strlen(name)+1;
-		char[] escaped_name = new char[escaped_name_size];
-		char query[255];
-		g_db.Escape(name, escaped_name, escaped_name_size);
-		Format(query, sizeof(query), "UPDATE stats SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, steamidcache[client]);
-		PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
-		g_db.Query(DBC_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
-	}else{
-		if(!IsFakeClient(client)) {
+	if(client > 0 && !IsFakeClient(client) && IsClientConnected(client)) {
+		//Only run if client valid client, AND has steamid. Not probably necessarily anymore.
+		if (steamidcache[client][0]) {
+			if(g_db == INVALID_HANDLE) {
+				LogError("Database handle is invalid.");
+				return;
+			}
+			int escaped_name_size = 2*strlen(name)+1;
+			char[] escaped_name = new char[escaped_name_size];
+			char query[255];
+			g_db.Escape(name, escaped_name, escaped_name_size);
+			Format(query, sizeof(query), "UPDATE stats SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, steamidcache[client]);
+			#if defined debug
+			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
+			#endif 
+			g_db.Query(DBC_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
+		}else{
+			//Incase user does not have a steamid in the cache: to prevent stat loss, fetch steamid and retry.
 			#if defined debug
 			LogError("Incrementing stat (%s) for client %N (%d) [%s] failure: No steamid or is bot", name, client, client, steamidcache[client]);
 			#endif
@@ -211,6 +222,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 		}
 	}
 }
+//Increments a map statistic (basically a finale completion, includes difficulty and if realism)
 void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 	if (steamidcache[client][0] && !IsFakeClient(client)) {
 		char query[256], difficultyName[16];
@@ -234,6 +246,7 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 		#endif
 	}
 }
+//Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
 public void FlushQueuedStats(int client) {
 	//Update stats (don't bother checking if 0.)
 	char query[1023];
@@ -274,16 +287,19 @@ public void FlushQueuedStats(int client) {
 /////////////////////////////////
 //DATABASE CALLBACKS
 /////////////////////////////////
+//Handles the CreateDBUser() response. Either updates alias and stores points, or creates new SQL user.
 public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[] error, any data) {
 	if(db == null || results == null) {
         LogError("DBC_CheckUserExistance returned error: %s", error);
         return;
     }
+	//initialize variables
 	int client = GetClientOfUserId(data); 
 	int alias_length = 2*MAX_NAME_LENGTH+1;
 	char alias[MAX_NAME_LENGTH], ip[40], country_name[45];
 	char[] safe_alias = new char[alias_length];
 
+	//Get a SQL-safe player name, and their counttry and IP
 	GetClientName(client, alias, sizeof(alias));
 	db.Escape(alias, safe_alias, alias_length);
 	GetClientIP(client, ip, sizeof(ip));
@@ -291,13 +307,13 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 
 	if(results.RowCount == 0) {
 		//user does not exist in db, create now
-		
+
 		char query[255]; 
 		Format(query, sizeof(query), "INSERT INTO `stats` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", steamidcache[client], safe_alias, country_name);
 		g_db.Query(DBC_Generic, query);
-		PrintToServer("Created new database entry for %N (%s)", client, steamidcache[client]);
+		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, steamidcache[client]);
 	}else{
-		//User does exist, check if alias is outdated and update if needed
+		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
 		while(results.FetchRow()) {
 			int field_num;
 			if(results.FieldNameToNum("points", field_num)) {
@@ -305,7 +321,7 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 			}
 		}
 		if(points[client] == 0) {
-			PrintToServer("[Warning] Existing player %N (%d) has no points", client, client);
+			PrintToServer("[l4d2_stats_recorder] Warning: Existing player %N (%d) has no points", client, client);
 		}
 		char query[255];
 		int connections_amount = lateLoaded ? 0 : 1;
@@ -314,6 +330,7 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 		g_db.Query(DBC_Generic, query);
 	}
 }
+//Generic database response that logs error
 public void DBC_Generic(Database db, DBResultSet results, const char[] error, any data)
 {
     if(db == null || results == null) {
@@ -321,6 +338,7 @@ public void DBC_Generic(Database db, DBResultSet results, const char[] error, an
         return;
     }
 }
+//After a user's stats were flushed, reset any statistics needed to zero.
 public void DBC_FlushQueuedStats(Database db, DBResultSet results, const char[] error, any data) {
 	if(db == null || results == null) {
 		LogError("DBC_FlushQueuedStats returned error: %s", error);
@@ -355,7 +373,7 @@ public Action Command_DebugStats(int client, int args) {
 ////////////////////////////
 // EVENTS 
 ////////////////////////////
-
+//Records the amount of HP done to infected (zombies)
 public void Event_InfectedHurt(Event event, const char[] name, bool dontBroadcast) {
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	if(attacker > 0 && !IsFakeClient(attacker)) {
@@ -446,7 +464,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 	}
 	
 }
-
+//Records anytime an item is picked up. Runs for any weapon, only a few have a SQL column. (Throwables)
 public void Event_ItemPickup(Event event, const char[] name, bool dontBroadcast) {
 	char statname[72], item[64];
 
@@ -464,6 +482,7 @@ public void Event_PlayerIncap(Event event, const char[] name, bool dontBroadcast
 		IncrementStat(client, "survivor_incaps", 1);
 	}
 }
+//Track heals, or defibs
 public void Event_ItemUsed(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
@@ -565,17 +584,21 @@ public void Event_GrenadeDenonate(Event event, const char[] name, bool dontBroad
 		//Somehow have to check if molotov or gr
 	}
 }
-
+//This is used to track throwable throws 
 public void OnEntityCreated(int entity) {
 	char class[32];
 	GetEntityClassname(entity, class, sizeof(class));
 	if(StrContains(class,"_projectile",true)) {
-		for(int i=1; i<MaxClients;i++) {
+		for(int i = 1; i < MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && IsPlayerAlive(i) && GetClientTeam(i) == 2 && !IsFakeClient(i)) {
+				//Get the player's current weapon. 
 				int wpn = GetEntPropEnt(i, Prop_Data, "m_hActiveWeapon");
 				if (IsValidEntity(wpn)) {
+					//Acquire the technical name of the weapon
 					char name[32];
 					GetEntityClassname(wpn, name, sizeof(name));
+
+					//Check for name of throwable, and if the m_fThrowTime is > 0 (aka has been thrown and not just out)
 					if(StrEqual(name, "weapon_vomitjar",true)) {
 						float throwtime = GetEntPropFloat(wpn, Prop_Send, "m_fThrowTime");
 						if(throwtime > 0.0) {
@@ -607,6 +630,7 @@ public void OnEntityCreated(int entity) {
 ////////////////////////////
 // STOCKS
 ///////////////////////////
+//Simply prints the respected infected's class name based on their numeric id. (not client/user ID)
 stock bool GetInfectedClassName(int type, char[] buffer, int bufferSize) {
 	switch(type) {
 		case 1: strcopy(buffer, bufferSize, "smoker");

@@ -57,34 +57,23 @@ async function main() {
         }
     })
     app.get('/api/user/:user',async(req,res) => {
-        try {
-            const [rows] = await pool.execute("SELECT * FROM `stats` WHERE `last_alias` = ? OR `steamid` = ?", [req.params.user, req.params.user])
-            if(rows.length > 0) {
+        const user = req.params.user.replace(/\+-/,' ')
 
-                const [map_rows] = await pool.execute("SELECT map_name,difficulty_easy,difficulty_normal,difficulty_advanced,difficulty_expert,realism,wins  FROM `stats_maps` WHERE `steamid`= ?",[rows[0].steamid])
-                /*let obj = {};
-                for(const key in rows[0]) {
-                    const split = key.split('_');
-                    if(split.length >= 2 && (SPLIT_STATS_ROOTS.includes(split[0]) || split[1] === "used")) {
-                        let root = split[0];
-                        let new_key = split.slice(1,split.length).join("_")
-                        if(new_key === "used") {
-                            root = "used"
-                            new_key = split[0]
-                        }
-                        if(!obj[root]) obj[root] = {}
-                        obj[root][new_key] = rows[0][key]
-                    }else{
-                        obj[key] = rows[0][key]
-                    }
-                }*/
+        try {
+            const [rows] = await pool.execute("SELECT * FROM `stats` WHERE STRCMP(`last_alias`,?) = 0 OR `steamid` = ?", [user, req.params.user])
+            if(rows.length > 0) {
+                const [map_rows] = await pool.execute("SELECT map_name,difficulty_easy,difficulty_normal,difficulty_advanced,difficulty_expert,realism,wins FROM `stats_maps` WHERE `steamid`= ?", [rows[0].steamid])
 
                 res.json({
                     user:rows[0],
                     maps: map_rows
                 })
             }else{
-                res.json({user:null,maps:[],not_found:true})
+                res.json({ 
+                    user: null, 
+                    maps: [], 
+                    not_found: true 
+                })
             }
         }catch(err) {
             console.error('[/api/user/:user]',err.message);

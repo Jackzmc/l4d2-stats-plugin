@@ -59,7 +59,7 @@
         </template>
     </b-navbar>
     <keep-alive :max="5">
-      <router-view :key="$route.fullPath"/>
+      <router-view />
     </keep-alive>
   </div>
 </template>

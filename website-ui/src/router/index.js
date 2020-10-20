@@ -15,8 +15,8 @@ const routes = [
     component: Home
   },
   {
-    path: '/leaderboard',
-    alias: '/top',
+    path: '/leaderboard/:page?',
+    alias: ['/top', '/top/:page'],
     name: 'Leaderboard',
     meta: {
       title_part: 'Leaderboards'

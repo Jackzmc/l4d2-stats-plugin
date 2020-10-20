@@ -80,6 +80,9 @@ export default {
     }
   },
   mounted() {
+    let currentRoutePage = !isNaN(this.$route.params.page) ? parseInt(this.$route.params.page) : 0
+    if(currentRoutePage <= 0) currentRoutePage = 1;
+    this.top_page = currentRoutePage;
     this.refreshTop();
   },
   methods: {
@@ -106,7 +109,9 @@ export default {
     },
     onTopPageChange(page) {
       this.top_page = page;
-      this.refreshTop();
+      this.$router.replace(`/top/${page}`)
+        this.refreshTop();
+
     },
     searchUser() {
       if(this.search.trim().length > 0)

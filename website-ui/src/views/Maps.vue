@@ -118,7 +118,6 @@ export default {
         mapUrl() {
             if(this.selected) {
                 const imageUrl = getMapImage(this.selected.map_name);
-                console.log(this.selected.map_name, imageUrl)
                 return imageUrl ? `/img/${imageUrl}` : NoMapImage;
             }
             return NoMapImage

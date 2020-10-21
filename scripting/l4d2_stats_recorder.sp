@@ -68,9 +68,8 @@ public void OnPluginStart()
 				char steamid[32];
 				GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid));
 				strcopy(steamidcache[i], 32, steamid);
-				startedPlaying[i] = GetTime();
 				//Recreate user (grabs points, so it won't reset)
-				CreateDBUser(i, steamid);
+				SetupUserInDB(i, steamid);
 			}
 		}
 	}
@@ -149,8 +148,7 @@ public void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[
 public void OnClientAuthorized(int client, const char[] auth) {
 	if(client > 0 && !IsFakeClient(client)) {
 		strcopy(steamidcache[client], 32, auth);
-		CreateDBUser(client, steamidcache[client]);
-		startedPlaying[client] = GetTime();
+		SetupUserInDB(client, steamidcache[client]);
 	}
 }
 public void OnClientDisconnect(int client) {
@@ -182,8 +180,9 @@ bool ConnectDB() {
     }
 }
 //Setups a user, this tries to fetch user by steamid
-void CreateDBUser(int client, const char steamid[32]) {
+void SetupUserInDB(int client, const char steamid[32]) {
 	if(client > 0 && !IsFakeClient(client)) {
+		startedPlaying[client] = GetTime();
 		char query[128];
 		Format(query, sizeof(query), "SELECT steamid,last_alias,points FROM stats WHERE steamid='%s'", steamid);
 		g_db.Query(DBC_CheckUserExistance, query, GetClientUserId(client));
@@ -298,6 +297,8 @@ void RecordCampaign(int client, const char[] mapname, int difficulty) {
 		#if defined debug
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
 		#endif
+		//TODO: remove. Only temp.
+		IncrementMapStat(client, mapname, difficulty);
 	}
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0

@@ -24,4 +24,4 @@ jobs:
         with:
           version: '1.10.x'
 
-      - run: spcomp -iAnotherIncludeDirectory l4d2_stats_recorder.sp -o output/l4d2_stats_recorder.smx
+      - run: spcomp -iAnotherIncludeDirectory scripting/l4d2_stats_recorder.sp -o plugins/l4d2_stats_recorder.smx

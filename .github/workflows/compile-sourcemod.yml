@@ -1,0 +1,51 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Compile Plugin
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+    paths: scripting
+  pull_request:
+    branches: [ master ]
+    paths: scripting
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - uses: rumblefrog/setup-sp@master
+        with:
+          version: '1.10.x'
+
+      - name: compile
+        run: spcomp -iAnotherIncludeDirectory scripting/l4d2_stats_recorder.sp -o plugins/l4d2_stats_recorder.smx
+        
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: ./plugins/l4d2_stats_recorder.smx
+          asset_name: l4d2_stats_recorder.smx
+          asset_content_type: application/octet-stream

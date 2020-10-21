@@ -70,7 +70,7 @@ public void OnPluginStart()
 				strcopy(steamidcache[i], 32, steamid);
 				startedPlaying[i] = GetTime();
 				//Recreate user (grabs points, so it won't reset)
-				CreateDBUser(client, steamidcache[client]);
+				CreateDBUser(i, steamid);
 			}
 		}
 	}
@@ -238,11 +238,65 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 
 		Format(query, sizeof(query), "INSERT INTO stats_maps (steamid, map_name, wins, `difficulty_%s`, realism, best_time)\nVALUES ('%s', '%s', 1, 1, %d, %d)\n ON DUPLICATE KEY UPDATE wins=wins+1,`difficulty_%s`=`difficulty_%s`+1,realism=realism+%d,best_time=GREATEST(%d,VALUES(best_time))", 
 			difficultyName, steamidcache[client], mapname, realism_amount, time, difficultyName, difficultyName, realism_amount, time);
+		
 		PrintToServer("[Debug] Updated Map Stat %s for %s", mapname, steamidcache[client]);
 		g_db.Query(DBC_Generic, query, _);
 	}else{
 		#if defined debug
 		LogError("Incrementing stat (%s) for client %d error: No steamid", mapname, client);
+		#endif
+	}
+}
+void RecordCampaign(int client, const char[] mapname, int difficulty) {
+	if (steamidcache[client][0] && !IsFakeClient(client)) {
+		int time = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
+		char query[1023];
+
+		int zombieKills = 0; //GetEntProp(client, Prop_Send, "m_missionZombieKills")
+		int m_missionSurvivorDamage = 		GetEntProp(client, Prop_Send, "m_SurvivorDamage");
+		int m_missionMedkitsUsed = 			GetEntProp(client, Prop_Send, "m_missionMedkitsUsed");
+		int m_missionPillsUsed = 			GetEntProp(client, Prop_Send, "m_missionPillsUsed");
+		int m_missionMolotovsUsed = 		GetEntProp(client, Prop_Send, "m_missionMolotovsUsed");
+		int m_missionPipebombsUsed = 		GetEntProp(client, Prop_Send, "m_missionPipebombsUsed");
+		int m_missionBoomerBilesUsed = 		GetEntProp(client, Prop_Send, "m_missionBoomerBilesUsed");
+		int m_missionAdrenalinesUsed = 		GetEntProp(client, Prop_Send, "m_missionAdrenalinesUsed");
+		int m_missionDefibrillatorsUsed = 	GetEntProp(client, Prop_Send, "m_missionDefibrillatorsUsed");
+		int m_missionDamageTaken =			GetEntProp(client, Prop_Send, "m_missionDamageTaken");
+		int m_missionReviveOtherCount = 	GetEntProp(client, Prop_Send, "m_missionReviveOtherCount");
+		int m_missionFirstAidShared = 		GetEntProp(client, Prop_Send, "m_missionFirstAidShared");
+		int m_missionIncaps  = 				GetEntProp(client, Prop_Send, "m_missionIncaps ");
+		int m_missionAccuracy = 			GetEntProp(client, Prop_Send, "m_missionAccuracy ");
+		int m_missionHeadshotAccuracy = 	GetEntProp(client, Prop_Send, "m_missionHeadshotAccuracy");
+		int m_missionDeaths = 				GetEntProp(client, Prop_Send, "m_missionDeaths ");
+		int m_missionMeleeKills = 			GetEntProp(client, Prop_Send, "m_missionMeleeKills");
+
+		Format(query, sizeof(query), "INSERT INTO `stats_games` (`steamid`, `map`, `gametime`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Accuracy`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES (%s, %s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+			steamidcache[client][0],
+			mapname,
+			time,
+			zombieKills,
+			m_missionSurvivorDamage,
+			m_missionMedkitsUsed,
+			m_missionPillsUsed,
+			m_missionMolotovsUsed,
+			m_missionPipebombsUsed,
+			m_missionBoomerBilesUsed,
+			m_missionAdrenalinesUsed,
+			m_missionDefibrillatorsUsed,
+			m_missionDamageTaken,
+			m_missionReviveOtherCount,
+			m_missionFirstAidShared,
+			m_missionIncaps,
+			m_missionAccuracy,
+			m_missionHeadshotAccuracy,
+			m_missionDeaths,
+			m_missionMeleeKills,
+			difficulty,
+			bRealism ? 1 : 0
+		);
+		g_db.Query(DBC_Generic, query);
+		#if defined debug
+			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
 		#endif
 	}
 }
@@ -557,7 +611,7 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
 			int team = GetClientTeam(i);
 			if(team == 2) {
-				IncrementMapStat(i, map_name, difficulty);
+				RecordCampaign(i, map_name, difficulty);
 				IncrementStat(i, "finales_won", 1);
 				points[i] += 400;
 			}

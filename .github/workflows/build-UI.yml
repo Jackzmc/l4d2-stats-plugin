@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: yarn add -D @vue/cli-service-global @vue/cli
+        run: cd website-ui; npm i -D @vue/cli-service-global @vue/cli
       # Runs a command
       - name: Build
-        run: cd website-ui; yarn build
+        run: cd website-ui; npx vue-cli-service build

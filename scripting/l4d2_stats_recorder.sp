@@ -93,7 +93,7 @@ public void OnPluginStart()
 	HookEvent("infected_death", Event_InfectedDeath);
 	HookEvent("door_open", Event_DoorOpened);
 	HookEvent("upgrade_pack_used", Event_UpgradePackUsed);
-	HookEvent("finale_win", Event_FinaleWin);
+	HookEvent("finale_vehicle_leaving", Event_FinaleWin);
 	HookEvent("witch_killed", Event_WitchKilled);
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("gauntlet_finale_start", Event_FinaleStart);
@@ -270,7 +270,7 @@ void RecordCampaign(int client, const char[] mapname, int difficulty) {
 		int m_missionMeleeKills = 			GetEntProp(client, Prop_Send, "m_missionMeleeKills");
 
 		Format(query, sizeof(query), "INSERT INTO `stats_games` (`steamid`, `map`, `gametime`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Accuracy`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES ('%s','%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
-			steamidcache[client][0],
+			steamidcache[client],
 			mapname,
 			time,
 			zombieKills,
@@ -296,6 +296,7 @@ void RecordCampaign(int client, const char[] mapname, int difficulty) {
 		g_db.Query(DBC_Generic, query);
 		#if defined debug
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
+			PrintToServer("[l4d2_stats_recorder] query %s", query);
 		#endif
 		//TODO: remove. Only temp.
 		IncrementMapStat(client, mapname, difficulty);
@@ -609,7 +610,7 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 	int difficulty = event.GetInt("difficulty");
 	event.GetString("map_name", map_name, sizeof(map_name));
 
-	for(int i=1; i <= MaxClients; i++) {
+	for(int i = 1; i <= MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
 			int team = GetClientTeam(i);
 			if(team == 2) {

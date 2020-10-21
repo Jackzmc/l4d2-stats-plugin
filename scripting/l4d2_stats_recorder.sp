@@ -270,7 +270,7 @@ void RecordCampaign(int client, const char[] mapname, int difficulty) {
 		int m_missionDeaths = 				GetEntProp(client, Prop_Send, "m_missionDeaths ");
 		int m_missionMeleeKills = 			GetEntProp(client, Prop_Send, "m_missionMeleeKills");
 
-		Format(query, sizeof(query), "INSERT INTO `stats_games` (`steamid`, `map`, `gametime`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Accuracy`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES (%s, %s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO `stats_games` (`steamid`, `map`, `gametime`, `ZombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Accuracy`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES (%s, %s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 			steamidcache[client][0],
 			mapname,
 			time,

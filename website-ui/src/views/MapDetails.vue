@@ -11,7 +11,7 @@
         </div>
     </section>
     <br>
-    <div class="container">
+    <div v-if="campaign" class="container is-fluid">
         <div class="tile is-ancestor">
             <div class="tile is-vertical is-10">
                 <div class="tile">
@@ -20,17 +20,15 @@
                         <p class="title">Best Time</p>
                         <p class="subtitle">{{ humanReadable(this.bestPlayerWin.best_time) }}</p>
                         <hr>
-                        <p>
-                            <b-button tag="router-link" type="is-info" :to="'/user/'">Jackz</b-button>
-                        </p>
+                        <h6 class="title is-6">Top Player</h6>
+                        <p class="subtitle is-4">Jackz</p>
+                        <b-button tag="router-link" type="is-secondary" :to="'/user/'">View Profile</b-button>
                     </article>
                     <article class="tile is-child notification is-warning">
                     <p class="title">Statistics</p>
                     <p>{{mapTotals.wins}} Wins</p>
                     <hr>
-                    <p>
-                        ????????????
-                    </p>
+                    
                     </article>
                 </div>
                 <div class="tile is-parent">
@@ -59,7 +57,9 @@
                 </article>
             </div>
         </div>
-
+    </div>
+    <div v-else>
+        <b-loading :active="!campaign" />
     </div>
 </div>
 </template>
@@ -73,29 +73,24 @@ export default {
         return {
             mapTotals: [],
             bestPlayerWin: {},
+            campaign: null,
         }
     },
     mounted() {
+        
         this.fetchDetails();
     },
+    watch: {
+        '$route.params.map': 'fetchDetails'
+    },
     computed: {
-        campaign() {
-            for(const chapter in CAMPAIGNS) {
-                if(CAMPAIGNS[chapter].id == this.$route.params.map) {
-                    return CAMPAIGNS[chapter];
-                }
-            }
-            return {};
-        },
-        finaleChapter() {
-            return this.campaign.chapters[this.campaign.chapters.length - 1]
-        },
         campaignTitle() {
             return this.campaign ? this.campaign.title : this.$route.params.map
         },
     },
     methods: {
         humanReadable(minutes) {
+            if(minutes <= 0) return "N/A minutes"
             let hours = Math.floor(minutes / 60);  
             const days = Math.floor(hours / 24);
             minutes = minutes % 60;
@@ -112,6 +107,12 @@ export default {
             }
         },
         fetchDetails() {
+            for(const chapter in CAMPAIGNS) {
+                if(CAMPAIGNS[chapter].id == this.$route.params.map) {
+                    this.campaign = CAMPAIGNS[chapter];
+                }
+            }
+            this.finaleChapter = this.campaign.chapters[this.campaign.chapters.length - 1];
             this.$http.get(`/api/maps/${this.finaleChapter}`, { cache: true })
             .then(res => {
                 this.mapTotals = res.data.totals

@@ -22,6 +22,8 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Install dependencies
+        run: yarn add -D @vue/cli-service-global @vue/cli
       # Runs a command
       - name: Build
         run: cd website-ui; yarn build

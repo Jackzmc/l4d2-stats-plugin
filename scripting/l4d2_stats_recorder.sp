@@ -247,12 +247,12 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 	}
 }
 void RecordCampaign(int client, const char[] mapname, int difficulty) {
-	if (steamidcache[client][0] && !IsFakeClient(client)) {
+	if (client > 0 && steamidcache[client][0] && !IsFakeClient(client)) {
 		int time = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
 		char query[1023];
 
 		int zombieKills = 0; //GetEntProp(client, Prop_Send, "m_missionZombieKills")
-		int m_missionSurvivorDamage = 		GetEntProp(client, Prop_Send, "m_SurvivorDamage");
+		int m_missionSurvivorDamage = 		GetEntProp(client, Prop_Send, "m_missionSurvivorDamage");
 		int m_missionMedkitsUsed = 			GetEntProp(client, Prop_Send, "m_missionMedkitsUsed");
 		int m_missionPillsUsed = 			GetEntProp(client, Prop_Send, "m_missionPillsUsed");
 		int m_missionMolotovsUsed = 		GetEntProp(client, Prop_Send, "m_missionMolotovsUsed");
@@ -263,13 +263,13 @@ void RecordCampaign(int client, const char[] mapname, int difficulty) {
 		int m_missionDamageTaken =			GetEntProp(client, Prop_Send, "m_missionDamageTaken");
 		int m_missionReviveOtherCount = 	GetEntProp(client, Prop_Send, "m_missionReviveOtherCount");
 		int m_missionFirstAidShared = 		GetEntProp(client, Prop_Send, "m_missionFirstAidShared");
-		int m_missionIncaps  = 				GetEntProp(client, Prop_Send, "m_missionIncaps ");
-		int m_missionAccuracy = 			GetEntProp(client, Prop_Send, "m_missionAccuracy ");
+		int m_missionIncaps  = 				GetEntProp(client, Prop_Send, "m_missionIncaps");
+		int m_missionAccuracy = 			GetEntProp(client, Prop_Send, "m_missionAccuracy");
 		int m_missionHeadshotAccuracy = 	GetEntProp(client, Prop_Send, "m_missionHeadshotAccuracy");
-		int m_missionDeaths = 				GetEntProp(client, Prop_Send, "m_missionDeaths ");
+		int m_missionDeaths = 				GetEntProp(client, Prop_Send, "m_missionDeaths");
 		int m_missionMeleeKills = 			GetEntProp(client, Prop_Send, "m_missionMeleeKills");
 
-		Format(query, sizeof(query), "INSERT INTO `stats_games` (`steamid`, `map`, `gametime`, `ZombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Accuracy`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES (%s, %s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO `stats_games` (`steamid`, `map`, `gametime`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Accuracy`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES ('%s','%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 			steamidcache[client][0],
 			mapname,
 			time,
@@ -311,6 +311,7 @@ public void FlushQueuedStats(int client) {
 		startedPlaying[client] = GetTime();
 		minutes_played = 0;
 	}
+	//TODO: check for entity (1) not valid. possibly on campaign end when not returning to lobby.
 	//Prevent points from being reset by not recording until user has gotten a point. 
 	if(points[client] > 0) {
 		Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d WHERE steamid='%s'",

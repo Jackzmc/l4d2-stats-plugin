@@ -38,6 +38,8 @@ static int pipeKills[MAXPLAYERS+1];
 static int molotovKills[MAXPLAYERS+1];
 static int minigunKills[MAXPLAYERS+1];
 
+static int totalCampaignSession_ZombieKills = 0;
+
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	if(late) {
 		lateLoaded = true;
@@ -246,12 +248,12 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 		#endif
 	}
 }
-void RecordCampaign(int client, const char[] mapname, int difficulty) {
+void RecordCampaign(int client, int difficulty) {
 	if (client > 0 && steamidcache[client][0] && !IsFakeClient(client)) {
 		int time = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		char query[1023];
+		char query[1023], mapname[127];
+		GetCurrentMap(mapname, sizeof(mapname));
 
-		int zombieKills = 0; //GetEntProp(client, Prop_Send, "m_missionZombieKills")
 		int m_missionSurvivorDamage = 		GetEntProp(client, Prop_Send, "m_missionSurvivorDamage");
 		int m_missionMedkitsUsed = 			GetEntProp(client, Prop_Send, "m_missionMedkitsUsed");
 		int m_missionPillsUsed = 			GetEntProp(client, Prop_Send, "m_missionPillsUsed");
@@ -273,7 +275,7 @@ void RecordCampaign(int client, const char[] mapname, int difficulty) {
 			steamidcache[client],
 			mapname,
 			time,
-			zombieKills,
+			totalCampaignSession_ZombieKills,
 			m_missionSurvivorDamage,
 			m_missionMedkitsUsed,
 			m_missionPillsUsed,
@@ -298,6 +300,7 @@ void RecordCampaign(int client, const char[] mapname, int difficulty) {
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
 			PrintToServer("[l4d2_stats_recorder] query %s", query);
 		#endif
+		totalCampaignSession_ZombieKills = 0;
 		//TODO: remove. Only temp.
 		IncrementMapStat(client, mapname, difficulty);
 	}
@@ -419,6 +422,7 @@ public void DBC_FlushQueuedStats(Database db, DBResultSet results, const char[] 
 public Action Command_DebugStats(int client, int args) {
 	int meleeKills = GetEntProp(client, Prop_Send, "m_checkpointMeleeKills");
 	int zombiekills = GetEntProp(client, Prop_Send, "m_checkpointZombieKills");
+	int m_missionAdrenalinesUsed = 		GetEntProp(client, Prop_Send, "m_missionAdrenalinesUsed");
 	ReplyToCommand(client, "m_checkpointMeleeKills %d", meleeKills);
 	ReplyToCommand(client, "damageSurvivorGiven %d", damageSurvivorGiven[client]); 
 	ReplyToCommand(client, "m_checkpointDamageTaken %d", GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"));
@@ -606,15 +610,12 @@ public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroad
 	}
 }
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
-	char map_name[128];
 	int difficulty = event.GetInt("difficulty");
-	event.GetString("map_name", map_name, sizeof(map_name));
-
 	for(int i = 1; i <= MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
 			int team = GetClientTeam(i);
 			if(team == 2) {
-				RecordCampaign(i, map_name, difficulty);
+				RecordCampaign(i, difficulty);
 				IncrementStat(i, "finales_won", 1);
 				points[i] += 400;
 			}

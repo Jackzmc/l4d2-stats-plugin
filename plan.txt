@@ -1,0 +1,4 @@
+Every map_transition, fetch checkpoint statistics (Possibly getting rid of current event based increments?)
+Then on finale_win (if round_end, reset) push these statistics for each player to SQL.
+
+SQL database has a daily event or something that computes a global sum of all games in total.

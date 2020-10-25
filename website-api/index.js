@@ -125,6 +125,15 @@ async function main() {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
+    app.get('/api/user/:user/sessions',async(req,res) => {
+        try {
+            const [rows] = await pool.execute("SELECT * FROM `stats_games` WHERE `steamid`=?",[req.params.user])
+            res.json(rows)
+        }catch(err) {
+            console.error('/api/user/:user/campaign',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
     app.get('/api/*',(req,res) => {
         res.status(404).json({error:'PageNotFound'})
     })

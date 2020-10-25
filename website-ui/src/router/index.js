@@ -80,6 +80,13 @@ const routes = [
         component: () => import('@/components/user/campaign')
       },
       {
+        // UserPosts will be rendered inside User's <router-view>
+        // when /user /:id/posts is matched
+        path: 'sessions',
+        meta: { keep_title: true },
+        component: () => import('@/components/user/session')
+      },
+      {
         path: '*',
         component: () => import(/* webpackChunkName: "error_404" */ '@/views/404.vue') 
       }

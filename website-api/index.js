@@ -125,9 +125,12 @@ async function main() {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
-    app.get('/api/user/:user/sessions',async(req,res) => {
+    app.get('/api/user/:user/sessions/:page?',async(req,res) => {
         try {
-            const [rows] = await pool.execute("SELECT * FROM `stats_games` WHERE `steamid`=?",[req.params.user])
+            const selectedPage = req.params.page || 0
+            const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(req.params.page) - 1);
+            const offset = pageNumber * 10;
+            const [rows] = await pool.execute("SELECT * FROM `stats_games` WHERE `steamid`=? LIMIT ?,15", [ req.params.user, offset ])
             res.json(rows)
         }catch(err) {
             console.error('/api/user/:user/campaign',err.message)

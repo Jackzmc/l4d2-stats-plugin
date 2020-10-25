@@ -1,6 +1,6 @@
 <template>
 <div>
-    <h3 class='title is-3'>Games Played</h3>
+    <h2 class='title is-2'>Games Played</h2>
     <b-table :data="sessions" detailed>
         <template slot-scope="props">
             <b-table-column width="20">
@@ -10,11 +10,17 @@
                     </router-link>
                 </b-tooltip>
             </b-table-column>
+            <b-table-column field="map" label="Map" centered >
+                {{ props.row.map }}
+            </b-table-column>
             <b-table-column field="zombieKills" label="Zombie Kills" centered cell-class="number-cell">
                 {{ props.row.zombieKills | formatNumber }}
             </b-table-column>
             <b-table-column field="survivorDamage" label="Friendly Fire" centered cell-class="number-cell">
                 {{ props.row.survivorDamage | formatNumber }}
+            </b-table-column>
+            <b-table-column field="MedkitsUsed" label="Medkits Used" centered cell-class="number-cell">
+                {{ props.row.MedkitsUsed | formatNumber }}
             </b-table-column>
             <b-table-column field="throwables" label="Total Throwables" centered cell-class="number-cell">
                 {{ getThrowableCount(props.row) | formatNumber }}
@@ -25,8 +31,11 @@
             <b-table-column field="DamageTaken" label="Damage Taken" centered cell-class="number-cell">
                 {{ props.row.DamageTaken | formatNumber }}
             </b-table-column>
-            <b-table-column field="difficulty" label="Difficulty" centered cell-class="number-cell">
+            <b-table-column field="difficulty" label="Difficulty" centered>
                 {{ formatDifficulty(props.row.difficulty) }}
+            </b-table-column>
+            <b-table-column field="realism" label="Realism" centered >
+                <b-checkbox disabled :value="!!props.row.realism" />
             </b-table-column>
         </template>
         <template slot="detail" slot-scope="props">

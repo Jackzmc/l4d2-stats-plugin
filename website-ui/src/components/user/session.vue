@@ -1,15 +1,13 @@
 <template>
 <div>
     <h2 class='title is-2'>Games Played</h2>
-    <b-table :data="sessions" detailed>
+    <b-table 
+        :data="sessions"
+        detailed
+        @details-open="openedSession"
+        detail-key="id"
+    >
         <template slot-scope="props">
-            <b-table-column width="20">
-                <b-tooltip label="View Details">
-                    <router-link icon-right="angle-right">
-                        <b-icon icon="angle-right" />
-                    </router-link>
-                </b-tooltip>
-            </b-table-column>
             <b-table-column field="map" label="Map" centered >
                 {{ getMapNameByChapter(props.row.map) }}
             </b-table-column>
@@ -39,7 +37,7 @@
             </b-table-column>
         </template>
         <template slot="detail" slot-scope="props">
-            {{props.row}}
+        <pre>{{props.row}}</pre>
         </template>
         <template slot="empty">
             <section class="section">
@@ -54,12 +52,13 @@
 
 <script>
 import { getMapNameByChapter } from '../../js/map'
+import beautify from "json-beautify";
 export default {
     props: ['user'],
     data() {
         return {
             sessions: [],
-            loading: true
+            loading: true,
         }
     },
     mounted() {
@@ -68,6 +67,7 @@ export default {
     },
     methods: {
         getMapNameByChapter,
+        beautify,
         fetchSessions() {
             this.loading = true;
             this.$http.get(`/api/user/${this.user.steamid}/sessions`, { cache: true })

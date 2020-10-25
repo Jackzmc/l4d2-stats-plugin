@@ -8,7 +8,7 @@
       <div class="container has-text-centered">
         <h1 class="title is-1">
           {{user.steamid ? user.last_alias : 'Unknown User'}}
-          <router-link style="color: white" :to="getShareLink()"><b-icon icon="share" /></router-link>
+          <router-link v-if="user.steamid" style="color: white" :to="getShareLink()"><b-icon icon="share" /></router-link>
         </h1>
         <h4 class="subtitle is-4">
           {{user.points||0 | formatNumber}} points
@@ -98,9 +98,14 @@ export default {
       }
     },
     getShareLink() {
-      const stripped_part = this.user.last_alias.replace(/\s/,'+').replace(/[^0-9a-z+]/gi,'');
-      const safe_alias = encodeURIComponent(stripped_part)
-      return `/user/${safe_alias}`
+      if(this.user && this.user.last_alias) {
+        const stripped_part = this.user.last_alias.replace(/\s/,'+').replace(/[^0-9a-z+]/gi,'');
+        const safe_alias = encodeURIComponent(stripped_part)
+
+        return window.location.pathname.replace(this.user.steamid, safe_alias)
+      }else{
+        return '#'
+      }
     }
   }
 }

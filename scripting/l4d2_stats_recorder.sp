@@ -37,6 +37,23 @@ static int molotovDamage[MAXPLAYERS+1];
 static int pipeKills[MAXPLAYERS+1];
 static int molotovKills[MAXPLAYERS+1];
 static int minigunKills[MAXPLAYERS+1];
+//Used for table: stats_games
+static int m_checkpointSurvivorDamage[MAXPLAYERS+1];
+static int m_checkpointMedkitsUsed[MAXPLAYERS+1];
+static int m_checkpointPillsUsed[MAXPLAYERS+1];
+static int m_checkpointMolotovsUsed[MAXPLAYERS+1];
+static int m_checkpointPipebombsUsed[MAXPLAYERS+1];
+static int m_checkpointBoomerBilesUsed[MAXPLAYERS+1];
+static int m_checkpointAdrenalinesUsed[MAXPLAYERS+1];
+static int m_checkpointDefibrillatorsUsed[MAXPLAYERS+1];
+static int m_checkpointDamageTaken[MAXPLAYERS+1];
+static int m_checkpointReviveOtherCount[MAXPLAYERS+1];
+static int m_checkpointFirstAidShared[MAXPLAYERS+1];
+static int m_checkpointIncaps[MAXPLAYERS+1];
+static int m_checkpointAccuracy[MAXPLAYERS+1];
+static int m_checkpointHeadshotAccuracy[MAXPLAYERS+1];
+static int m_checkpointDeaths[MAXPLAYERS+1];
+static int m_checkpointMeleeKills[MAXPLAYERS+1];
 
 static int totalCampaignSession_ZombieKills = 0;
 
@@ -100,6 +117,9 @@ public void OnPluginStart()
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("gauntlet_finale_start", Event_FinaleStart);
 	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
+	//Used to transition checkpoint statistics for stats_games
+	HookEvent("round_end", Event_RoundEnd);
+	HookEvent("map_transition", Event_MapTransition);
 
 
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
@@ -250,48 +270,28 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 }
 void RecordCampaign(int client, int difficulty) {
 	if (client > 0 && steamidcache[client][0] && !IsFakeClient(client)) {
-		int time = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		char query[1023], mapname[127];
+		char query[512], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
 
-		int m_missionSurvivorDamage = 		GetEntProp(client, Prop_Send, "m_missionSurvivorDamage");
-		int m_missionMedkitsUsed = 			GetEntProp(client, Prop_Send, "m_missionMedkitsUsed");
-		int m_missionPillsUsed = 			GetEntProp(client, Prop_Send, "m_missionPillsUsed");
-		int m_missionMolotovsUsed = 		GetEntProp(client, Prop_Send, "m_missionMolotovsUsed");
-		int m_missionPipebombsUsed = 		GetEntProp(client, Prop_Send, "m_missionPipebombsUsed");
-		int m_missionBoomerBilesUsed = 		GetEntProp(client, Prop_Send, "m_missionBoomerBilesUsed");
-		int m_missionAdrenalinesUsed = 		GetEntProp(client, Prop_Send, "m_missionAdrenalinesUsed");
-		int m_missionDefibrillatorsUsed = 	GetEntProp(client, Prop_Send, "m_missionDefibrillatorsUsed");
-		int m_missionDamageTaken =			GetEntProp(client, Prop_Send, "m_missionDamageTaken");
-		int m_missionReviveOtherCount = 	GetEntProp(client, Prop_Send, "m_missionReviveOtherCount");
-		int m_missionFirstAidShared = 		GetEntProp(client, Prop_Send, "m_missionFirstAidShared");
-		int m_missionIncaps  = 				GetEntProp(client, Prop_Send, "m_missionIncaps");
-		int m_missionAccuracy = 			GetEntProp(client, Prop_Send, "m_missionAccuracy");
-		int m_missionHeadshotAccuracy = 	GetEntProp(client, Prop_Send, "m_missionHeadshotAccuracy");
-		int m_missionDeaths = 				GetEntProp(client, Prop_Send, "m_missionDeaths");
-		int m_missionMeleeKills = 			GetEntProp(client, Prop_Send, "m_missionMeleeKills");
-
-		Format(query, sizeof(query), "INSERT INTO `stats_games` (`steamid`, `map`, `gametime`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Accuracy`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES ('%s','%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES ('%s','%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,b'%d',%d)",
 			steamidcache[client],
 			mapname,
-			time,
 			totalCampaignSession_ZombieKills,
-			m_missionSurvivorDamage,
-			m_missionMedkitsUsed,
-			m_missionPillsUsed,
-			m_missionMolotovsUsed,
-			m_missionPipebombsUsed,
-			m_missionBoomerBilesUsed,
-			m_missionAdrenalinesUsed,
-			m_missionDefibrillatorsUsed,
-			m_missionDamageTaken,
-			m_missionReviveOtherCount,
-			m_missionFirstAidShared,
-			m_missionIncaps,
-			m_missionAccuracy,
-			m_missionHeadshotAccuracy,
-			m_missionDeaths,
-			m_missionMeleeKills,
+			m_checkpointSurvivorDamage[client],
+			m_checkpointMedkitsUsed[client],
+			m_checkpointPillsUsed[client],
+			m_checkpointMolotovsUsed[client],
+			m_checkpointPipebombsUsed[client],
+			m_checkpointBoomerBilesUsed[client],
+			m_checkpointAdrenalinesUsed[client],
+			m_checkpointDefibrillatorsUsed[client],
+			m_checkpointDamageTaken[client],
+			m_checkpointReviveOtherCount[client],
+			m_checkpointFirstAidShared[client],
+			m_checkpointIncaps[client],
+			m_checkpointHeadshotAccuracy[client],
+			m_checkpointDeaths[client],
+			m_checkpointMeleeKills[client],
 			difficulty,
 			bRealism ? 1 : 0
 		);
@@ -420,14 +420,17 @@ public void DBC_FlushQueuedStats(Database db, DBResultSet results, const char[] 
 // COMMANDS
 ///////////////////////////
 public Action Command_DebugStats(int client, int args) {
-	int meleeKills = GetEntProp(client, Prop_Send, "m_checkpointMeleeKills");
-	int zombiekills = GetEntProp(client, Prop_Send, "m_checkpointZombieKills");
-	int m_missionAdrenalinesUsed = 		GetEntProp(client, Prop_Send, "m_missionAdrenalinesUsed");
-	ReplyToCommand(client, "m_checkpointMeleeKills %d", meleeKills);
-	ReplyToCommand(client, "damageSurvivorGiven %d", damageSurvivorGiven[client]); 
-	ReplyToCommand(client, "m_checkpointDamageTaken %d", GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"));
-	ReplyToCommand(client, "m_checkpointZombieKills: %d", zombiekills);
-	ReplyToCommand(client, "points = %d", points[client]);
+	if(client == 0 && !IsDedicatedServer()) {
+		ReplyToCommand(client, "This command must be used as a player.");
+	}else {
+		ReplyToCommand(client, "Statistics for %s", steamidcache[client]);
+		int meleeKills = GetEntProp(client, Prop_Send, "m_checkpointMeleeKills");
+		ReplyToCommand(client, "m_checkpointMeleeKills %d", meleeKills);
+		ReplyToCommand(client, "damageSurvivorGiven %d", damageSurvivorGiven[client]); 
+		ReplyToCommand(client, "m_checkpointDamageTaken %d", GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"));
+		ReplyToCommand(client, "m_checkpointDamageTaken[client]: %d", m_checkpointDamageTaken[client]);
+		ReplyToCommand(client, "points = %d", points[client]);
+	}
 	return Plugin_Handled;
 }
 
@@ -682,6 +685,50 @@ public void OnEntityCreated(int entity) {
 			} 
 		}
 		//
+	}
+}
+public void Event_MapTransition(Event event, const char[] name, bool dontBroadcast) {
+	for(int i = 1; i < MaxClients; i++) {
+		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && !IsFakeClient(i)) {
+			m_checkpointSurvivorDamage[i] += 		GetEntProp(i, Prop_Send, "m_checkpointSurvivorDamage");
+			m_checkpointMedkitsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMedkitsUsed");
+			m_checkpointPillsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointPillsUsed");
+			m_checkpointMolotovsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMolotovsUsed");
+			m_checkpointPipebombsUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointPipebombsUsed");
+			m_checkpointBoomerBilesUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointBoomerBilesUsed");
+			m_checkpointAdrenalinesUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointAdrenalinesUsed");
+			m_checkpointDefibrillatorsUsed[i] += 	GetEntProp(i, Prop_Send, "m_checkpointDefibrillatorsUsed");
+			m_checkpointDamageTaken[i] +=			GetEntProp(i, Prop_Send, "m_checkpointDamageTaken");
+			m_checkpointReviveOtherCount[i] += 		GetEntProp(i, Prop_Send, "m_checkpointReviveOtherCount");
+			m_checkpointFirstAidShared[i] += 		GetEntProp(i, Prop_Send, "m_checkpointFirstAidShared");
+			m_checkpointIncaps[i]  += 				GetEntProp(i, Prop_Send, "m_checkpointIncaps");
+			m_checkpointHeadshotAccuracy[i] += 		GetEntProp(i, Prop_Send, "m_checkpointHeadshotAccuracy");
+			m_checkpointDeaths[i] += 				GetEntProp(i, Prop_Send, "m_checkpointDeaths");
+			m_checkpointMeleeKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMeleeKills");
+			PrintToServer("Incremented checkpoint stats for %N", i);
+		}
+	}
+
+}
+public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
+	for(int i = 1; i < MaxClients; i++) {
+		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
+			m_checkpointSurvivorDamage[i] = 		0;
+			m_checkpointMedkitsUsed[i] = 			0;
+			m_checkpointPillsUsed[i] = 				0;
+			m_checkpointMolotovsUsed[i] = 			0;
+			m_checkpointPipebombsUsed[i] = 			0;
+			m_checkpointBoomerBilesUsed[i] = 		0;
+			m_checkpointAdrenalinesUsed[i] = 		0;
+			m_checkpointDefibrillatorsUsed[i] = 	0;
+			m_checkpointDamageTaken[i] =			0;
+			m_checkpointReviveOtherCount[i] = 		0;
+			m_checkpointFirstAidShared[i] = 		0;
+			m_checkpointIncaps[i]  = 				0;
+			m_checkpointHeadshotAccuracy[i] = 		0;
+			m_checkpointDeaths[i] = 				0;
+			m_checkpointMeleeKills[i] = 			0;
+		}
 	}
 }
 

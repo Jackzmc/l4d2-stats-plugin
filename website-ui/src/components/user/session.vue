@@ -52,7 +52,6 @@
 
 <script>
 import { getMapNameByChapter } from '../../js/map'
-import beautify from "json-beautify";
 export default {
     props: ['user'],
     data() {
@@ -67,7 +66,6 @@ export default {
     },
     methods: {
         getMapNameByChapter,
-        beautify,
         fetchSessions() {
             this.loading = true;
             this.$http.get(`/api/user/${this.user.steamid}/sessions`, { cache: true })

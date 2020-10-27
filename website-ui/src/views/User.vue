@@ -8,7 +8,7 @@
       <div class="container has-text-centered">
         <h1 class="title is-1">
           {{user.steamid ? user.last_alias : 'Unknown User'}}
-          <router-link v-if="user.steamid" style="color: white" :to="getShareLink()"><b-icon icon="share" /></router-link>
+          <a v-if="user.steamid" style="color: white" @click="getShareLink()"><b-icon icon="share" /></a>
         </h1>
         <h4 class="subtitle is-4">
           {{user.points||0 | formatNumber}} points
@@ -99,10 +99,18 @@ export default {
     },
     getShareLink() {
       if(this.user && this.user.last_alias) {
+        
         const stripped_part = this.user.last_alias.replace(/\s/,'+').replace(/[^0-9a-z+]/gi,'');
         const safe_alias = encodeURIComponent(stripped_part)
 
-        return window.location.pathname.replace(this.user.steamid, safe_alias)
+        const url = window.location.pathname.replace(this.user.steamid, safe_alias)
+        const { host, protocol} = window.location;
+
+        this.$buefy.dialog.alert({
+            title: 'Profile Share Link',
+            message: `<a href="${protocol}//${host}${url}">${protocol}//${host}${url}</a>`,
+            confirmText: 'OK'
+        })
       }else{
         return '#'
       }

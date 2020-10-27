@@ -112,7 +112,7 @@ public void OnPluginStart()
 	HookEvent("infected_death", Event_InfectedDeath);
 	HookEvent("door_open", Event_DoorOpened);
 	HookEvent("upgrade_pack_used", Event_UpgradePackUsed);
-	HookEvent("finale_vehicle_leaving", Event_FinaleWin);
+	HookEvent("finale_win", Event_FinaleWin);
 	HookEvent("witch_killed", Event_WitchKilled);
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("gauntlet_finale_start", Event_FinaleStart);
@@ -273,9 +273,11 @@ void RecordCampaign(int client, int difficulty) {
 		char query[512], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
 
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `date`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES ('%s','%s',UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,b'%d',%d)",
+		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `finale_time`, `date`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES ('%s','%s',UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 			steamidcache[client],
 			mapname,
+			finaleTimeTotal,
 			totalCampaignSession_ZombieKills,
 			m_checkpointSurvivorDamage[client],
 			m_checkpointMedkitsUsed[client],
@@ -298,7 +300,6 @@ void RecordCampaign(int client, int difficulty) {
 		g_db.Query(DBC_Generic, query);
 		#if defined debug
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
-			PrintToServer("[l4d2_stats_recorder] query %s", query);
 		#endif
 		totalCampaignSession_ZombieKills = 0;
 		//TODO: remove. Only temp.

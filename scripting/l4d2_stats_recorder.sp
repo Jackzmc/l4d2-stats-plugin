@@ -200,7 +200,7 @@ bool ConnectDB() {
 		PrintToServer("Connected to database stats");
 		//I don't think first query necessarily but sets SQL to use utf-8 to allow unicode symbols.
 		SQL_FastQuery(g_db, "SET NAMES \"UTF8mb4\"");  
-		SQL_SetCharset(g_db, "utf8mb4");
+		g_db.SetCharset("utf8mb4");
 		return true;
     }
 }
@@ -277,7 +277,7 @@ void RecordCampaign(int client, int difficulty) {
 		GetCurrentMap(mapname, sizeof(mapname));
 
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `ping`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 			steamidcache[client],
 			mapname,
 			gamemode,
@@ -298,15 +298,20 @@ void RecordCampaign(int client, int difficulty) {
 			m_checkpointHeadshotAccuracy[client],
 			m_checkpointDeaths[client],
 			m_checkpointMeleeKills[client],
-			difficulty
+			difficulty,
+			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client) //record user ping
 		);
+		bool result = SQL_FastQuery(g_db, query);
+		if(!result) {
+			char error[128];
+			SQL_GetError(g_db, error, sizeof(error));
+			LogError("[l4d2_stats_recorder] RecordCampaign for %d failed. Query: `%s` | Error: %s", client, query, error);
+		}
 		g_db.Query(DBC_Generic, query);
 		#if defined debug
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
 		#endif
 		totalCampaignSession_ZombieKills = 0;
-		//TODO: remove. Only temp.
-		IncrementMapStat(client, mapname, difficulty);
 	}
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
@@ -398,8 +403,11 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 public void DBC_Generic(Database db, DBResultSet results, const char[] error, any data)
 {
     if(db == null || results == null) {
-        LogError("DBC_Generic returned error: %s", error);
-        return;
+		if(data) {
+        	LogError("DBC_Generic query `%s` returned error: %s", data, error);
+		}else {
+			LogError("DBC_Generic returned error: %s", error);
+		}
     }
 }
 //After a user's stats were flushed, reset any statistics needed to zero.

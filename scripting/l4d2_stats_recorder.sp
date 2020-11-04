@@ -21,6 +21,7 @@ public Plugin myinfo =
 static Database g_db;
 static char steamidcache[MAXPLAYERS+1][32];
 bool lateLoaded = false, bVersus, bRealism;
+static char gamemode[32];
 
 //Stats that need to be only sent periodically. (note: possibly deaths?)
 static int damageSurvivorGiven[MAXPLAYERS+1];
@@ -94,6 +95,7 @@ public void OnPluginStart()
 	}
 
 	ConVar hGamemode = FindConVar("mp_gamemode");
+	hGamemode.GetString(gamemode, sizeof(gamemode));
 	hGamemode.AddChangeHook(CVC_GamemodeChange);
 
 	//Hook all events to track statistics
@@ -152,6 +154,7 @@ public Action Timer_FlushStats(Handle timer) {
 // CONVAR CHANGES
 /////////////////////////////////
 public void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[] newValue) {
+	strcopy(gamemode, sizeof(gamemode), newValue);
 	if(StrEqual(newValue, "realism")) {
 		bRealism = true;
 		bVersus = false;
@@ -274,9 +277,10 @@ void RecordCampaign(int client, int difficulty) {
 		GetCurrentMap(mapname, sizeof(mapname));
 
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `finale_time`, `date`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES ('%s','%s',UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `HeadshotAccuracy`, `Deaths`, `MeleeKills`, `difficulty`, `realism`) VALUES ('%s','%s',UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 			steamidcache[client],
 			mapname,
+			gamemode,
 			finaleTimeTotal,
 			totalCampaignSession_ZombieKills,
 			m_checkpointSurvivorDamage[client],

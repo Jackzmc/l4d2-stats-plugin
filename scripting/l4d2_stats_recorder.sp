@@ -269,7 +269,7 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 }
 void RecordCampaign(int client, int difficulty) {
 	if (client > 0 && steamidcache[client][0] && !IsFakeClient(client)) {
-		char query[512], mapname[127];
+		char query[1023], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
 
 		char players[128];

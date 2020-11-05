@@ -24,8 +24,8 @@
             <b-table-column field="points" label="Points" >
                 <span style="color: blue">{{ props.row.points | formatNumber }}</span>
             </b-table-column>
-            <b-table-column field="top_gamemode" label="Top Gamemode" >
-                {{ props.row.top_gamemode }}
+            <b-table-column label="Last Played" >
+                {{ formatDateAndRel(props.row.last_join_date * 1000) }}
             </b-table-column>
             <b-table-column field="minutes_played" label="Total Playtime" >
                 <span style="color: blue">{{ humanReadable(props.row.minutes_played) }}</span>
@@ -48,8 +48,7 @@
 
 
 <script>
-import { formatDuration } from 'date-fns'
-
+import { formatDuration, formatDistanceToNow } from 'date-fns'
 export default {
     methods: {
         humanReadable(minutes) {
@@ -73,7 +72,16 @@ export default {
         },
         getUserLink({steamid}) {
             return `/user/${steamid}`
-        }
+        },
+        formatDateAndRel(inp) {
+            if(inp <= 0 || isNaN(inp)) return ""
+            try {
+                const rel = formatDistanceToNow(new Date(inp))
+                return `${rel} ago`
+            }catch(err) {
+                return ""
+            }
+        },
     },
 }
 </script>

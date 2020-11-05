@@ -82,6 +82,14 @@ const routes = [
       {
         // UserPosts will be rendered inside User's <router-view>
         // when /user /:id/posts is matched
+        name: 'versus',
+        path: 'versus',
+        meta: { keep_title: true },
+        component: () => import('@/components/user/versus')
+      },
+      {
+        // UserPosts will be rendered inside User's <router-view>
+        // when /user /:id/posts is matched
         name: 'UserSessions',
         path: 'sessions/:page?',
         meta: { keep_title: true },

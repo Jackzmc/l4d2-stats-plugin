@@ -1,84 +1,76 @@
 <template>
-<div>
+<div v-if="!loading">
     <h2 class='title is-2'>Campaign Statistics</h2>
     <nav class="level">
         <b-loading :is-full-page="false" :active="loading" />
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Total Finales Won</p>
-            <p class="title">{{totals.wins | formatNumber}}</p>
+            <p class="title">{{totals.gamemodes.coop | formatNumber}}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Realism Games Played</p>
-            <p class="title">{{totals.realism | formatNumber}}</p>
+            <p class="title">{{totals.gamemodes.realism | formatNumber}}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Easy Games Played</p>
-            <p class="title">{{totals.easy | formatNumber}}</p>
+            <p class="title">{{totals.difficulty.easy | formatNumber}}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Normal Games Played</p>
-            <p class="title">{{totals.normal | formatNumber}}</p>
+            <p class="title">{{totals.difficulty.normal | formatNumber}}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Advanced Games Played</p>
-            <p class="title">{{totals.advanced | formatNumber}}</p>
+            <p class="title">{{totals.difficulty.advanced | formatNumber}}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Expert Games Played</p>
-            <p class="title">{{totals.expert | formatNumber}}</p>
+            <p class="title">{{totals.difficulty.expert | formatNumber}}</p>
             </div>
         </div>
     </nav>
     <hr>
-    <br>
-    <h6 class="title is-6">Map Statistics</h6>
-    <b-table :data="maps" detailed>
+    <b-table :data="maps">
         <template slot-scope="props">
-            <b-table-column field="map_name" label="Map" >
-                <router-link :to="'/maps/' + props.row.map_name">
-                    <strong>{{ props.row.map_name | formatMap }}</strong>
+            <b-table-column field="map" label="Map" >
+                <router-link :to="'/maps/' + props.row.map">
+                    <strong>{{ props.row.map| formatMap }}</strong>
                 </router-link>
             </b-table-column>
             <b-table-column field="wins" label="Wins" centered cell-class="number-cell">
                 {{ props.row.wins | formatNumber }}
             </b-table-column>
             <b-table-column field="realism" label="Times on Realism" centered cell-class="number-cell">
-                {{ props.row.realism | formatNumber }}
+                {{ props.row.gamemodes.realism | formatNumber }}
             </b-table-column>
-            <b-table-column field="realism" label="Times on Easy" centered cell-class="number-cell">
-                {{ props.row.difficulty_easy | formatNumber }}
+            <b-table-column field="difficulty.easy" label="Times on Easy" centered cell-class="number-cell">
+                {{ props.row.difficulty.easy | formatNumber }}
             </b-table-column>
-            <b-table-column field="realism" label="Times on Normal" centered cell-class="number-cell">
-                {{ props.row.difficulty_normal | formatNumber }}
+            <b-table-column field="difficulty.normal" label="Times on Normal" centered cell-class="number-cell">
+                {{ props.row.difficulty.normal | formatNumber }}
             </b-table-column>
-            <b-table-column field="realism" label="Times on Advanced" centered cell-class="number-cell">
-                {{ props.row.difficulty_advanced | formatNumber }}
+            <b-table-column field="difficulty.advanced" label="Times on Advanced" centered cell-class="number-cell">
+                {{ props.row.difficulty.advanced | formatNumber }}
             </b-table-column>
-            <b-table-column field="realism" label="Times on Expert" centered cell-class="number-cell">
-                {{ props.row.difficulty_expert | formatNumber }}
+            <b-table-column field="difficulty.expert" label="Times on Expert" centered cell-class="number-cell">
+                {{ props.row.difficulty.expert | formatNumber }}
             </b-table-column>
-        </template>
-        <template slot="detail" slot-scope="props">
-            <p><strong>Map: </strong>{{props.row.map_name}}</p>
-            <hr>
-            <h5 class="title is-5">Best Time</h5>
-            <p class="subtitle is-6">{{props.row.best_time | formatMs}}</p>
         </template>
         <template slot="empty">
             <section class="section">
                 <div class="content has-text-grey has-text-centered">
-                    <p>{{user.last_alias}} has no recorded finale statistics</p>
+                    <p>{{user.last_alias}} has no recorded campaign statistics</p>
                 </div>
             </section>
         </template>
@@ -88,18 +80,19 @@
 
 <script>
 import { formatDuration } from 'date-fns'
-import { getMapName } from '../../js/map'
+import { getMapNameByChapter } from '../../js/map'
 export default {
-    props: ['user', 'maps'],
+    props: ['user'],
     data() {
         return {
-            totals:{},
+            totals: {},
+            maps: [],
             loading: true
         }
     },
     filters: {
         formatMap(str) {
-            return getMapName(str)
+            return getMapNameByChapter(str)
         },
         formatMS(inp) {
             return formatDuration({seconds: inp / 1000})
@@ -114,7 +107,8 @@ export default {
             this.loading = true;
             this.$http.get(`/api/user/${this.user.steamid}/campaign`,{cache:true})
             .then(r => {
-                this.totals = r.data.campaign;
+                this.totals = r.data.totals;
+                this.maps = r.data.maps;
             })
             .catch(err => {
                 console.error('Fetch err', err)

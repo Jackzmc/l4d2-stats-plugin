@@ -6,6 +6,9 @@ app.listen(WEB_PORT,() => {
     console.info('[Server] Listening on :' + WEB_PORT)
 })
 
+const DIFFICULTIES = ["easy","normal","advanced","expert"]
+
+
 //TODO: record random player of the day
 
 async function main() {
@@ -92,16 +95,12 @@ async function main() {
         try {
             const [rows] = await pool.execute("SELECT * FROM `stats` WHERE STRCMP(`last_alias`,?) = 0 OR `steamid` = ?", [user, req.params.user])
             if(rows.length > 0) {
-                const [map_rows] = await pool.execute("SELECT map_name,difficulty_easy,difficulty_normal,difficulty_advanced,difficulty_expert,realism,wins FROM `stats_maps` WHERE `steamid`= ?", [rows[0].steamid])
-
                 res.json({
                     user:rows[0],
-                    maps: map_rows
                 })
             }else{
                 res.json({ 
                     user: null, 
-                    maps: [], 
                     not_found: true 
                 })
             }
@@ -112,11 +111,65 @@ async function main() {
     })
     app.get('/api/user/:user/campaign',async(req,res) => {
         try {
-            const [rows] = await pool.execute("SELECT SUM(`wins`) AS wins, SUM(`difficulty_easy`) AS easy, SUM(`difficulty_normal`) AS normal, SUM(`difficulty_advanced`) AS advanced, SUM(`difficulty_expert`) AS expert, SUM(`realism`) AS realism FROM `stats_maps` WHERE `steamid`=?",[req.params.user])
+            const [rows] = await pool.execute("SELECT `map`, `difficulty`, `gamemode` FROM `stats_games` WHERE `steamid` = ?",[req.params.user])
+            const [map_rows] = await pool.execute("SELECT map_name,difficulty_easy,difficulty_normal,difficulty_advanced,difficulty_expert,realism,wins FROM `stats_maps` WHERE `steamid`= ?", [req.params.user])
             if(rows.length > 0) {
-                let stats = {};
-                for(const key in rows[0]) stats[key] = parseInt(rows[0][key])
-                res.json({campaign: stats})
+                let mapStat = {};
+                let difficulty = {
+                    easy: 0,
+                    normal: 0,
+                    advanced: 0,
+                    expert: 0
+                }
+                let gamemodes = {
+                    realism: 0,
+                    coop: 0,
+                    versus: 0,
+                    mutation: 0
+                }
+                rows.forEach(row => {
+                    if(!mapStat[row.map]) mapStat[row.map] = {
+                        difficulty: {
+                            easy: 0,
+                            normal: 0,
+                            advanced: 0,
+                            expert: 0
+                        },
+                        gamemodes: {
+                            realism: 0,
+                            coop: 0,
+                            versus: 0,
+                        },
+                        wins: 0
+                    }
+                    mapStat[row.map].wins++;
+                    const diff = DIFFICULTIES[row.difficulty];
+                    const gamemode = row.gamemode || 'coop';
+                    mapStat[row.map].difficulty[diff]++;
+                    difficulty[diff]++;
+                    if(mapStat[row.map].gamemodes[gamemode]) {
+                        gamemodes[gamemode]++;
+                        mapStat[row.map].gamemodes[gamemode]++;
+                    }else {
+                        gamemodes['coop']++;
+                        mapStat[row.map].gamemodes['coop']++;
+                    }
+                })
+                const mapTotals = [];
+                for(const map in mapStat) {
+                    mapTotals.push({
+                        map,
+                        ...mapStat[map]
+                    })
+                }
+                res.json({
+                    totals: {
+                        wins: rows.length,
+                        gamemodes,
+                        difficulty
+                    }, 
+                    maps: mapTotals,
+                })
             }else{
                 res.json({camapign: {}, not_found: true})
             }

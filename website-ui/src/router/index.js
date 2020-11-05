@@ -12,7 +12,8 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: Home
+    component: Home,
+    redirect: '/top'
   },
   {
     path: '/leaderboard/:page?',

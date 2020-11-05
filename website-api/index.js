@@ -241,7 +241,11 @@ async function main() {
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(req.params.page) - 1);
             const offset = pageNumber * 10;
             const [rows] = await pool.execute("SELECT * FROM `stats_games` WHERE `steamid`=? LIMIT ?,15", [ req.params.user, offset ])
-            res.json(rows)
+            const [total_sessions] = await pool.execute("SELECT COUNT(*) AS total FROM `stats_games` WHERE `steamid`=?", [ req.params.user])
+            res.json({
+                sessions: rows,
+                total: total_sessions[0].total
+            })
         }catch(err) {
             console.error('/api/user/:user/campaign',err.message)
             res.status(500).json({error:'Internal Server Error'})

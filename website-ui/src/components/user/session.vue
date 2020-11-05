@@ -4,8 +4,15 @@
     <b-table 
         :data="sessions"
         detailed
-        @details-open="openedSession"
         detail-key="id"
+        
+
+        paginated 
+        backend-pagination 
+        :current-page="current_page" 
+        per-page=20
+        :total="total_sessions" 
+        @page-change="onPageChange" 
     >
         <template slot-scope="props">
             <b-table-column field="map" label="Map" centered >
@@ -42,7 +49,7 @@
         <template slot="empty">
             <section class="section">
                 <div class="content has-text-grey has-text-centered">
-                    <p>{{user.last_alias}} has no recorded game sessions</p>
+                    <p>{{user.last_alias}} has no recorded sessions</p>
                 </div>
             </section>
         </template>
@@ -58,9 +65,14 @@ export default {
         return {
             sessions: [],
             loading: true,
+            current_page: 1,
+            total_sessions: 0
         }
     },
     mounted() {
+        let routerPage = parseInt(this.$route.params.page);
+        if(isNaN(routerPage) || routerPage <= 0) routerPage = 1;
+        this.current_page = routerPage;
         this.fetchSessions()
         document.title = `Sessions - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
     },
@@ -68,9 +80,10 @@ export default {
         getMapNameByChapter,
         fetchSessions() {
             this.loading = true;
-            this.$http.get(`/api/user/${this.user.steamid}/sessions`, { cache: true })
+            this.$http.get(`/api/user/${this.user.steamid}/sessions/${this.current_page}`, { cache: true })
             .then(r => {
-                this.sessions = r.data;
+                this.sessions = r.data.sessions;
+                this.total_sessions = r.data.total;
             })
             .catch(err => {
                 console.error('Fetch err', err)
@@ -84,6 +97,11 @@ export default {
                 })
             })
             .finally(() => this.loading = false)
+        },
+        onPageChange(page) {
+            this.current_page = page;
+            this.$router.replace({params: {page}})
+            this.fetchSessions();
         },
         getThrowableCount(session) {
             return session.MolotovsUsed + session.PipebombsUsed + session.BoomerBilesUsed;

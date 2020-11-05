@@ -22,8 +22,9 @@
         <div class="container">
           <ul>
             <router-link tag="li" to="overview"><a>Overview</a></router-link>
-            <router-link tag="li" to="campaign"><a>Campaign</a></router-link>
             <router-link tag="li" to="sessions"><a>Sessions</a></router-link>
+            <router-link tag="li" to="campaign"><a>Campaign</a></router-link>
+            <router-link tag="li" to="versus">  <a>Versus</a></router-link>
             <!-- <router-link tag="li" to="versus"><a>Versus</a></router-link>
             <router-link tag="li" to="survival"><a>Survival</a></router-link>
             <router-link tag="li" to="scavenge"><a>Scavenge</a></router-link> -->

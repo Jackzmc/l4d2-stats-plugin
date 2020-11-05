@@ -5,8 +5,8 @@
         <b-loading :is-full-page="false" :active="loading" />
         <div class="level-item has-text-centered">
             <div>
-            <p class="heading">Total Finales Won</p>
-            <p class="title">{{totals.gamemodes.coop | formatNumber}}</p>
+            <p class="heading">Games Played</p>
+            <p class="title">{{totals.gamemodes.coop + totals.gamemodes.realism | formatNumber}}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
@@ -45,11 +45,11 @@
         <template slot-scope="props">
             <b-table-column field="map" label="Map" >
                 <router-link :to="'/maps/' + props.row.map">
-                    <strong>{{ props.row.map| formatMap }}</strong>
+                    <strong>{{ props.row.map | formatMap }}</strong>
                 </router-link>
             </b-table-column>
             <b-table-column field="wins" label="Wins" centered cell-class="number-cell">
-                {{ props.row.wins | formatNumber }}
+                {{ props.row.gamemodes.coop + props.row.gamemodes.realism | formatNumber }}
             </b-table-column>
             <b-table-column field="realism" label="Times on Realism" centered cell-class="number-cell">
                 {{ props.row.gamemodes.realism | formatNumber }}
@@ -105,16 +105,16 @@ export default {
     methods: {
         fetchTotals() {
             this.loading = true;
-            this.$http.get(`/api/user/${this.user.steamid}/campaign`,{cache:true})
+            this.$http.get(`/api/user/${this.user.steamid}/totals`,{cache:true})
             .then(r => {
                 this.totals = r.data.totals;
-                this.maps = r.data.maps;
+                this.maps = r.data.maps
             })
             .catch(err => {
                 console.error('Fetch err', err)
                 this.$buefy.snackbar.open({
                     duration: 5000,
-                    message: 'Failed to fetch campaign total statistics',
+                    message: 'Failed to fetch campaign statistics',
                     type: 'is-danger',
                     position: 'is-bottom-left',
                     actionText: 'Retry',

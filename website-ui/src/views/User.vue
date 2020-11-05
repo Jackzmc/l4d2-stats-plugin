@@ -21,11 +21,11 @@
       <nav class="tabs is-boxed is-fullwidth">
         <div class="container">
           <ul>
-            <router-link tag="li" to="overview"><a>Overview</a></router-link>
-            <router-link tag="li" to="sessions"><a>Sessions</a></router-link>
-            <router-link tag="li" to="campaign"><a>Campaign</a></router-link>
-            <router-link tag="li" to="versus">  <a>Versus</a></router-link>
-            <!-- <router-link tag="li" to="versus"><a>Versus</a></router-link>
+            <router-link tag="li" :to="getLink('overview')"><a>Overview</a></router-link>
+            <router-link tag="li" :to="getLink('sessions')"><a>Sessions</a></router-link>
+            <router-link tag="li" :to="getLink('campaign')"><a>Campaign</a></router-link>
+            <router-link tag="li" :to="getLink('versus')">  <a>Versus</a></router-link>
+            <!--
             <router-link tag="li" to="survival"><a>Survival</a></router-link>
             <router-link tag="li" to="scavenge"><a>Scavenge</a></router-link> -->
           </ul>
@@ -48,7 +48,7 @@
   <div class="container" v-if="user.steamid">
     <transition name="slide" :duration="200">
       <keep-alive>
-        <router-view :user="user" :key="$route.fullPath"></router-view>
+        <router-view :user="user" :key="$route.name"></router-view>
       </keep-alive>
     </transition>
   </div>
@@ -75,6 +75,9 @@ export default {
     '$route': 'fetchUser'
   },
   methods: {
+    getLink(a) {
+      return `/user/${this.$route.params.user}/${a}`
+    },
     fetchUser() {
       this.error = null;
       this.not_found = false;

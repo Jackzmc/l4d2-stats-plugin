@@ -47,7 +47,7 @@
   <div class="container" v-if="user.steamid">
     <transition name="slide" :duration="200">
       <keep-alive>
-        <router-view :user="user" :maps="maps" :key="$route.fullPath"></router-view>
+        <router-view :user="user" :key="$route.fullPath"></router-view>
       </keep-alive>
     </transition>
   </div>
@@ -62,7 +62,6 @@ export default {
   data() {
     return {
       user: {},
-      maps: [],
       error: null,
       not_found: false,
     }
@@ -83,7 +82,6 @@ export default {
         .then(response => {
           if(response.data.user) {
             this.user = response.data.user
-            this.maps = response.data.maps || []
             document.title = `${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
           }else{
             this.not_found = true;

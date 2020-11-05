@@ -1,11 +1,12 @@
 <template>
 <div>
     <h2 class='title is-2'>Games Played</h2>
+    <p class="subtitle is-4">{{total_sessions}} total sessions</p>
     <b-table 
         :data="sessions"
         detailed
         detail-key="id"
-        
+        :loading="loading"
 
         paginated 
         backend-pagination 
@@ -15,7 +16,7 @@
         @page-change="onPageChange" 
     >
         <template slot-scope="props">
-            <b-table-column field="map" label="Map" centered >
+            <b-table-column field="map" label="Map" >
                 {{ getMapNameByChapter(props.row.map) }}
             </b-table-column>
             <b-table-column field="zombieKills" label="Zombie Kills" centered cell-class="number-cell">
@@ -32,6 +33,9 @@
             </b-table-column>
             <b-table-column label="Total Pills/Shots Used" centered cell-class="number-cell">
                 {{ getPillShotCount(props.row) | formatNumber }}
+            </b-table-column>
+            <b-table-column field="incaps" label="Incaps" centered cell-class="number-cell">
+                {{ props.row.incaps | formatNumber }}
             </b-table-column>
             <b-table-column field="deaths" label="Deaths" centered cell-class="number-cell">
                 {{ props.row.deaths | formatNumber }}

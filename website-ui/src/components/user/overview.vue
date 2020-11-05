@@ -19,11 +19,11 @@
             </tr>
             <tr>
                 <th>Creation Date</th>
-                <td v-html="$options.filters.formatDateAndRel(user.created_date*1000)"></td>
+                <td v-html="formatDateAndRel(user.created_date*1000)"></td>
             </tr>
             <tr>
                 <th>Last Played</th>
-                <td v-html="$options.filters.formatDateAndRel(user.last_join_date*1000)"></td>
+                <td v-html="formatDateAndRel(user.last_join_date*1000)"></td>
             </tr>
             <tr>
                 <th>Last Location</th>
@@ -35,7 +35,7 @@
             </tr>
             <tr>
                 <th>Time Played</th>
-                <td style="color: blue">{{user.minutes_played | humanReadable}}</td>
+                <td style="color: blue">{{ humanReadable(user.minutes_played)}}</td>
             </tr>
             </tbody>
         </table>
@@ -322,7 +322,7 @@ export default {
         }
         
     },
-    filters:{
+    methods: {
         formatDateAndRel(inp) {
             if(inp <= 0 || isNaN(inp)) return ""
             try {

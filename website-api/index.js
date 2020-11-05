@@ -21,16 +21,25 @@ async function main() {
     });
     // query database
     //const [rows, fields] = await connection.execute('SELECT * FROM `table` WHERE `name` = ? AND `age` > ?', ['Morty', 14]);
+    app.get('/api/info',async(req,res) => {
+        try {
+            const [totals] = await pool.execute("SELECT (SELECT COUNT(*) FROM `stats`) AS total_users, (SELECT COUNT(*) FROM `stats_games`) AS total_sessions");
+            res.json({
+                ...totals[0]
+            });
+        }catch(err) {
+            console.error('[/api/top]',err.message);
+            res.status(500).json({error:"Internal Server Error"})
+        }
+    })
     app.get('/api/top/:page?',async(req,res) => {
         try {
             const selectedPage = req.params.page || 0;
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(req.params.page) - 1);
             const offset = pageNumber * 10;
-            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` ORDER BY `points` DESC, `minutes_played` DESC LIMIT ?,10", [offset])
-            const [count] = await pool.execute("SELECT COUNT(*) AS total FROM `stats` ");
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats` ORDER BY `points` DESC, `minutes_played` DESC LIMIT ?,10", [offset])
             res.json({
                 users: rows,
-                total_users: count[0].total
             });
         }catch(err) {
             console.error('[/api/top]',err.message);
@@ -41,7 +50,7 @@ async function main() {
         try {
             //TODO: add top_gamemode
             const searchQuery = `%${req.params.user}%`;
-            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,points FROM `stats` WHERE `last_alias` LIKE ?", [ searchQuery ])
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats` WHERE `last_alias` LIKE ?", [ searchQuery ])
             res.json(rows);
         }catch(err) {
             console.error('[/api/search/:user]', err.message);

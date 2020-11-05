@@ -2,3 +2,7 @@ Every map_transition, fetch checkpoint statistics (Possibly getting rid of curre
 Then on finale_win (if round_end, reset) push these statistics for each player to SQL.
 
 SQL database has a daily event or something that computes a global sum of all games in total.
+
+Issues:
+1. Versus:
+    Records both teams as one, some only record if survivor: Either way first finale win will trigger save.

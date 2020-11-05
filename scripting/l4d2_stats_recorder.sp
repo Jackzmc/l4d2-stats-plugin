@@ -272,8 +272,11 @@ void RecordCampaign(int client, int difficulty) {
 		char query[512], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
 
+		char players[128];
+		GetOtherPlayers(client, players, sizeof(players));
+
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`, `players`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s')",
 			steamidcache[client],
 			mapname,
 			gamemode,
@@ -294,7 +297,8 @@ void RecordCampaign(int client, int difficulty) {
 			m_checkpointDeaths[client],
 			m_checkpointMeleeKills[client],
 			difficulty,
-			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client) //record user ping
+			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client), //record user ping
+			players
 		);
 		bool result = SQL_FastQuery(g_db, query);
 		if(!result) {
@@ -306,6 +310,15 @@ void RecordCampaign(int client, int difficulty) {
 		#if defined debug
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
 		#endif
+	}
+}
+void GetOtherPlayers(int client, char[] players, int strSize) {
+	for(int i=1; i<MaxClients;i++) {
+		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && client != i) {
+			char user[32];
+			Format(user, sizeof(user), "%s;", steamidcache[i]);
+			StrCat(players, strSize, user);
+		} 
 	}
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0

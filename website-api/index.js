@@ -109,10 +109,57 @@ async function main() {
             res.status(500).json({error:"Internal Server Error"})
         }
     })
-    app.get('/api/user/:user/campaign',async(req,res) => {
+    app.get('/api/user/:user/totals/:gamemode',async(req,res) => {
+        try {
+            const [rows] = await pool.execute("SELECT `map`, `difficulty` FROM `stats_games` WHERE `steamid` = ? AND `gamemode` = ?", [req.params.user, req.params.gamemode])
+            if(rows.length > 0) {
+                let maps = {};
+                let difficulty = {
+                    easy: 0,
+                    normal: 0,
+                    advanced: 0,
+                    expert: 0
+                }
+                rows.forEach(row => {
+                    if(!maps[row.map]) maps[row.map] = {
+                        difficulty: {
+                            easy: 0,
+                            normal: 0,
+                            advanced: 0,
+                            expert: 0
+                        },
+                        wins: 0
+                    }
+                    maps[row.map].wins++;
+                    const diff = DIFFICULTIES[row.difficulty];
+                    maps[row.map].difficulty[diff]++;
+                    difficulty[diff]++;
+                })
+                const mapTotals = [];
+                for(const map in maps) {
+                    mapTotals.push({
+                        map,
+                        ...maps[map]
+                    })
+                }
+                res.json({
+                    totals: {
+                        wins: rows.length,
+                        difficulty
+                    }, 
+                    maps: mapTotals,
+                })
+            }else{
+                res.json({maps: [], totals: { wins: 0, gamemodes: [], difficulty: []}})
+            }
+        }catch(err) {
+            console.error('/api/user/:user/totals/:gamemode',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
+    app.get('/api/user/:user/totals',async(req,res) => {
         try {
             const [rows] = await pool.execute("SELECT `map`, `difficulty`, `gamemode` FROM `stats_games` WHERE `steamid` = ?",[req.params.user])
-            const [map_rows] = await pool.execute("SELECT map_name,difficulty_easy,difficulty_normal,difficulty_advanced,difficulty_expert,realism,wins FROM `stats_maps` WHERE `steamid`= ?", [req.params.user])
             if(rows.length > 0) {
                 let mapStat = {};
                 let difficulty = {
@@ -144,7 +191,8 @@ async function main() {
                     }
                     mapStat[row.map].wins++;
                     const diff = DIFFICULTIES[row.difficulty];
-                    const gamemode = row.gamemode || 'coop';
+                    let gamemode = row.gamemode || 'coop';
+                    if(gamemode.startsWith("mutation") || gamemode == "tankrun" || gamemode == "rocketdude") gamemode = 'mutation';
                     mapStat[row.map].difficulty[diff]++;
                     difficulty[diff]++;
                     if(mapStat[row.map].gamemodes[gamemode]) {
@@ -174,7 +222,7 @@ async function main() {
                 res.json({camapign: {}, not_found: true})
             }
         }catch(err) {
-            console.error('/api/user/:user/campaign',err.message)
+            console.error('/api/user/:user/totals',err.message)
             res.status(500).json({error:'Internal Server Error'})
         }
     })

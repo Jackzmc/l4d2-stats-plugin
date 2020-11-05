@@ -45,7 +45,7 @@
             </b-field>
             </form>
           </div>
-          <div class="box">
+          <!--<div class="box">
             <h5 class='title is-5'>Categories</h5>
             <b-menu-list>
               <b-menu-item label="Top Overall"></b-menu-item>
@@ -54,7 +54,7 @@
               <b-menu-item label="Top Survival"></b-menu-item>
               <b-menu-item label="Top Scavenge"></b-menu-item>
             </b-menu-list>
-          </div>
+          </div>-->
         </div>
       </div>
     </div>
@@ -83,16 +83,34 @@ export default {
     let currentRoutePage = !isNaN(this.$route.params.page) ? parseInt(this.$route.params.page) : 0
     if(currentRoutePage <= 0) currentRoutePage = 1;
     this.top_page = currentRoutePage;
+    this.refreshInfo();
     this.refreshTop();
   },
   methods: {
+    refreshInfo() {
+      this.$http.get(`/api/info`, { cache: true })
+      .then((r) => {
+        this.players_total = r.data.total_users;
+      })
+      .catch(err => {
+        this.failure = true;
+        console.error('Fetch error', err)
+        this.$buefy.snackbar.open({
+            duration: 5000,
+            message: 'Error ocurred while fetching leaderboard information',
+            type: 'is-danger',
+            position: 'is-bottom-left',
+            actionText: 'Retry',
+            onAction: () => this.refreshInfo()
+        })
+      }).finally(() => this.loading = false)
+    },
     refreshTop() {
       console.debug('Loading users for page' + this.top_page)
       this.loading = true;
       this.$http.get(`/api/top/${this.top_page}`, { cache: true })
       .then((r) => {
         this.top_today = r.data.users;
-        this.players_total = r.data.total_users;
       })
       .catch(err => {
         this.failure = true;

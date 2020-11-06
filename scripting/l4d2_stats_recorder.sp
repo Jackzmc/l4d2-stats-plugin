@@ -267,7 +267,7 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 		#endif
 	}
 }
-void RecordCampaign(int client, int difficulty) {
+void RecordCampaign(int client, int difficulty, const char[] uuid) {
 	if (client > 0 && steamidcache[client][0] && !IsFakeClient(client)) {
 		char query[1023], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
@@ -276,7 +276,7 @@ void RecordCampaign(int client, int difficulty) {
 		GetOtherPlayers(client, players, sizeof(players));
 
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`, `players`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s')",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`, `players`,`campaignID`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s','%s')",
 			steamidcache[client],
 			mapname,
 			gamemode,
@@ -298,7 +298,8 @@ void RecordCampaign(int client, int difficulty) {
 			m_checkpointMeleeKills[client],
 			difficulty,
 			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client), //record user ping
-			players
+			players,
+			uuid
 		);
 		bool result = SQL_FastQuery(g_db, query);
 		if(!result) {
@@ -416,6 +417,24 @@ public void DBC_Generic(Database db, DBResultSet results, const char[] error, an
 			LogError("DBC_Generic returned error: %s", error);
 		}
     }
+}
+public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[] error, any data) {
+	if(results != null) {
+		char uuid[64];
+		results.FetchString(0, uuid, sizeof(uuid));
+
+		for(int i = 1; i <= MaxClients; i++) {
+			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
+				int team = GetClientTeam(i);
+				if(team == 2) {
+					//Get a random UUID
+					RecordCampaign(i, data, uuid);
+					IncrementStat(i, "finales_won", 1);
+					points[i] += 400;
+				}
+			}
+		}
+	}
 }
 //After a user's stats were flushed, reset any statistics needed to zero.
 public void DBC_FlushQueuedStats(Database db, DBResultSet results, const char[] error, any data) {
@@ -633,16 +652,7 @@ public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroad
 }
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	int difficulty = event.GetInt("difficulty");
-	for(int i = 1; i <= MaxClients; i++) {
-		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
-			int team = GetClientTeam(i);
-			if(team == 2) {
-				RecordCampaign(i, difficulty);
-				IncrementStat(i, "finales_won", 1);
-				points[i] += 400;
-			}
-		}
-	}
+	g_db.Query(DBC_GetUUIDForCampaign, "SELECT UUID() AS UUID", difficulty);
 }
 public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));

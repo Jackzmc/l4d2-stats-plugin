@@ -4,8 +4,6 @@
     <p class="subtitle is-4">{{total_sessions}} total sessions</p>
     <b-table 
         :data="sessions"
-        detailed
-        detail-key="id"
         :loading="loading"
 
         paginated 
@@ -16,6 +14,11 @@
         @page-change="onPageChange" 
     >
         <template slot-scope="props">
+            <b-table-column label="View">
+                <b-button type="is-info" tag="router-link" size="is-small" :to="'/sessions/details/' + props.row.id + '?from=' + user.steamid">
+                    View
+                </b-button>
+            </b-table-column>
             <b-table-column field="map" label="Map" >
                 {{ getMapNameByChapter(props.row.map) }}
             </b-table-column>
@@ -46,9 +49,6 @@
             <b-table-column field="difficulty" label="Difficulty" centered>
                 {{ formatDifficulty(props.row.difficulty) }}
             </b-table-column>
-        </template>
-        <template slot="detail" slot-scope="props">
-        <pre>{{props.row}}</pre>
         </template>
         <template slot="empty">
             <section class="section">

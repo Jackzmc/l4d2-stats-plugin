@@ -272,11 +272,8 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 		char query[1023], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
 
-		char players[128];
-		GetOtherPlayers(client, players, sizeof(players));
-
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`, `players`,`campaignID`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s','%s')",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`, `campaignID`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s')",
 			steamidcache[client],
 			mapname,
 			gamemode,
@@ -298,7 +295,6 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			m_checkpointMeleeKills[client],
 			difficulty,
 			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client), //record user ping
-			players,
 			uuid
 		);
 		bool result = SQL_FastQuery(g_db, query);
@@ -311,15 +307,6 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 		#if defined debug
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
 		#endif
-	}
-}
-void GetOtherPlayers(int client, char[] players, int strSize) {
-	for(int i=1; i<MaxClients;i++) {
-		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && client != i) {
-			char user[32];
-			Format(user, sizeof(user), "%s;", steamidcache[i]);
-			StrCat(players, strSize, user);
-		} 
 	}
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
@@ -419,7 +406,8 @@ public void DBC_Generic(Database db, DBResultSet results, const char[] error, an
     }
 }
 public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[] error, any data) {
-	if(results != null) {
+	if(results != null && results.RowCount > 0) {
+		results.FetchRow();
 		char uuid[64];
 		results.FetchString(0, uuid, sizeof(uuid));
 

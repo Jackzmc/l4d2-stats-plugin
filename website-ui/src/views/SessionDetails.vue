@@ -93,7 +93,7 @@
                     <tbody>
                         <tr>
                             <td>{{session.DamageTaken | formatNumber}}</td>
-                            <td>{{session.survivorDamage}}</td>
+                            <td>{{session.SurvivorDamage}}</td>
                             <td>{{session.ZombieKills | formatNumber}}</td>
                             <td>{{session.MeleeKills  | formatNumber}}</td>
                         </tr>

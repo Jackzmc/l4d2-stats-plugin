@@ -396,7 +396,7 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 		//user does not exist in db, create now
 
 		char query[255]; 
-		Format(query, sizeof(query), "INSERT INTO `stats` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", steamidcache[client], safe_alias, country_name);
+		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", steamidcache[client], safe_alias, country_name);
 		g_db.Query(DBC_Generic, query);
 		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, steamidcache[client]);
 	}else{
@@ -413,7 +413,7 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 		char query[255];
 		int connections_amount = lateLoaded ? 0 : 1;
 
-		Format(query, sizeof(query), "UPDATE `stats` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, steamidcache[client]);
+		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, steamidcache[client]);
 		g_db.Query(DBC_Generic, query);
 	}
 }

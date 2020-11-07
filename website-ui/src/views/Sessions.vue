@@ -40,7 +40,7 @@
                     {{ props.row.zombieKills | formatNumber }}
                 </b-table-column>
                 <b-table-column field="survivorDamage" label="Friendly Fire" centered cell-class="number-cell">
-                    {{ props.row.survivorDamage | formatNumber }}
+                    {{ props.row.SurvivorDamage | formatNumber }}
                 </b-table-column>
                 <b-table-column field="MedkitsUsed" label="Medkits Used" centered cell-class="number-cell">
                     {{ props.row.MedkitsUsed | formatNumber }}

@@ -23,7 +23,7 @@ async function main() {
     //const [rows, fields] = await connection.execute('SELECT * FROM `table` WHERE `name` = ? AND `age` > ?', ['Morty', 14]);
     app.get('/api/info',async(req,res) => {
         try {
-            const [totals] = await pool.execute("SELECT (SELECT COUNT(*) FROM `stats`) AS total_users, (SELECT COUNT(*) FROM `stats_games`) AS total_sessions");
+            const [totals] = await pool.execute("SELECT (SELECT COUNT(*) FROM `stats_users`) AS total_users, (SELECT COUNT(*) FROM `stats_games`) AS total_sessions");
             res.json({
                 ...totals[0]
             });
@@ -37,7 +37,7 @@ async function main() {
             const selectedPage = req.params.page || 0;
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(req.params.page) - 1);
             const offset = pageNumber * 10;
-            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats` ORDER BY `points` DESC, `minutes_played` DESC LIMIT ?,10", [offset])
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats_users` ORDER BY `points` DESC, `minutes_played` DESC LIMIT ?,10", [offset])
             res.json({
                 users: rows,
             });
@@ -50,7 +50,7 @@ async function main() {
         try {
             //TODO: add top_gamemode
             const searchQuery = `%${req.params.user}%`;
-            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats` WHERE `last_alias` LIKE ?", [ searchQuery ])
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats_users` WHERE `last_alias` LIKE ?", [ searchQuery ])
             res.json(rows);
         }catch(err) {
             console.error('[/api/search/:user]', err.message);
@@ -102,7 +102,7 @@ async function main() {
         const user = req.params.user.replace(/\+-/,' ')
 
         try {
-            const [rows] = await pool.execute("SELECT * FROM `stats` WHERE STRCMP(`last_alias`,?) = 0 OR `steamid` = ?", [user, req.params.user])
+            const [rows] = await pool.execute("SELECT * FROM `stats_users` WHERE STRCMP(`last_alias`,?) = 0 OR `steamid` = ?", [user, req.params.user])
             if(rows.length > 0) {
                 res.json({
                     user:rows[0],
@@ -258,7 +258,7 @@ async function main() {
             const selectedPage = req.query.page || 0
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
             const offset = pageNumber * perPage;
-            const [rows] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats` ON `stats_games`.steamid = `stats`.steamid order by `stats_games`.id asc LIMIT ?,?", [offset, perPage])
+            const [rows] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid order by `stats_games`.id asc LIMIT ?,?", [offset, perPage])
             const [total] = await pool.execute("SELECT COUNT(*)  AS total_sessions FROM `stats_games`");
             return res.json({
                 sessions: rows,
@@ -275,11 +275,11 @@ async function main() {
             if(isNaN(sessId)) {
                 res.status(422).json({error: "Session ID is not a valid number."})
             }else{
-                const [row] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats` ON `stats_games`.steamid = `stats`.steamid WHERE `stats_games`.`id`=?", [req.params.session])
+                const [row] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid WHERE `stats_games`.`id`=?", [req.params.session])
                 if(row.length > 0) {
                     let users = [];
                     if(row[0].campaignID) {
-                        const [userlist] = await pool.execute("SELECT stats_games.id,stats.steamid,stats.last_alias from `stats_games` inner join `stats` on `stats`.steamid = `stats_games`.steamid WHERE `campaignID`=?", [row[0].campaignID])
+                        const [userlist] = await pool.execute("SELECT stats_games.id,stats.steamid,stats.last_alias from `stats_games` inner join `stats_users` on `stats_users`.steamid = `stats_games`.steamid WHERE `campaignID`=?", [row[0].campaignID])
                         users = userlist;
                     }
                     res.json({session: row[0], users})

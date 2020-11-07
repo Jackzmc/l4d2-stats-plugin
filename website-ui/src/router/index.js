@@ -53,9 +53,14 @@ const routes = [
     component: () => import(/* webpackChunkName: "faq" */ '@/views/FAQ.vue')
   },
   {
-    path: '/times',
-    name: 'Times',
-    component: () => import(/* webpackChunkName: "times" */ '@/views/Times.vue')
+    path: '/sessions/:page?',
+    name: 'Sessions',
+    component: () => import(/* webpackChunkName: "times" */ '@/views/Sessions.vue')
+  },
+  {
+    path: '/sessions/details/:id',
+    name: 'SessionDetail',
+    component: () => import(/* webpackChunkName: "times" */ '@/views/SessionDetails.vue')
   },
   {
     path: '/user/:user',

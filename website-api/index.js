@@ -247,7 +247,43 @@ async function main() {
                 total: total_sessions[0].total
             })
         }catch(err) {
-            console.error('/api/user/:user/campaign',err.message)
+            console.error('/api/user/:user/sessions/:page?',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
+    app.get('/api/sessions', async(req,res) => {
+        try {
+            let perPage = parseInt(req.query.perPage) || 10;
+            if(perPage > 100) perPage = 100;
+            const selectedPage = req.query.page || 0
+            const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
+            const offset = pageNumber * perPage;
+            const [rows] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats` ON `stats_games`.steamid = `stats`.steamid order by `stats_games`.id asc LIMIT ?,?", [offset, perPage])
+            const [total] = await pool.execute("SELECT COUNT(*)  AS total_sessions FROM `stats_games`");
+            return res.json({
+                sessions: rows,
+                total_sessions: total[0].total_sessions,
+            })
+        }catch(err) {
+            console.error('/api/sessions',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
+    app.get('/api/sessions/:session', async(req,res) => {
+        try {
+            const sessId = parseInt(req.params.session);
+            if(isNaN(sessId)) {
+                res.status(422).json({error: "Session ID is not a valid number."})
+            }else{
+                const [row] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats` ON `stats_games`.steamid = `stats`.steamid WHERE `stats_games`.`id`=?", [req.params.session])
+                if(row.length > 0) 
+                    res.json({session: row[0]})
+                else 
+                    res.json({sesssion: null, not_found: true})
+            }
+           
+        }catch(err) {
+            console.error('/api/sessions/:session',err.message)
             res.status(500).json({error:'Internal Server Error'})
         }
     })

@@ -156,16 +156,6 @@ public Action Timer_FlushStats(Handle timer) {
 /////////////////////////////////
 public void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[] newValue) {
 	strcopy(gamemode, sizeof(gamemode), newValue);
-	if(StrEqual(newValue, "realism")) {
-		bRealism = true;
-		bVersus = false;
-	}else if(StrEqual(newValue, "versus")) {
-		bVersus = true;
-		bRealism = false;
-	}else {
-		bRealism = false;
-		bVersus = false;
-	}
 }
 /////////////////////////////////
 // PLAYER AUTH
@@ -227,7 +217,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			char[] escaped_name = new char[escaped_name_size];
 			char query[255];
 			g_db.Escape(name, escaped_name, escaped_name_size);
-			Format(query, sizeof(query), "UPDATE stats SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, steamidcache[client]);
+			Format(query, sizeof(query), "UPDATE stats_users SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, steamidcache[client]);
 			#if defined debug
 			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
 			#endif 
@@ -333,7 +323,7 @@ public void FlushQueuedStats(int client) {
 	//TODO: check for entity (1) not valid. possibly on campaign end when not returning to lobby.
 	//Prevent points from being reset by not recording until user has gotten a point. 
 	if(points[client] > 0) {
-		Format(query, sizeof(query), "UPDATE stats SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d WHERE steamid='%s'",
+		Format(query, sizeof(query), "UPDATE stats_users SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d WHERE steamid='%s'",
 			damageSurvivorGiven[client], 								//survivor_damage_give
 			GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),   //survivor_damage_rec
 			damageInfectedGiven[client],  							    //infected_damage_give

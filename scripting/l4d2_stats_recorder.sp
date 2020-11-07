@@ -200,7 +200,7 @@ void SetupUserInDB(int client, const char steamid[32]) {
 	if(client > 0 && !IsFakeClient(client)) {
 		startedPlaying[client] = GetTime();
 		char query[128];
-		Format(query, sizeof(query), "SELECT steamid,last_alias,points FROM stats WHERE steamid='%s'", steamid);
+		Format(query, sizeof(query), "SELECT steamid,last_alias,points FROM stats_users WHERE steamid='%s'", steamid);
 		g_db.Query(DBC_CheckUserExistance, query, GetClientUserId(client));
 	}
 }

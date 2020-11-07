@@ -171,14 +171,6 @@ export default {
     mounted() {
         this.getSession()
     },
-    computed: {
-        players() {
-            if(!this.session.players) return []
-            const users = this.session.players.split(";");
-            users.pop();
-            return users;
-        }
-    },
     watch: {
         '$route.params.id': 'getSession'
     },

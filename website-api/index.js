@@ -49,6 +49,7 @@ async function main() {
     app.get('/api/search/:user',async(req,res) => {
         try {
             //TODO: add top_gamemode
+            if(!req.params.user) return res.status(404).json([])
             const searchQuery = `%${req.params.user}%`;
             const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats_users` WHERE `last_alias` LIKE ?", [ searchQuery ])
             res.json(rows);
@@ -279,7 +280,8 @@ async function main() {
                 if(row.length > 0) {
                     let users = [];
                     if(row[0].campaignID) {
-                        const [userlist] = await pool.execute("SELECT stats_games.id,stats.steamid,stats.last_alias from `stats_games` inner join `stats_users` on `stats_users`.steamid = `stats_games`.steamid WHERE `campaignID`=?", [row[0].campaignID])
+                        console.log('id', row[0])
+                        const [userlist] = await pool.execute("SELECT stats_games.id,stats_users.steamid,stats_users.last_alias from `stats_games` inner join `stats_users` on `stats_users`.steamid = `stats_games`.steamid WHERE `campaignID`=?", [row[0].campaignID])
                         users = userlist;
                     }
                     res.json({session: row[0], users})

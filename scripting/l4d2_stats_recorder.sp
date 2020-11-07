@@ -116,7 +116,7 @@ public void OnPluginStart()
 	HookEvent("infected_death", Event_InfectedDeath);
 	HookEvent("door_open", Event_DoorOpened);
 	HookEvent("upgrade_pack_used", Event_UpgradePackUsed);
-	HookEvent("finale_win", Event_FinaleWin);
+	HookEvent("finale_vehicle_leaving", Event_FinaleWin);
 	HookEvent("witch_killed", Event_WitchKilled);
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("gauntlet_finale_start", Event_FinaleStart);
@@ -173,6 +173,8 @@ public void OnClientDisconnect(int client) {
 		FlushQueuedStats(client);
 		steamidcache[client][0] = '\0';
 		points[client] = 0;
+
+		ResetSessionStats(client);
 	}
 }
 
@@ -221,7 +223,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			#if defined debug
 			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
 			#endif 
-			g_db.Query(DBC_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
+			SQL_TQuery(g_db, DBC_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
 		}else{
 			//Incase user does not have a steamid in the cache: to prevent stat loss, fetch steamid and retry.
 			#if defined debug
@@ -255,7 +257,7 @@ void IncrementMapStat(int client, const char[] mapname, int difficulty) {
 			difficultyName, steamidcache[client], mapname, realism_amount, time, difficultyName, difficultyName, realism_amount, time);
 		
 		PrintToServer("[Debug] Updated Map Stat %s for %s", mapname, steamidcache[client]);
-		g_db.Query(DBC_Generic, query, _);
+		SQL_TQuery(g_db, DBC_Generic, query, _);
 	}else{
 		#if defined debug
 		LogError("Incrementing stat (%s) for client %d error: No steamid", mapname, client);
@@ -298,13 +300,13 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client), //record user ping
 			uuid
 		);
+
 		bool result = SQL_FastQuery(g_db, query);
 		if(!result) {
 			char error[128];
 			SQL_GetError(g_db, error, sizeof(error));
 			LogError("[l4d2_stats_recorder] RecordCampaign for %d failed. Query: `%s` | Error: %s", client, query, error);
 		}
-		g_db.Query(DBC_Generic, query);
 		#if defined debug
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
 		#endif
@@ -345,7 +347,7 @@ public void FlushQueuedStats(int client) {
 			minigunKills[client],										//kills_minigun
 			steamidcache[client][0]
 		);
-		g_db.Query(DBC_FlushQueuedStats, query, client);
+		SQL_TQuery(g_db, DBC_FlushQueuedStats, query, client);
 		//And clear them.
 	}
 }
@@ -359,6 +361,29 @@ void IncrementSpecialKill(int client, int special) {
 		case 5: sJockeyKills[client]++;
 		case 6: sChargerKills[client]++;
 	}
+}
+void ResetSessionStats(int i) {
+	m_checkpointZombieKills[i] =			0;
+	m_checkpointSurvivorDamage[i] = 		0;
+	m_checkpointMedkitsUsed[i] = 			0;
+	m_checkpointPillsUsed[i] = 				0;
+	m_checkpointMolotovsUsed[i] = 			0;
+	m_checkpointPipebombsUsed[i] = 			0;
+	m_checkpointBoomerBilesUsed[i] = 		0;
+	m_checkpointAdrenalinesUsed[i] = 		0;
+	m_checkpointDefibrillatorsUsed[i] = 	0;
+	m_checkpointDamageTaken[i] =			0;
+	m_checkpointReviveOtherCount[i] = 		0;
+	m_checkpointFirstAidShared[i] = 		0;
+	m_checkpointIncaps[i]  = 				0;
+	m_checkpointDeaths[i] = 				0;
+	m_checkpointMeleeKills[i] = 			0;
+	sBoomerKills[i]  = 0;
+	sSmokerKills[i]  = 0;
+	sJockeyKills[i]  = 0;
+	sHunterKills[i]  = 0;
+	sSpitterKills[i] = 0;
+	sChargerKills[i] = 0;
 }
 
 /////////////////////////////////
@@ -387,7 +412,7 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 
 		char query[255]; 
 		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", steamidcache[client], safe_alias, country_name);
-		g_db.Query(DBC_Generic, query);
+		SQL_TQuery(g_db, DBC_Generic, query);
 		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, steamidcache[client]);
 	}else{
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
@@ -404,13 +429,13 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 		int connections_amount = lateLoaded ? 0 : 1;
 
 		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, steamidcache[client]);
-		g_db.Query(DBC_Generic, query);
+		SQL_TQuery(g_db, DBC_Generic, query);
 	}
 }
 //Generic database response that logs error
-public void DBC_Generic(Database db, DBResultSet results, const char[] error, any data)
+public void DBC_Generic(Handle db, Handle child, const char[] error, any data)
 {
-    if(db == null || results == null) {
+    if(db == null || child == null) {
 		if(data) {
         	LogError("DBC_Generic query `%s` returned error: %s", data, error);
 		}else {
@@ -419,6 +444,7 @@ public void DBC_Generic(Database db, DBResultSet results, const char[] error, an
     }
 }
 public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[] error, any data) {
+	SQL_UnlockDatabase(db);
 	if(results != null && results.RowCount > 0) {
 		results.FetchRow();
 		char uuid[64];
@@ -439,8 +465,8 @@ public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[
 	}
 }
 //After a user's stats were flushed, reset any statistics needed to zero.
-public void DBC_FlushQueuedStats(Database db, DBResultSet results, const char[] error, any data) {
-	if(db == null || results == null) {
+public void DBC_FlushQueuedStats(Handle db, Handle child, const char[] error, any data) {
+	if(db == null || child == null) {
 		LogError("DBC_FlushQueuedStats returned error: %s", error);
 	}else{
 		int client = data;
@@ -655,7 +681,8 @@ public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroad
 }
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	int difficulty = event.GetInt("difficulty");
-	g_db.Query(DBC_GetUUIDForCampaign, "SELECT UUID() AS UUID", difficulty);
+	SQL_LockDatabase(g_db);
+	g_db.Query(DBC_GetUUIDForCampaign, "SELECT UUID() AS UUID", difficulty, DBPrio_High);
 }
 public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
@@ -745,27 +772,7 @@ public void Event_MapTransition(Event event, const char[] name, bool dontBroadca
 public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-			m_checkpointZombieKills[i] =			0;
-			m_checkpointSurvivorDamage[i] = 		0;
-			m_checkpointMedkitsUsed[i] = 			0;
-			m_checkpointPillsUsed[i] = 				0;
-			m_checkpointMolotovsUsed[i] = 			0;
-			m_checkpointPipebombsUsed[i] = 			0;
-			m_checkpointBoomerBilesUsed[i] = 		0;
-			m_checkpointAdrenalinesUsed[i] = 		0;
-			m_checkpointDefibrillatorsUsed[i] = 	0;
-			m_checkpointDamageTaken[i] =			0;
-			m_checkpointReviveOtherCount[i] = 		0;
-			m_checkpointFirstAidShared[i] = 		0;
-			m_checkpointIncaps[i]  = 				0;
-			m_checkpointDeaths[i] = 				0;
-			m_checkpointMeleeKills[i] = 			0;
-			sBoomerKills[i]  = 0;
-			sSmokerKills[i]  = 0;
-			sJockeyKills[i]  = 0;
-			sHunterKills[i]  = 0;
-			sSpitterKills[i] = 0;
-			sChargerKills[i] = 0;
+			ResetSessionStats(i);
 			FlushQueuedStats(i);
 		}
 	}

@@ -55,7 +55,12 @@ static int m_checkpointIncaps[MAXPLAYERS+1];
 static int m_checkpointAccuracy[MAXPLAYERS+1];
 static int m_checkpointDeaths[MAXPLAYERS+1];
 static int m_checkpointMeleeKills[MAXPLAYERS+1];
-
+static int sBoomerKills[MAXPLAYERS+1];
+static int sSmokerKills[MAXPLAYERS+1];
+static int sJockeyKills[MAXPLAYERS+1];
+static int sHunterKills[MAXPLAYERS+1];
+static int sSpitterKills[MAXPLAYERS+1];
+static int sChargerKills[MAXPLAYERS+1];
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	if(late) lateLoaded = true;
@@ -273,7 +278,7 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 		GetCurrentMap(mapname, sizeof(mapname));
 
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`, `campaignID`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s')",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`, `campaignID`,`kills_boomer`,`kills_smoker`,`kills_jockey`,`kills_hunter`,`kills_spitter`,`kills_charger`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,%d,%d,%d,%d)",
 			steamidcache[client],
 			mapname,
 			gamemode,
@@ -293,6 +298,12 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			m_checkpointIncaps[client],
 			m_checkpointDeaths[client],
 			m_checkpointMeleeKills[client],
+			sBoomerKills[client],
+			sSmokerKills[client],
+			sJockeyKills[client],
+			sHunterKills[client],
+			sSpitterKills[client],
+			sChargerKills[client],
 			difficulty,
 			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client), //record user ping
 			uuid
@@ -348,6 +359,18 @@ public void FlushQueuedStats(int client) {
 		//And clear them.
 	}
 }
+//Record a special kill to local variable
+void IncrementSpecialKill(int client, int special) {
+	switch(special) {
+		case 1: sSmokerKills[client]++;
+		case 2: sBoomerKills[client]++;
+		case 3: sHunterKills[client]++;
+		case 4: sSpitterKills[client]++;
+		case 5: sJockeyKills[client]++;
+		case 6: sChargerKills[client]++;
+	}
+}
+
 /////////////////////////////////
 //DATABASE CALLBACKS
 /////////////////////////////////
@@ -410,6 +433,7 @@ public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[
 		results.FetchRow();
 		char uuid[64];
 		results.FetchString(0, uuid, sizeof(uuid));
+		PrintToServer("UUID for campaign: %s", uuid);
 
 		for(int i = 1; i <= MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
@@ -538,6 +562,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 				event.GetString("weapon", wpn_name, sizeof(wpn_name));
 
 				if(GetInfectedClassName(victim_class, class, sizeof(class))) {
+					IncrementSpecialKill(attacker, victim_class);
 					Format(statname, sizeof(statname), "kills_%s", class);
 					IncrementStat(attacker, statname, 1);
 					points[attacker] += 5; //special kill
@@ -745,6 +770,12 @@ public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
 			m_checkpointIncaps[i]  = 				0;
 			m_checkpointDeaths[i] = 				0;
 			m_checkpointMeleeKills[i] = 			0;
+			sBoomerKills[i]  = 0;
+			sSmokerKills[i]  = 0;
+			sJockeyKills[i]  = 0;
+			sHunterKills[i]  = 0;
+			sSpitterKills[i] = 0;
+			sChargerKills[i] = 0;
 			FlushQueuedStats(i);
 		}
 	}

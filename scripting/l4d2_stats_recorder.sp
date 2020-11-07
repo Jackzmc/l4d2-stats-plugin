@@ -270,11 +270,13 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 		GetCurrentMap(mapname, sizeof(mapname));
 
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`, `campaignID`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`) VALUES ('%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,%d,%d,%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`) VALUES ('%s','%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 			steamidcache[client],
 			mapname,
 			gamemode,
+			uuid,
 			finaleTimeTotal,
+			//unix_timestamp(),
 			m_checkpointZombieKills[client],
 			m_checkpointSurvivorDamage[client],
 			m_checkpointMedkitsUsed[client],
@@ -297,8 +299,7 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			sSpitterKills[client],
 			sChargerKills[client],
 			difficulty,
-			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client), //record user ping
-			uuid
+			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client) //record user ping
 		);
 
 		bool result = SQL_FastQuery(g_db, query);

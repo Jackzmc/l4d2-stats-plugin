@@ -280,7 +280,6 @@ async function main() {
                 if(row.length > 0) {
                     let users = [];
                     if(row[0].campaignID) {
-                        console.log('id', row[0])
                         const [userlist] = await pool.execute("SELECT stats_games.id,stats_users.steamid,stats_users.last_alias from `stats_games` inner join `stats_users` on `stats_users`.steamid = `stats_games`.steamid WHERE `campaignID`=?", [row[0].campaignID])
                         users = userlist;
                     }

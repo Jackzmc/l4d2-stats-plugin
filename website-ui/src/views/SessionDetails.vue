@@ -119,13 +119,16 @@
             <div class="column is-3">
                 <div class="box">
                     <h5 class="title is-5">Players</h5>
-                    <span class="has-text-left" v-if="players.length > 0">
-                        <div v-for="player in players" :key="player">
-                            <div class="has-text-left is-inline-block">
-                                <router-link :to="'/user/' + player">{{player}}</router-link>
-                            </div>
-                            <div class="is-pulled-right is-inline">
-                                <p disabled class="disabled" href="#wip">(view stats)</p>
+                    <span class="has-text-left" v-if="users.length > 0">
+                        <div v-for="userRecord in users" :key="userRecord.steamid">
+                            <div>
+                                <div class="has-text-left is-inline-block">
+                                    <router-link v-if="session.steamid != userRecord.steamid" :to="'/user/' + userRecord.steamid">{{userRecord.last_alias}}</router-link>
+                                    <p v-else>{{userRecord.last_alias}}</p>
+                                </div>
+                                <div class="is-pulled-right is-inline">
+                                    <router-link v-if="session.steamid != userRecord.steamid" :to="'/sessions/details/' + userRecord.id">(view stats)</router-link>
+                                </div>
                             </div>
                         </div>
                     </span>
@@ -161,6 +164,7 @@ export default {
     data() {
         return {
             session: null,
+            users: [],
             loading: true
         }
     },
@@ -215,6 +219,7 @@ export default {
             this.$http.get(`/api/sessions/${this.$route.params.id}`, { cache: true })
             .then(r => {
                 this.session = r.data.session;
+                this.users = r.data.users
             })
             .catch(err => {
                 console.error('Fetch err', err)

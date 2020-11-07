@@ -276,10 +276,15 @@ async function main() {
                 res.status(422).json({error: "Session ID is not a valid number."})
             }else{
                 const [row] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats` ON `stats_games`.steamid = `stats`.steamid WHERE `stats_games`.`id`=?", [req.params.session])
-                if(row.length > 0) 
-                    res.json({session: row[0]})
-                else 
-                    res.json({sesssion: null, not_found: true})
+                if(row.length > 0) {
+                    let users = [];
+                    if(row[0].campaignID) {
+                        const [userlist] = await pool.execute("SELECT stats_games.id,stats.steamid,stats.last_alias from `stats_games` inner join `stats` on `stats`.steamid = `stats_games`.steamid WHERE `campaignID`=?", [row[0].campaignID])
+                        users = userlist;
+                    }
+                    res.json({session: row[0], users})
+                } else 
+                    res.json({sesssion: null, users: [], not_found: true})
             }
            
         }catch(err) {

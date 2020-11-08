@@ -116,7 +116,7 @@ public void OnPluginStart()
 	HookEvent("infected_death", Event_InfectedDeath);
 	HookEvent("door_open", Event_DoorOpened);
 	HookEvent("upgrade_pack_used", Event_UpgradePackUsed);
-	HookEvent("finale_vehicle_leaving", Event_FinaleWin);
+	HookEvent("finale_win", Event_FinaleWin);
 	HookEvent("witch_killed", Event_WitchKilled);
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("gauntlet_finale_start", Event_FinaleStart);
@@ -315,6 +315,9 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
 public void FlushQueuedStats(int client) {
+	if(!IsClientConnected(client)) {
+		return;
+	}
 	//Update stats (don't bother checking if 0.)
 	char query[1023];
 	int minutes_played = (GetTime() - startedPlaying[client]) / 60;

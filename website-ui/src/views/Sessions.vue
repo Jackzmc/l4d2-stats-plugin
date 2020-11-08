@@ -30,7 +30,7 @@
                     <b-button tag="router-link" :to="'/sessions/details/' + props.row.id">View</b-button>
                 </b-table-column>
                 <b-table-column field="steamid" label="User" >
-                    <router-link :to='"/user/" + props.row.steamid'>{{props.row.steamid}}</router-link>
+                    <router-link :to='"/user/" + props.row.steamid'><b>{{props.row.last_alias}}</b></router-link>
                 </b-table-column>
                 <b-table-column field="map" label="Map" >
                     {{ getMapNameByChapter(props.row.map) }}

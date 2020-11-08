@@ -24,11 +24,10 @@
             @page-change="onPageChange" 
 
         >
-            <template slot-scope="props">
-                <b-table-column label="View">
-                    <b-button type="is-info" tag="router-link" size="is-small" :to="'/sessions/details/' + props.row.id">
-                        View
-                    </b-button>
+        <!-- TODO: background sort -->
+            <template slot-scope="props" >
+                <b-table-column label="View" :style="'background-color:' + getRGB(props.row.campaignID)">
+                    <b-button tag="router-link" :to="'/sessions/details/' + props.row.id">View</b-button>
                 </b-table-column>
                 <b-table-column field="steamid" label="User" >
                     <router-link :to='"/user/" + props.row.steamid'>{{props.row.steamid}}</router-link>
@@ -137,7 +136,27 @@ export default {
                 case 2: return "Advanced"
                 case 4: return "Expert"
             }
+        },
+        getRGB(inp) {
+            if(!inp) return "#0f77ea"
+            return "#" + intToRGB(hashCode(inp))
         }
     }
+}
+function hashCode(str) { // java String#hashCode
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+       hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return hash;
+} 
+
+function intToRGB(i){
+    const c = (i & 0x00FFFFFF)
+        .toString(16)
+        .toUpperCase();
+
+    const a = "00000".substring(0, 6 - c.length) + c;
+    return a.substr(0, a.length - 2) + "FF";
 }
 </script>

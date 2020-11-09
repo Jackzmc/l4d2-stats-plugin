@@ -203,6 +203,7 @@ void SetupUserInDB(int client, const char steamid[32]) {
 		startedPlaying[client] = GetTime();
 		char query[128];
 		Format(query, sizeof(query), "SELECT steamid,last_alias,points FROM stats_users WHERE steamid='%s'", steamid);
+		SQL_LockDatabase(g_db);
 		g_db.Query(DBC_CheckUserExistance, query, GetClientUserId(client));
 	}
 }
@@ -395,6 +396,7 @@ void ResetSessionStats(int i) {
 /////////////////////////////////
 //Handles the CreateDBUser() response. Either updates alias and stores points, or creates new SQL user.
 public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[] error, any data) {
+	SQL_UnlockDatabase(db);
 	if(db == null || results == null) {
         LogError("DBC_CheckUserExistance returned error: %s", error);
         return;
@@ -466,6 +468,8 @@ public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[
 				}
 			}
 		}
+	}else{
+		LogError("RecordCampaign, failed to get UUID: %s", error);
 	}
 }
 //After a user's stats were flushed, reset any statistics needed to zero.

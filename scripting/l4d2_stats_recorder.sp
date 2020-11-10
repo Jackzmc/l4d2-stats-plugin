@@ -203,7 +203,6 @@ void SetupUserInDB(int client, const char steamid[32]) {
 		startedPlaying[client] = GetTime();
 		char query[128];
 		Format(query, sizeof(query), "SELECT last_alias,points FROM stats_users WHERE steamid='%s'", steamid);
-		SQL_LockDatabase(g_db);
 		g_db.Query(DBC_CheckUserExistance, query, GetClientUserId(client));
 	}
 }
@@ -224,7 +223,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			#if defined debug
 			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
 			#endif 
-			SQL_TQuery(g_db, DBC_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
+			g_db.Query(DBC_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
 		}else{
 			//Incase user does not have a steamid in the cache: to prevent stat loss, fetch steamid and retry.
 			#if defined debug
@@ -328,7 +327,7 @@ public void FlushQueuedStats(int client) {
 			minigunKills[client],										//kills_minigun
 			steamidcache[client][0]
 		);
-		SQL_TQuery(g_db, DBC_FlushQueuedStats, query, client);
+		g_db.Query(DBC_FlushQueuedStats, query, client);
 		//And clear them.
 	}
 }
@@ -372,7 +371,6 @@ void ResetSessionStats(int i) {
 /////////////////////////////////
 //Handles the CreateDBUser() response. Either updates alias and stores points, or creates new SQL user.
 public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[] error, any data) {
-	SQL_UnlockDatabase(db);
 	if(db == null || results == null) {
         LogError("DBC_CheckUserExistance returned error: %s", error);
         return;
@@ -394,7 +392,7 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 
 		char query[255]; 
 		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", steamidcache[client], safe_alias, country_name);
-		SQL_TQuery(g_db, DBC_Generic, query);
+		g_db.Query(DBC_Generic, query);
 		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, steamidcache[client]);
 	}else{
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
@@ -411,11 +409,11 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 		int connections_amount = lateLoaded ? 0 : 1;
 
 		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, steamidcache[client]);
-		SQL_TQuery(g_db, DBC_Generic, query);
+		g_db.Query(DBC_Generic, query);
 	}
 }
 //Generic database response that logs error
-public void DBC_Generic(Handle db, Handle child, const char[] error, any data)
+public void DBC_Generic(Database db, DBResultSet child, const char[] error, any data)
 {
     if(db == null || child == null) {
 		if(data) {
@@ -426,7 +424,6 @@ public void DBC_Generic(Handle db, Handle child, const char[] error, any data)
     }
 }
 public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[] error, any data) {
-	SQL_UnlockDatabase(db);
 	if(results != null && results.RowCount > 0) {
 		results.FetchRow();
 		char uuid[64];
@@ -449,7 +446,7 @@ public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[
 	}
 }
 //After a user's stats were flushed, reset any statistics needed to zero.
-public void DBC_FlushQueuedStats(Handle db, Handle child, const char[] error, any data) {
+public void DBC_FlushQueuedStats(Database db, DBResultSet child, const char[] error, any data) {
 	if(db == null || child == null) {
 		LogError("DBC_FlushQueuedStats returned error: %s", error);
 	}else{
@@ -665,7 +662,6 @@ public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroad
 }
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	int difficulty = event.GetInt("difficulty");
-	SQL_LockDatabase(g_db);
 	g_db.Query(DBC_GetUUIDForCampaign, "SELECT UUID() AS UUID", difficulty, DBPrio_High);
 }
 public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {

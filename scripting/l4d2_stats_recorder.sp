@@ -202,7 +202,7 @@ void SetupUserInDB(int client, const char steamid[32]) {
 	if(client > 0 && !IsFakeClient(client)) {
 		startedPlaying[client] = GetTime();
 		char query[128];
-		Format(query, sizeof(query), "SELECT steamid,last_alias,points FROM stats_users WHERE steamid='%s'", steamid);
+		Format(query, sizeof(query), "SELECT last_alias,points FROM stats_users WHERE steamid='%s'", steamid);
 		SQL_LockDatabase(g_db);
 		g_db.Query(DBC_CheckUserExistance, query, GetClientUserId(client));
 	}
@@ -240,31 +240,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 		}
 	}
 }
-//Increments a map statistic (basically a finale completion, includes difficulty and if realism)
-void IncrementMapStat(int client, const char[] mapname, int difficulty) {
-	if (steamidcache[client][0] && !IsFakeClient(client)) {
-		char query[256], difficultyName[16];
-		int realism_amount = bRealism ? 1 : 0;
-		switch(difficulty) {
-			case 0: strcopy(difficultyName, sizeof(difficultyName), "easy");
-			case 1: strcopy(difficultyName, sizeof(difficultyName), "normal");
-			case 2: strcopy(difficultyName, sizeof(difficultyName), "advanced");
-			case 3: strcopy(difficultyName, sizeof(difficultyName), "expert");
-		}
-		//Prevent subtraction of 0, if finaleTimeStart not set.
-		int time = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
 
-		Format(query, sizeof(query), "INSERT INTO stats_maps (steamid, map_name, wins, `difficulty_%s`, realism, best_time)\nVALUES ('%s', '%s', 1, 1, %d, %d)\n ON DUPLICATE KEY UPDATE wins=wins+1,`difficulty_%s`=`difficulty_%s`+1,realism=realism+%d,best_time=GREATEST(%d,VALUES(best_time))", 
-			difficultyName, steamidcache[client], mapname, realism_amount, time, difficultyName, difficultyName, realism_amount, time);
-		
-		PrintToServer("[Debug] Updated Map Stat %s for %s", mapname, steamidcache[client]);
-		SQL_TQuery(g_db, DBC_Generic, query, _);
-	}else{
-		#if defined debug
-		LogError("Incrementing stat (%s) for client %d error: No steamid", mapname, client);
-		#endif
-	}
-}
 void RecordCampaign(int client, int difficulty, const char[] uuid) {
 	if (client > 0 && steamidcache[client][0] && !IsFakeClient(client)) {
 		char query[1023], mapname[127];

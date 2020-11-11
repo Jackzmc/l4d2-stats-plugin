@@ -78,7 +78,9 @@ public void OnPluginStart()
 	{
 		SetFailState("This plugin is for L4D/L4D2 only.");	
 	}
-
+	if(!SQL_CheckConfig("stats")) {
+		SetFailState("No database entry for 'stats'; no database to connect to.");
+	}
 	if(!ConnectDB()) {
 		SetFailState("Failed to connect to database.");
 	}
@@ -191,8 +193,9 @@ bool ConnectDB() {
 		return false;
     } else {
 		PrintToServer("Connected to database stats");
-		//I don't think first query necessarily but sets SQL to use utf-8 to allow unicode symbols.
+		SQL_LockDatabase(g_db);
 		SQL_FastQuery(g_db, "SET NAMES \"UTF8mb4\"");  
+		SQL_UnlockDatabase(g_db);
 		g_db.SetCharset("utf8mb4");
 		return true;
     }
@@ -203,7 +206,7 @@ void SetupUserInDB(int client, const char steamid[32]) {
 		startedPlaying[client] = GetTime();
 		char query[128];
 		Format(query, sizeof(query), "SELECT last_alias,points FROM stats_users WHERE steamid='%s'", steamid);
-		g_db.Query(DBC_CheckUserExistance, query, GetClientUserId(client));
+		SQL_TQuery(g_db, DBCT_CheckUserExistance, query, GetClientUserId(client));
 	}
 }
 //Increments a statistic by X amount
@@ -223,7 +226,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			#if defined debug
 			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
 			#endif 
-			g_db.Query(DBC_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
+			SQL_TQuery(g_db, DBCT_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
 		}else{
 			//Incase user does not have a steamid in the cache: to prevent stat loss, fetch steamid and retry.
 			#if defined debug
@@ -277,8 +280,9 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			difficulty,
 			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client) //record user ping
 		);
-
+		SQL_LockDatabase(g_db);
 		bool result = SQL_FastQuery(g_db, query);
+		SQL_UnlockDatabase(g_db);
 		if(!result) {
 			char error[128];
 			SQL_GetError(g_db, error, sizeof(error));
@@ -327,7 +331,7 @@ public void FlushQueuedStats(int client) {
 			minigunKills[client],										//kills_minigun
 			steamidcache[client][0]
 		);
-		g_db.Query(DBC_FlushQueuedStats, query, client);
+		SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, client);
 		//And clear them.
 	}
 }
@@ -370,9 +374,9 @@ void ResetSessionStats(int i) {
 //DATABASE CALLBACKS
 /////////////////////////////////
 //Handles the CreateDBUser() response. Either updates alias and stores points, or creates new SQL user.
-public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[] error, any data) {
-	if(db == null || results == null) {
-        LogError("DBC_CheckUserExistance returned error: %s", error);
+public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] error, any data) {
+	if(db == INVALID_HANDLE || queryHandle == INVALID_HANDLE) {
+        LogError("DBCT_CheckUserExistance returned error: %s", error);
         return;
     }
 	//initialize variables
@@ -383,23 +387,23 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 
 	//Get a SQL-safe player name, and their counttry and IP
 	GetClientName(client, alias, sizeof(alias));
-	db.Escape(alias, safe_alias, alias_length);
+	SQL_EscapeString(g_db, alias, safe_alias, alias_length);
 	GetClientIP(client, ip, sizeof(ip));
 	GeoipCountry(ip, country_name, sizeof(country_name));
 
-	if(results.RowCount == 0) {
+	if(SQL_GetRowCount(queryHandle) == 0) {
 		//user does not exist in db, create now
 
 		char query[255]; 
 		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", steamidcache[client], safe_alias, country_name);
-		g_db.Query(DBC_Generic, query);
+		SQL_TQuery(g_db, DBCT_Generic, query);
 		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, steamidcache[client]);
 	}else{
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
-		while(results.FetchRow()) {
+		while(SQL_FetchRow(queryHandle)) {
 			int field_num;
-			if(results.FieldNameToNum("points", field_num)) {
-				points[client] = results.FetchInt(field_num);
+			if(SQL_FieldNameToNum(queryHandle, "points", field_num)) {
+				points[client] = SQL_FetchInt(queryHandle, field_num);
 			}
 		}
 		if(points[client] == 0) {
@@ -409,25 +413,25 @@ public void DBC_CheckUserExistance(Database db, DBResultSet results, const char[
 		int connections_amount = lateLoaded ? 0 : 1;
 
 		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, steamidcache[client]);
-		g_db.Query(DBC_Generic, query);
+		SQL_TQuery(g_db, DBCT_Generic, query);
 	}
 }
 //Generic database response that logs error
-public void DBC_Generic(Database db, DBResultSet child, const char[] error, any data)
+public void DBCT_Generic(Handle db, Handle child, const char[] error, any data)
 {
     if(db == null || child == null) {
 		if(data) {
-        	LogError("DBC_Generic query `%s` returned error: %s", data, error);
+        	LogError("DBCT_Generic query `%s` returned error: %s", data, error);
 		}else {
-			LogError("DBC_Generic returned error: %s", error);
+			LogError("DBCT_Generic returned error: %s", error);
 		}
     }
 }
-public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[] error, any data) {
-	if(results != null && results.RowCount > 0) {
-		results.FetchRow();
+public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] error, any data) {
+	if(results != INVALID_HANDLE && SQL_GetRowCount(results) > 0) {
+		SQL_FetchRow(results);
 		char uuid[64];
-		results.FetchString(0, uuid, sizeof(uuid));
+		SQL_FetchString(results, 0, uuid, sizeof(uuid));
 		PrintToServer("UUID for campaign: %s", uuid);
 
 		for(int i = 1; i <= MaxClients; i++) {
@@ -446,9 +450,9 @@ public void DBC_GetUUIDForCampaign(Database db, DBResultSet results, const char[
 	}
 }
 //After a user's stats were flushed, reset any statistics needed to zero.
-public void DBC_FlushQueuedStats(Database db, DBResultSet child, const char[] error, any data) {
-	if(db == null || child == null) {
-		LogError("DBC_FlushQueuedStats returned error: %s", error);
+public void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, any data) {
+	if(db == INVALID_HANDLE || child == INVALID_HANDLE) {
+		LogError("DBCT_FlushQueuedStats returned error: %s", error);
 	}else{
 		int client = data;
 		damageSurvivorFF[client] = 0;
@@ -662,7 +666,7 @@ public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroad
 }
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	int difficulty = event.GetInt("difficulty");
-	g_db.Query(DBC_GetUUIDForCampaign, "SELECT UUID() AS UUID", difficulty, DBPrio_High);
+	SQL_TQuery(g_db, DBCT_GetUUIDForCampaign, "SELECT UUID() AS UUID", difficulty, DBPrio_High);
 }
 public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));

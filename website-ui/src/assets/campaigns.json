@@ -82,7 +82,7 @@
         ]
     },
     "c9": {
-        "title": "Death Toll",
+        "title": "Crash Course",
         "image": "c9_death_toll.jpeg",
         "chapters": [
             "c9m1_alleys",
@@ -90,7 +90,7 @@
         ]
     },
     "c10": {
-        "title": "Crash Course",
+        "title": "Death Toll",
         "image": "c10_crash_course.jpeg",
         "chapters": [
             "c10m1_caves",

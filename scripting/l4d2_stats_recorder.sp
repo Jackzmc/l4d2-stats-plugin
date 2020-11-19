@@ -271,14 +271,14 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			m_checkpointIncaps[client],
 			m_checkpointDeaths[client],
 			m_checkpointMeleeKills[client],
+			difficulty,
+			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client), //record user ping
 			sBoomerKills[client],
 			sSmokerKills[client],
 			sJockeyKills[client],
 			sHunterKills[client],
 			sSpitterKills[client],
-			sChargerKills[client],
-			difficulty,
-			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client) //record user ping
+			sChargerKills[client]
 		);
 		SQL_LockDatabase(g_db);
 		bool result = SQL_FastQuery(g_db, query);
@@ -432,7 +432,7 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 		SQL_FetchRow(results);
 		char uuid[64];
 		SQL_FetchString(results, 0, uuid, sizeof(uuid));
-		PrintToServer("UUID for campaign: %s", uuid);
+		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, data);
 
 		for(int i = 1; i <= MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {

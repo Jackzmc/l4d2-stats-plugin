@@ -16,6 +16,9 @@
             <b-navbar-item tag="router-link" to="/maps">
                 Maps List
             </b-navbar-item>
+            <b-navbar-item tag="router-link" to="/stats">
+                Summary
+            </b-navbar-item>
             <b-navbar-item tag="router-link" to="/sessions">
                 Sessions
             </b-navbar-item>

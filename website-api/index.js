@@ -167,6 +167,55 @@ async function main() {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
+    app.get('/api/summary', async(req,res) => {
+        try {
+            const [maps] = await pool.execute("SELECT map FROM stats_games GROUP BY map ORDER BY COUNT(map) DESC")
+            const [userCount] = await pool.execute("SELECT AVG(games.players) as avgPlayers FROM (SELECT COUNT(campaignID) as players FROM stats_games GROUP BY `campaignID`) as games")
+            const [topStats] = await pool.execute(`SELECT 
+            avg(nullif(finale_time,0)) as finale_time, 
+            avg(nullif(ZombieKills,0)) as zombie_kills, 
+            avg(nullif(SurvivorDamage,0)) as survivor_ff, 
+            avg(MedkitsUsed) as MedkitsUsed, 
+            avg(PillsUsed) as PillsUsed, 
+            avg(MolotovsUsed) as MolotovsUsed, 
+            avg(PipebombsUsed) as PipebombsUsed, 
+            avg(BoomerBilesUsed) as BoomerBilesUsed, 
+            avg(DamageTaken) as DamageTaken, 
+            avg(difficulty) as difficulty, 
+            avg(MeleeKills) as MeleeKills, 
+            avg(ping) as ping, 
+            avg(ReviveOtherCount) as ReviveOtherCount, 
+            avg(Deaths) as Deaths, 
+            avg(Incaps) as Incaps, 
+            avg(nullif(boomer_kills,0)) as boomer_kills, 
+            avg(nullif(jockey_kills,0)) as jockey_kills, 
+            avg(nullif(smoker_kills,0)) as smoker_kills, 
+            avg(nullif(spitter_kills,0)) as spitter_kills, 
+            avg(nullif(hunter_kills,0)) as hunter_kills
+            FROM stats_games`)
+            if(topStats.length == 0 || maps.length == 0 || userCount.length == 0) {
+                return res.status(500).json({error:'Internal Server Error'})
+            }else{
+                let stats = {};
+                for(const key in topStats[0]) {
+                    if(key == "difficulty") {
+                        stats[key] = Math.round(parseFloat(topStats[0][key]))
+                    }else{
+                        stats[key] = parseFloat(topStats[0][key])
+                    }
+                }
+                res.json({
+                    topMap: maps[0].map,
+                    bottomMap: maps[maps.length-1].map,
+                    averagePlayers: Math.round(parseFloat(userCount[0].avgPlayers)),
+                    stats
+                })
+            }
+        }catch(err) {
+            console.error('/api/summary',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
     app.get('/api/user/:user/totals',async(req,res) => {
         try {
             const [rows] = await pool.execute("SELECT `map`, `difficulty`, `gamemode` FROM `stats_games` WHERE `steamid` = ?",[req.params.user])

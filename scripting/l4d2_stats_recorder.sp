@@ -38,6 +38,7 @@ static int molotovDamage[MAXPLAYERS+1];
 static int pipeKills[MAXPLAYERS+1];
 static int molotovKills[MAXPLAYERS+1];
 static int minigunKills[MAXPLAYERS+1];
+static int iGameStartTime;
 //Used for table: stats_games
 static int m_checkpointZombieKills[MAXPLAYERS+1];
 static int m_checkpointSurvivorDamage[MAXPLAYERS+1];
@@ -248,13 +249,18 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 		char query[1023], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
 
+		if(m_checkpointZombieKills[client] == 0) {
+			PrintToServer("Warn: Client %d for %s | 0 zombie kills", client, uuid);
+		}
+
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`) VALUES ('%s','%s','%s','%s',%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 			steamidcache[client],
 			mapname,
 			gamemode,
 			uuid,
 			finaleTimeTotal,
+			iGameStartTime,
 			//unix_timestamp(),
 			m_checkpointZombieKills[client],
 			m_checkpointSurvivorDamage[client],
@@ -728,6 +734,15 @@ public void OnEntityCreated(int entity) {
 			} 
 		}
 		//
+	}
+}
+public void OnConfigsExecuted() {
+	iGameStartTime = GetTime();
+	for(int i = 1; i < MaxClients; i++) {
+		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
+			ResetSessionStats(i);
+			FlushQueuedStats(i);
+		}
 	}
 }
 public void Event_MapTransition(Event event, const char[] name, bool dontBroadcast) {

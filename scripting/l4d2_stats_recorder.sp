@@ -126,7 +126,7 @@ public void OnPluginStart()
 	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
 	//Used to transition checkpoint statistics for stats_games
 	HookEvent("round_end", Event_RoundEnd);
-	HookEvent("map_transition", Event_MapTransition);
+	//HookEvent("map_transition", Event_MapTransition); //Use OnMapEnd()
 
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 
@@ -745,7 +745,7 @@ public void OnConfigsExecuted() {
 		}
 	}
 }
-public void Event_MapTransition(Event event, const char[] name, bool dontBroadcast) {
+public void OnMapEnd() {
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && !IsFakeClient(i)) {
 			m_checkpointZombieKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointZombieKills");

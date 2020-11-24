@@ -126,7 +126,7 @@ public void OnPluginStart()
 	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
 	//Used to transition checkpoint statistics for stats_games
 	HookEvent("round_end", Event_RoundEnd);
-	//HookEvent("map_transition", Event_MapTransition); //Use OnMapEnd()
+	HookEvent("map_transition", Event_MapTransition);
 
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 
@@ -176,8 +176,8 @@ public void OnClientDisconnect(int client) {
 		FlushQueuedStats(client);
 		steamidcache[client][0] = '\0';
 		points[client] = 0;
-
-		ResetSessionStats(client);
+		
+		//ResetSessionStats(client); //Can't reset session stats cause transitions!
 	}
 }
 
@@ -250,7 +250,7 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 		GetCurrentMap(mapname, sizeof(mapname));
 
 		if(m_checkpointZombieKills[client] == 0) {
-			PrintToServer("Warn: Client %d for %s | 0 zombie kills", client, uuid);
+			PrintToServer("Warn: Client %N for %s | 0 zombie kills", client, uuid);
 		}
 
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
@@ -736,16 +736,24 @@ public void OnEntityCreated(int entity) {
 		//
 	}
 }
-public void OnConfigsExecuted() {
-	iGameStartTime = GetTime();
-	for(int i = 1; i < MaxClients; i++) {
-		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-			ResetSessionStats(i);
-			FlushQueuedStats(i);
+bool isTransition = false;
+
+public void OnMapStart() {
+	if(isTransition) {
+		isTransition = false;
+	}else{
+		PrintToServer("[l4d2_stats_recorder] Started recording statistics");
+		iGameStartTime = GetTime();
+		for(int i = 1; i < MaxClients; i++) {
+			if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
+				ResetSessionStats(i);
+				FlushQueuedStats(i);
+			}
 		}
 	}
 }
-public void OnMapEnd() {
+public void Event_MapTransition(Event event, const char[] name, bool dontBroadcast) {
+	isTransition = true;
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && !IsFakeClient(i)) {
 			m_checkpointZombieKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointZombieKills");
@@ -763,12 +771,14 @@ public void OnMapEnd() {
 			m_checkpointIncaps[i]  += 				GetEntProp(i, Prop_Send, "m_checkpointIncaps");
 			m_checkpointDeaths[i] += 				GetEntProp(i, Prop_Send, "m_checkpointDeaths");
 			m_checkpointMeleeKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMeleeKills");
-			PrintToServer("Incremented checkpoint stats for %N", i);
+			PrintToServer("[l4d2_stats_recorder] Incremented checkpoint stats for %N", i);
 			FlushQueuedStats(i);
 		}
 	}
 }
+
 public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
+	PrintToServer("[l4d2_stats_recorder] round_end: resetting stats");
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
 			ResetSessionStats(i);

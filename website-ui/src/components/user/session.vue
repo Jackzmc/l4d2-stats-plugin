@@ -22,11 +22,8 @@
             <b-table-column field="map" label="Map" >
                 {{ getMapNameByChapter(props.row.map) }}
             </b-table-column>
-            <b-table-column field="zombieKills" label="Zombie Kills" centered cell-class="number-cell">
-                {{ props.row.zombieKills | formatNumber }}
-            </b-table-column>
+
             <b-table-column field="survivorDamage" label="Friendly Fire" centered cell-class="number-cell">
-                {{ props.row.SurvivorDamage | formatNumber }}
             </b-table-column>
             <b-table-column field="MedkitsUsed" label="Medkits Used" centered cell-class="number-cell">
                 {{ props.row.MedkitsUsed | formatNumber }}

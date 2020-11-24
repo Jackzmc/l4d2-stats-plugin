@@ -115,6 +115,28 @@
                         </tr>
                     </tbody>
                 </table>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <td>Boomer Kills</td>
+                            <td>Spitter Kills</td>
+                            <td>Jockey Kills</td>
+                            <td>Charger Kills</td>
+                            <td>Smoker Kills</td>
+                            <td>Hunter Kills</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{session.boomer_kills}}</td>
+                            <td>{{session.jockey_kills}}</td>
+                            <td>{{session.jockey_kills}}</td>
+                            <td>{{session.charger_kills}}</td>
+                            <td>{{session.smoker_kills}}</td>
+                            <td>{{session.hunter_kills}}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             <div class="column is-3">
                 <div class="box">
@@ -123,8 +145,8 @@
                         <div v-for="userRecord in users" :key="userRecord.steamid">
                             <div>
                                 <div class="has-text-left is-inline-block">
-                                    <router-link v-if="session.steamid != userRecord.steamid" :to="'/user/' + userRecord.steamid">{{userRecord.last_alias}}</router-link>
-                                    <p v-else>{{userRecord.last_alias}}</p>
+                                    <router-link v-if="session.steamid != userRecord.steamid" :to="'/user/' + userRecord.steamid"><b>{{userRecord.last_alias}}</b></router-link>
+                                    <p v-else><b>{{userRecord.last_alias}}</b></p>
                                 </div>
                                 <div class="is-pulled-right is-inline">
                                     <router-link v-if="session.steamid != userRecord.steamid" :to="'/sessions/details/' + userRecord.id">(view stats)</router-link>
@@ -147,11 +169,12 @@
                         <p>{{getDifficulty(session.difficulty)}}</p>
                         <strong>Date Played</strong>
                         <p>{{formatDate(session.date_end*1000)}}</p>
-                        <br>
-                        <em>Campaign ID</em><br>
-                        <em>{{session.campaignID}}</em>
+                        <strong>Game Duration</strong>
+                        <p>{{secondsToHms((session.date_end-session.date_start))}}</p>
                     </div>
                 </div>
+                <em>Campaign ID</em><br>
+                <em>{{session.campaignID}}</em>
             </div>
         </div>
     </div>
@@ -225,6 +248,17 @@ export default {
                 })
             })
             .finally(() => this.loading = false)
+        },
+        secondsToHms(d) {
+            d = Number(d);
+            var h = Math.floor(d / 3600);
+            var m = Math.floor(d % 3600 / 60);
+            var s = Math.floor(d % 3600 % 60);
+
+            var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+            var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
+            var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+            return hDisplay + mDisplay + sDisplay; 
         }
     }
 }

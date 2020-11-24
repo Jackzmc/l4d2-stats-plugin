@@ -38,6 +38,9 @@
                 <b-table-column field="survivorDamage" label="Friendly Fire" centered cell-class="number-cell">
                     {{ props.row.SurvivorDamage | formatNumber }}
                 </b-table-column>
+                <b-table-column field="DamageTaken" label="Damage Taken" centered cell-class="number-cell">
+                    {{ props.row.DamageTaken | formatNumber }}
+                </b-table-column>
                 <b-table-column field="MedkitsUsed" label="Medkits Used" centered cell-class="number-cell">
                     {{ props.row.MedkitsUsed | formatNumber }}
                 </b-table-column>
@@ -52,9 +55,6 @@
                 </b-table-column>
                 <b-table-column field="deaths" label="Deaths" centered cell-class="number-cell">
                     {{ props.row.deaths | formatNumber }}
-                </b-table-column>
-                <b-table-column field="DamageTaken" label="Damage Taken" centered cell-class="number-cell">
-                    {{ props.row.DamageTaken | formatNumber }}
                 </b-table-column>
                 <b-table-column field="difficulty" label="Difficulty" centered>
                     {{ formatDifficulty(props.row.difficulty) }}
@@ -134,26 +134,33 @@ export default {
                 case 4: return "Expert"
             }
         },
-        getRGB(inp) {
-            if(!inp) return "#0f77ea"
-            return "#" + intToRGB(hashCode(inp))
+        getRGB(campaignID) {
+            if(!campaignID) return "#0f77ea"
+            return "#" + dec2hex(campaignID.replace(/[^0-9]/g,'')).substring(0,6)
         }
     }
 }
-function hashCode(str) { // java String#hashCode
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-       hash = str.charCodeAt(i) + ((hash << 5) - hash);
+function dec2hex(str){ // .toString(16) only works up to 2^53
+    var dec = str.toString().split(''), sum = [], hex = [], i, s
+    while(dec.length){
+        s = 1 * dec.shift()
+        for(i = 0; s || i < sum.length; i++){
+            s += (sum[i] || 0) * 10
+            sum[i] = s % 16
+            s = (s - sum[i]) / 16
+        }
     }
-    return hash;
-} 
-
-function intToRGB(i){
-    const c = (i & 0x00FFFFFF)
-        .toString(16)
-        .toUpperCase();
-
-    const a = "00000".substring(0, 6 - c.length) + c;
-    return a.substr(0, a.length - 2) + "FF";
+    while(sum.length){
+        hex.push(sum.pop().toString(16))
+    }
+    return hex.join('')
 }
 </script>
+<style>
+.number-cell {
+  color: blue;
+}
+.table td {
+    vertical-align: middle;;
+}
+</style>

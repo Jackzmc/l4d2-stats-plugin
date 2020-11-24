@@ -173,6 +173,7 @@ async function main() {
             const [userCount] = await pool.execute("SELECT AVG(games.players) as avgPlayers FROM (SELECT COUNT(campaignID) as players FROM stats_games GROUP BY `campaignID`) as games")
             const [topStats] = await pool.execute(`SELECT 
             avg(nullif(finale_time,0)) as finale_time, 
+            avg(date_end - date_start) as game_duration,
             avg(nullif(ZombieKills,0)) as zombie_kills, 
             avg(nullif(SurvivorDamage,0)) as survivor_ff, 
             avg(MedkitsUsed) as MedkitsUsed, 

@@ -169,8 +169,10 @@
                         <p>{{getDifficulty(session.difficulty)}}</p>
                         <strong>Date Played</strong>
                         <p>{{formatDate(session.date_end*1000)}}</p>
-                        <strong>Game Duration</strong>
-                        <p>{{secondsToHms((session.date_end-session.date_start))}}</p>
+                        <span v-if="session.date_start">
+                            <strong>Game Duration</strong>
+                            <p>{{secondsToHms((session.date_end-session.date_start))}}</p>
+                        </span>
                     </div>
                 </div>
                 <em>Campaign ID</em><br>

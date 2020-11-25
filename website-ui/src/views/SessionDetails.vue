@@ -140,7 +140,7 @@
                     <h6 class="title is-6">Meta Information</h6>
                     <div class="has-text-left">
                         <strong>Map</strong>
-                        <p>{{getMap(session.map)}}<p>
+                        <p><router-link :to='"/maps/" + mapId + "/details"'>{{mapTitle}}</router-link></p>
                         <strong>Gamemode</strong>
                         <p>{{getGamemode(session.gamemode)}}</p>
                         <strong>Difficulty</strong>
@@ -244,7 +244,15 @@ export default {
                     value: this.session.DefibrillatorsUsed
                 }
             ], '#62a4b4');
-        }
+        },
+        mapTitle() {
+            return this.session.map ? getMapNameByChapter(this.session.map) : null
+        },
+        mapId() {
+            const title = this.mapTitle;
+            return title ? title.toLowerCase().replace(/\s/, '-') : null
+        },
+        
     },
     methods: {
         getDifficulty(inp) {
@@ -273,9 +281,6 @@ export default {
             }catch(err) {
                 return "Unknown"
             }
-        },
-        getMap(str) {
-            return getMapNameByChapter(str);
         },
         getSession() {
             if(!this.$route.params.id) return;

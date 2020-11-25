@@ -21,122 +21,100 @@
     <br>
     <div v-if="session" class="container is-fluid">
         <div class="columns">
-            <div class="column is-8">
-                <article class="message is-warning has-text-left">
-                <div class="message-body">
-                    This page is very much a work in progress. Only the basic information is given, a better UI will be implemented later.
+            <div class="column">
+                <nav class="level">
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Zombies Killed</p>
+                        <p class="title">{{session.ZombieKills}}</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Damage Taken</p>
+                        <p class="title">{{session.DamageTaken}}</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Melee Kills</p>
+                        <p class="title">{{session.MeleeKills}}</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Friendly Fire Damage Dealt</p>
+                        <p class="title">{{session.SurvivorDamage}}</p>
+                        </div>
+                    </div>
+                </nav>
+                <div class="tile is-ancestor">
+                    <div class="tile is-vertical">
+                        <div class="tile">
+                            <div class="tile is-parent is-vertical">
+                                <article class="tile is-child notification is-info">
+                                    <p class="title is-4">Throwables</p>
+                                    <p>&nbsp;</p>
+                                    <nav class="level">
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Molotovs</p>
+                                            <p class="title">{{session.MolotovsUsed}}</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Pipebombs</p>
+                                            <p class="title">{{session.PipebombsUsed}}</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Biles</p>
+                                            <p class="title">{{session.BoomerBilesUsed}}</p>
+                                            </div>
+                                        </div>
+                                    </nav>
+                                </article>
+                                <article class="tile is-child notification is-success">
+                                    <p class="title is-4">Specials Killed</p>
+                                    <PieChart label="Special Kills" :data="specialKills" />
+                                </article>
+                            </div>
+                            <div class="tile is-parent is-vertical">
+                                <article class="tile is-child notification is-warning">
+                                    <p class="title is-4">Usages</p>
+                                    <p>&nbsp;</p>
+                                    <BarChart label="Uses" :data="usages" color="#62a4b4" />
+                                </article>
+                                <article class="tile is-child notification" style="background-color: #d6405e">
+                                    <p class="title is-4">Misc</p>
+                                    <p>&nbsp;</p>
+                                    <nav class="level">
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Incaps</p>
+                                            <p class="title">{{session.Incaps}}</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Deaths</p>
+                                            <p class="title">{{session.Deaths}}</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Revives (others)</p>
+                                            <p class="title">{{session.ReviveOtherCount}}</p>
+                                            </div>
+                                        </div>
+                                    </nav>
+                                </article>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                </article>
-            </div>
-        </div>
-        <div class="columns">
-            <div class="column">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <td>Molotovs</td>
-                            <td>Pipebombs</td>
-                            <td>Boomer Biles</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{session.MolotovsUsed}}</td>
-                            <td>{{session.PipebombsUsed}}</td>
-                            <td>{{session.BoomerBilesUsed}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <td>Pills</td>
-                            <td>Adrenalines</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{session.PillsUsed}}</td>
-                            <td>{{session.AdrenalinesUsed}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <td>Kits Used (Total)</td>
-                            <td>Kits Used (Shared)</td>
-                            <td>Kits Used (Self)</td>
-                            <td>Defibs Used</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{session.MedkitsUsed}}</td>
-                            <td>{{session.FirstAidShared}}</td>
-                            <td>{{session.MedkitsUsed - session.FirstAidShared}}</td>
-                            <td>{{session.DefibrillatorsUsed}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="column">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <td>Damage Taken</td>
-                            <td>Friendly Fire Damage</td>
-                            <td>Zombies Killed</td>
-                            <td>Melee Kills</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{session.DamageTaken | formatNumber}}</td>
-                            <td>{{session.SurvivorDamage}}</td>
-                            <td>{{session.ZombieKills | formatNumber}}</td>
-                            <td>{{session.MeleeKills  | formatNumber}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <td>Incaps</td>
-                            <td>Deaths</td>
-                            <td>Revived Others</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{session.Incaps}}</td>
-                            <td>{{session.Deaths}}</td>
-                            <td>{{session.ReviveOtherCount}}</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <td>Boomer Kills</td>
-                            <td>Spitter Kills</td>
-                            <td>Jockey Kills</td>
-                            <td>Charger Kills</td>
-                            <td>Smoker Kills</td>
-                            <td>Hunter Kills</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>{{session.boomer_kills}}</td>
-                            <td>{{session.jockey_kills}}</td>
-                            <td>{{session.jockey_kills}}</td>
-                            <td>{{session.charger_kills}}</td>
-                            <td>{{session.smoker_kills}}</td>
-                            <td>{{session.hunter_kills}}</td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
             <div class="column is-3">
                 <div class="box">
@@ -173,6 +151,8 @@
                             <strong>Game Duration</strong>
                             <p>{{secondsToHms((session.date_end-session.date_start))}}</p>
                         </span>
+                        <strong>Average Ping</strong>
+                        <p>{{session.ping}} ms</p>
                     </div>
                 </div>
                 <em>Campaign ID</em><br>
@@ -185,6 +165,7 @@
 
 <script>
 import { getMapNameByChapter} from '../js/map'
+import {PieChart, BarChart } from '../js/graphs.js'
 export default {
     data() {
         return {
@@ -198,6 +179,99 @@ export default {
     },
     watch: {
         '$route.params.id': 'getSession'
+    },
+    components: {
+        PieChart,
+        BarChart
+    },
+    computed: {
+        specialKills() {
+            if(!this.session) return []
+            return [
+                {
+                    label: 'Boomer',
+                    color: '#00529B',
+                    value: this.session.boomer_kills
+                },
+                {
+                    label: 'Spitter',
+                    color: '#7AC142',
+                    value: this.session.spitter_kills
+                },
+                {
+                    label: 'Jockey',
+                    color: '#F47A1F',
+                    value: this.session.jockey_kills
+                },
+                {
+                    label: 'Charger',
+                    color: '#FDBB2F',
+                    value: this.session.charger_kills
+                },
+                {
+                    label: 'Smoker',
+                    color: '#377B2B',
+                    value: this.session.smoker_kills
+                },
+                {
+                    label: 'Hunter',
+                    color: '#007CC3',
+                    value: this.session.hunter_kills
+                }
+            ]
+        },
+        damageValues() {
+            if(!this.session) return []
+            return [
+                [
+                    {
+                        label: 'Damage Taken',
+                        value: this.session.DamageTaken,
+                        color: '#62a462'
+                    },
+                    {
+                        label: 'Friendly Fire Damage Dealt',
+                        value: this.session.SurvivorDamage,
+                        color: '#62a462'
+                    },
+                ],
+                {
+                    label: 'Zombies Killed',
+                    value: this.session.ZombieKills,
+                    color: '#62a462'
+                },
+                {
+                    label: 'Melee Kills',
+                    value: this.session.MeleeKills,
+                    color: '#62a462'
+                }
+            ]
+        },
+        usages() {
+            if(!this.session) return []
+            return [
+                {
+                    label: 'Pills',
+                    value: this.session.PillsUsed
+                },
+                {
+                    label: 'Adrendaline',
+                    value: this.session.AdrendalineUsed
+                },
+                {
+                    label: 'Kits (Self)',
+                    value: this.session.MedkitsUsed - this.session.FirstAidShared
+                },
+                {
+                    label: 'Kits (Shared)',
+                    value: this.session.FirstAidShared
+                },
+                {
+                    label: 'Defibs',
+                    value: this.session.DefibrillatorsUsed
+                }
+            ]
+        }
     },
     methods: {
         getDifficulty(inp) {

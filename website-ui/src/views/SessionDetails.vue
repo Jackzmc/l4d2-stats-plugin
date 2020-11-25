@@ -78,14 +78,14 @@
                                 </article>
                                 <article class="tile is-child notification is-success">
                                     <p class="title is-4">Specials Killed</p>
-                                    <PieChart label="Special Kills" :data="specialKills" />
+                                    <PieChart :chart-data="specialKills" />
                                 </article>
                             </div>
                             <div class="tile is-parent is-vertical">
                                 <article class="tile is-child notification is-warning">
                                     <p class="title is-4">Usages</p>
                                     <p>&nbsp;</p>
-                                    <BarChart label="Uses" :data="usages" color="#62a4b4" />
+                                    <BarChart :chart-data="usages" />
                                 </article>
                                 <article class="tile is-child notification" style="background-color: #d6405e">
                                     <p class="title is-4">Misc</p>
@@ -165,7 +165,7 @@
 
 <script>
 import { getMapNameByChapter} from '../js/map'
-import {PieChart, BarChart } from '../js/graphs.js'
+import {PieChart, BarChart, getChartData } from '../js/graphs.js'
 export default {
     data() {
         return {
@@ -187,7 +187,7 @@ export default {
     computed: {
         specialKills() {
             if(!this.session) return []
-            return [
+            return getChartData('Special Kills',[
                 {
                     label: 'Boomer',
                     color: '#00529B',
@@ -218,38 +218,11 @@ export default {
                     color: '#007CC3',
                     value: this.session.hunter_kills
                 }
-            ]
-        },
-        damageValues() {
-            if(!this.session) return []
-            return [
-                [
-                    {
-                        label: 'Damage Taken',
-                        value: this.session.DamageTaken,
-                        color: '#62a462'
-                    },
-                    {
-                        label: 'Friendly Fire Damage Dealt',
-                        value: this.session.SurvivorDamage,
-                        color: '#62a462'
-                    },
-                ],
-                {
-                    label: 'Zombies Killed',
-                    value: this.session.ZombieKills,
-                    color: '#62a462'
-                },
-                {
-                    label: 'Melee Kills',
-                    value: this.session.MeleeKills,
-                    color: '#62a462'
-                }
-            ]
+            ])
         },
         usages() {
             if(!this.session) return []
-            return [
+            return getChartData('Uses', [
                 {
                     label: 'Pills',
                     value: this.session.PillsUsed
@@ -270,7 +243,7 @@ export default {
                     label: 'Defibs',
                     value: this.session.DefibrillatorsUsed
                 }
-            ]
+            ], '#62a4b4');
         }
     },
     methods: {

@@ -1,41 +1,37 @@
-import { Pie, Bar } from 'vue-chartjs'
+import { Pie, Bar, mixins } from 'vue-chartjs'
 
 export const PieChart = {
   extends: Pie,
-  props: ['data', 'label'],
+  mixins: [mixins.reactiveProp],
+  props: ['chartData'],
   mounted () {
-    let renderOptions = {labels: []};
-    renderOptions.datasets = [{ label: this.label, backgroundColor: [], data: []}];
-    this.data.forEach(data => {
-        renderOptions.labels.push(data.label)
-        renderOptions.datasets[0].backgroundColor.push(data.color),
-        renderOptions.datasets[0].data.push(data.value)
-    })
-    this.renderChart(renderOptions)
+    this.renderChart(this.chartData)
   }
 }
 
 export const BarChart = {
-    extends: Bar,
-    props: ['data', 'label', 'color'],
-    mounted () {
-      const bgColor = this.color ? [] : null
-      let renderOptions = {labels: []};
-      renderOptions.datasets = [{ label: this.label, backgroundColor: bgColor, data: []}];
-      this.data.forEach(data => {
-          renderOptions.labels.push(data.label)
-          if(this.color) 
-            renderOptions.datasets[0].backgroundColor = this.color
-          else
-            renderOptions.datasets[0].backgroundColor.push(data.color)
-          renderOptions.datasets[0].data.push(data.value)
-      })
-      console.log(Object.assign({},renderOptions))
-
-      this.renderChart(renderOptions)
-    }
+  extends: Bar,
+  mixins: [mixins.reactiveProp],
+  props: ['chartData'],
+  mounted () {
+    this.renderChart(this.chartData)
   }
+}
 
+export function getChartData(label, options, color) {
+  const bgColor = color ? null : []
+  let renderOptions = {labels: []};
+  renderOptions.datasets = [{ label: label, backgroundColor: bgColor, data: []}];
+  if(color) renderOptions.datasets[0].backgroundColor = color
+  options.forEach(data => {
+      renderOptions.labels.push(data.label)
+      if(!color)
+        renderOptions.datasets[0].backgroundColor.push(data.color)
+      renderOptions.datasets[0].data.push(data.value)
+  })
+  return renderOptions;
+}
+  
 /* example data
 {
     label: 'Special Kills',

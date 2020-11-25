@@ -27,7 +27,7 @@
         <!-- TODO: background sort -->
             <template slot-scope="props" >
                 <b-table-column label="View" :style="'background-color:' + getRGB(props.row.campaignID)">
-                    <b-button tag="router-link" :to="'/sessions/details/' + props.row.id">View</b-button>
+                    <b-button tag="router-link" :to="'/sessions/details/' + props.row.id" expanded>View</b-button>
                 </b-table-column>
                 <b-table-column field="steamid" label="User" >
                     <router-link :to='"/user/" + props.row.steamid'><b>{{props.row.last_alias}}</b></router-link>

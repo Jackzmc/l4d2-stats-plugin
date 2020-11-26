@@ -62,6 +62,8 @@ static int sJockeyKills[MAXPLAYERS+1];
 static int sHunterKills[MAXPLAYERS+1];
 static int sSpitterKills[MAXPLAYERS+1];
 static int sChargerKills[MAXPLAYERS+1];
+//add:  	m_checkpointDamageToTank
+//add:  	m_checkpointDamageToWitch
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	if(late) lateLoaded = true;
@@ -352,7 +354,7 @@ void IncrementSpecialKill(int client, int special) {
 		case 6: sChargerKills[client]++;
 	}
 }
-void ResetSessionStats(int i) {
+void ResetSessionStats(int i, bool resetAll) {
 	m_checkpointZombieKills[i] =			0;
 	m_checkpointSurvivorDamage[i] = 		0;
 	m_checkpointMedkitsUsed[i] = 			0;
@@ -366,7 +368,8 @@ void ResetSessionStats(int i) {
 	m_checkpointReviveOtherCount[i] = 		0;
 	m_checkpointFirstAidShared[i] = 		0;
 	m_checkpointIncaps[i]  = 				0;
-	m_checkpointDeaths[i] = 				0;
+	if(resetAll) 
+		m_checkpointDeaths[i] = 				0;
 	m_checkpointMeleeKills[i] = 			0;
 	sBoomerKills[i]  = 0;
 	sSmokerKills[i]  = 0;
@@ -374,6 +377,24 @@ void ResetSessionStats(int i) {
 	sHunterKills[i]  = 0;
 	sSpitterKills[i] = 0;
 	sChargerKills[i] = 0;
+}
+void IncrementSessionStat(int i) {
+	m_checkpointZombieKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointZombieKills");
+	m_checkpointSurvivorDamage[i] += 		damageSurvivorFF[i];
+	m_checkpointMedkitsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMedkitsUsed");
+	m_checkpointPillsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointPillsUsed");
+	m_checkpointMolotovsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMolotovsUsed");
+	m_checkpointPipebombsUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointPipebombsUsed");
+	m_checkpointBoomerBilesUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointBoomerBilesUsed");
+	m_checkpointAdrenalinesUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointAdrenalinesUsed");
+	m_checkpointDefibrillatorsUsed[i] += 	GetEntProp(i, Prop_Send, "m_checkpointDefibrillatorsUsed");
+	m_checkpointDamageTaken[i] +=			GetEntProp(i, Prop_Send, "m_checkpointDamageTaken");
+	m_checkpointReviveOtherCount[i] += 		GetEntProp(i, Prop_Send, "m_checkpointReviveOtherCount");
+	m_checkpointFirstAidShared[i] += 		GetEntProp(i, Prop_Send, "m_checkpointFirstAidShared");
+	m_checkpointIncaps[i]  += 				GetEntProp(i, Prop_Send, "m_checkpointIncaps");
+	m_checkpointDeaths[i] += 				GetEntProp(i, Prop_Send, "m_checkpointDeaths");
+	m_checkpointMeleeKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMeleeKills");
+	PrintToServer("[l4d2_stats_recorder] Incremented checkpoint stats for %N", i);
 }
 
 /////////////////////////////////
@@ -445,6 +466,7 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 				int team = GetClientTeam(i);
 				if(team == 2) {
 					//Get a random UUID
+					IncrementSessionStat(i);
 					RecordCampaign(i, data, uuid);
 					IncrementStat(i, "finales_won", 1);
 					points[i] += 400;
@@ -481,8 +503,8 @@ public Action Command_DebugStats(int client, int args) {
 		ReplyToCommand(client, "This command must be used as a player.");
 	}else {
 		ReplyToCommand(client, "Statistics for %s", steamidcache[client]);
-		int meleeKills = GetEntProp(client, Prop_Send, "m_checkpointMeleeKills");
-		ReplyToCommand(client, "m_checkpointMeleeKills %d", meleeKills);
+		ReplyToCommand(client, "m_checkpointAdrenalinesUsed %d", GetEntProp(client, Prop_Send, " m_checkpointAdrenalinesUsed"));
+		ReplyToCommand(client, "m_checkpointAdrenalinesUsed[client] %d", m_checkpointAdrenalinesUsed[client]);
 		ReplyToCommand(client, "damageSurvivorGiven %d", damageSurvivorGiven[client]); 
 		ReplyToCommand(client, "m_checkpointDamageTaken %d", GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"));
 		ReplyToCommand(client, "m_checkpointDamageTaken[client]: %d", m_checkpointDamageTaken[client]);
@@ -746,7 +768,7 @@ public void OnMapStart() {
 		iGameStartTime = GetTime();
 		for(int i = 1; i < MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-				ResetSessionStats(i);
+				ResetSessionStats(i, true);
 				FlushQueuedStats(i);
 			}
 		}
@@ -756,22 +778,7 @@ public void Event_MapTransition(Event event, const char[] name, bool dontBroadca
 	isTransition = true;
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && !IsFakeClient(i)) {
-			m_checkpointZombieKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointZombieKills");
-			m_checkpointSurvivorDamage[i] += 		damageSurvivorFF[i];
-			m_checkpointMedkitsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMedkitsUsed");
-			m_checkpointPillsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointPillsUsed");
-			m_checkpointMolotovsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMolotovsUsed");
-			m_checkpointPipebombsUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointPipebombsUsed");
-			m_checkpointBoomerBilesUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointBoomerBilesUsed");
-			m_checkpointAdrenalinesUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointAdrenalinesUsed");
-			m_checkpointDefibrillatorsUsed[i] += 	GetEntProp(i, Prop_Send, "m_checkpointDefibrillatorsUsed");
-			m_checkpointDamageTaken[i] +=			GetEntProp(i, Prop_Send, "m_checkpointDamageTaken");
-			m_checkpointReviveOtherCount[i] += 		GetEntProp(i, Prop_Send, "m_checkpointReviveOtherCount");
-			m_checkpointFirstAidShared[i] += 		GetEntProp(i, Prop_Send, "m_checkpointFirstAidShared");
-			m_checkpointIncaps[i]  += 				GetEntProp(i, Prop_Send, "m_checkpointIncaps");
-			m_checkpointDeaths[i] += 				GetEntProp(i, Prop_Send, "m_checkpointDeaths");
-			m_checkpointMeleeKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMeleeKills");
-			PrintToServer("[l4d2_stats_recorder] Incremented checkpoint stats for %N", i);
+			IncrementSessionStat(i);
 			FlushQueuedStats(i);
 		}
 	}
@@ -781,7 +788,7 @@ public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
 	PrintToServer("[l4d2_stats_recorder] round_end: resetting stats");
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-			ResetSessionStats(i);
+			ResetSessionStats(i, false);
 			FlushQueuedStats(i);
 		}
 	}

@@ -71,7 +71,7 @@ async function main() {
     })
     app.get('/api/maps/:map',async(req,res) => {
         try {
-            const [rows] = await pool.execute("SELECT * FROM `stats_maps` WHERE `map_name` = ? ", [req.params.map.toLowerCase()])
+            const [rows] = await pool.execute("SELECT * FROM `stats_maps` WHERE `map_name` = ?", [req.params.map.toLowerCase()])
             const [bestTime] = await pool.execute("SELECT stats_games.id,stats_games.steamid,stats_games.campaignID,stats_games.map,stats_games.date_end - stats_games.date_start AS duration, stats_users.last_alias FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid WHERE `date_start` IS NOT NULL AND `map`=?  ORDER BY duration,finale_time asc LIMIT 1", [req.params.map.toLowerCase()])
             let totals = {
                 wins: 0,
@@ -89,7 +89,8 @@ async function main() {
             })
             res.json({
                 best: bestTime.length > 0 ? bestTime[0] : null,
-                totals
+                totals,
+                total_played: rows.length
             })
         }catch(err) {
             console.error('[/api/maps]',err.message);
@@ -172,30 +173,41 @@ async function main() {
             sum(nullif(ZombieKills,0)) as zombie_kills, 
             sum(nullif(SurvivorDamage,0)) as survivor_ff, 
             sum(MedkitsUsed) as MedkitsUsed, 
+            sum(FirstAidShared) as FirstAidShared,
             sum(PillsUsed) as PillsUsed, 
+            sum(AdrenalinesUsed) as AdrenalinesUsed,
             sum(MolotovsUsed) as MolotovsUsed, 
             sum(PipebombsUsed) as PipebombsUsed, 
             sum(BoomerBilesUsed) as BoomerBilesUsed, 
             sum(DamageTaken) as DamageTaken, 
             sum(MeleeKills) as MeleeKills, 
             sum(ReviveOtherCount) as ReviveOtherCount, 
+            sum(DefibrillatorsUsed) as DefibrillatorsUsed,
             sum(Deaths) as Deaths, 
             sum(Incaps) as Incaps, 
             sum(nullif(boomer_kills,0)) as boomer_kills, 
             sum(nullif(jockey_kills,0)) as jockey_kills, 
             sum(nullif(smoker_kills,0)) as smoker_kills, 
             sum(nullif(spitter_kills,0)) as spitter_kills, 
-            sum(nullif(hunter_kills,0)) as hunter_kills
+            sum(nullif(hunter_kills,0)) as hunter_kills,
+            sum(nullif(charger_kills,0)) as charger_kills,
+            (SELECT COUNT(*) FROM \`stats_games\`) AS total_sessions,
+            (SELECT COUNT(*) FROM \`stats_users\`) AS total_users
             FROM stats_games`)
+            const [mapTotals] = await pool.execute("SELECT map,COUNT(*) as count FROM stats_games GROUP BY map ORDER BY COUNT(map) DESC")
             if(totals.length == 0) {
                 return res.status(500).json({error:'Internal Server Error'})
             }else{
-                let stats = {};
+                let stats = {}, maps = {};
                 for(const key in totals[0]) {
                     stats[key] = parseInt(totals[0][key])
                 }
+                mapTotals.forEach(({map,count}) => {
+                    maps[map] = count;
+                })
                 res.json({
-                    stats
+                    stats,
+                    maps
                 })
             }
         }catch(err) {
@@ -213,7 +225,9 @@ async function main() {
             avg(nullif(ZombieKills,0)) as zombie_kills, 
             avg(nullif(SurvivorDamage,0)) as survivor_ff, 
             avg(MedkitsUsed) as MedkitsUsed, 
+            avg(FirstAidShared) as FirstAidShared,
             avg(PillsUsed) as PillsUsed, 
+            avg(AdrenalinesUsed) as AdrenalinesUsed,
             avg(MolotovsUsed) as MolotovsUsed, 
             avg(PipebombsUsed) as PipebombsUsed, 
             avg(BoomerBilesUsed) as BoomerBilesUsed, 
@@ -222,13 +236,15 @@ async function main() {
             avg(MeleeKills) as MeleeKills, 
             avg(ping) as ping, 
             avg(ReviveOtherCount) as ReviveOtherCount, 
+            avg(DefibrillatorsUsed) as DefibrillatorsUsed,
             avg(Deaths) as Deaths, 
             avg(Incaps) as Incaps, 
             avg(nullif(boomer_kills,0)) as boomer_kills, 
             avg(nullif(jockey_kills,0)) as jockey_kills, 
             avg(nullif(smoker_kills,0)) as smoker_kills, 
             avg(nullif(spitter_kills,0)) as spitter_kills, 
-            avg(nullif(hunter_kills,0)) as hunter_kills
+            avg(nullif(hunter_kills,0)) as hunter_kills,
+            avg(nullif(charger_kills,0)) as charger_kills
             FROM stats_games`)
             if(topStats.length == 0 || maps.length == 0 || userCount.length == 0) {
                 return res.status(500).json({error:'Internal Server Error'})
@@ -322,8 +338,17 @@ async function main() {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
-    app.get('/api/user/:user/times',(req,res) => {
-        //SELECT id,steamid,campaignID,map,date_end - date_start AS duration FROM `stats_games` WHERE `date_start` IS NOT NULL ORDER BY duration desc 
+    app.get('/api/user/:user/times',async(req,res) => {
+        //SELECT id,steamid,campaignID,map,date_end - date_start AS duration FROM `stats_games` WHERE `date_start` IS NOT NULL AND steamid = ? ORDER BY duration desc 
+        try {
+            const [times] = await pool.execute("SELECT id,steamid,campaignID,map,date_end - date_start AS duration FROM `stats_games` WHERE `date_start` IS NOT NULL AND steamid = ? GROUP BY map ORDER BY duration asc",[req.params.user])
+            res.json({
+                times
+            })
+        }catch(err) {
+            console.error('/api/user/:user/times',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
     })
     app.get('/api/user/:user/sessions/:page?',async(req,res) => {
         try {

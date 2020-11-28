@@ -228,8 +228,8 @@ export default {
                     value: this.session.PillsUsed
                 },
                 {
-                    label: 'Adrendaline',
-                    value: this.session.AdrendalineUsed
+                    label: 'Adrenalines',
+                    value: this.session.AdrenalinesUsed
                 },
                 {
                     label: 'Kits (Self)',

@@ -6,7 +6,7 @@
             <h1 class="title">
                 {{campaignTitle}}
             </h1>
-            <p class="subtitle is-4"></p>
+            <p class="subtitle is-4">Played {{totalPlayed}} times</p>
             </div>
         </div>
     </section>
@@ -76,6 +76,7 @@ export default {
             mapTotals: [],
             bestSession: null,
             campaign: null,
+            totalPlayed: 0
         }
     },
     mounted() {
@@ -119,6 +120,7 @@ export default {
             .then(res => {
                 this.mapTotals = res.data.totals
                 this.bestSession = res.data.best;
+                this.totalPlayed = res.data.total_played
             })
             .catch(err => {
                 console.error('Fetch error', err)

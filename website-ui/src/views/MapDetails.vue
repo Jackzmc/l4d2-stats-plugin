@@ -13,31 +13,33 @@
     <br>
     <div v-if="campaign" class="container is-fluid">
         <div class="tile is-ancestor">
-            <div class="tile is-vertical is-10">
+            <div class="tile is-vertical">
                 <div class="tile">
-                <div class="tile is-parent is-vertical">
-                    <article class="tile is-child notification is-info">
-                        <p class="title">Best Time</p>
-                        <p class="subtitle">{{ humanReadable(this.bestPlayerWin.best_time) }}</p>
+                    <div class="tile is-parent is-vertical is-4">
+                        <article class="tile is-child notification is-info">
+                            <p class="title">Best Time</p>
+                            <p class="subtitle" v-if="bestSession">{{ secondsToHms(bestSession.duration) }}</p>
+                            <p class="subtitle" v-else>N/A</p>
+                            <hr>
+                            <h6 class="title is-6">Top Player</h6>
+                            <p class="subtitle is-4">{{bestSession.last_alias}}</p>
+                            <b-button tag="router-link" type="is-secondary" :to="'/user/' + bestSession.steamid">View Profile</b-button>
+                        </article>
+                        <article class="tile is-child notification is-warning">
+                        <p class="title">Statistics</p>
+                        <p>{{mapTotals.wins}} Wins</p>
                         <hr>
-                        <h6 class="title is-6">Top Player</h6>
-                        <p class="subtitle is-4">Jackz</p>
-                        <b-button tag="router-link" type="is-secondary" :to="'/user/'">View Profile</b-button>
-                    </article>
-                    <article class="tile is-child notification is-warning">
-                    <p class="title">Statistics</p>
-                    <p>{{mapTotals.wins}} Wins</p>
-                    <hr>
+                        
+                        </article>
+                    </div>
                     
-                    </article>
-                </div>
-                <div class="tile is-parent">
-                    <article class="tile is-child ">
-                    <figure class="image is-4by3">
-                        <img :src="'/img/' + campaign.image">
-                    </figure>
-                    </article>
-                </div>
+                    <div class="tile is-parent is-8">
+                        <article class="tile is-child ">
+                        <figure class="image is-4by3">
+                            <img :src="'/img/' + campaign.image">
+                        </figure>
+                        </article>
+                    </div>
                 </div>
                 
             </div>
@@ -72,7 +74,7 @@ export default {
     data() {
         return {
             mapTotals: [],
-            bestPlayerWin: {},
+            bestSession: null,
             campaign: null,
         }
     },
@@ -116,7 +118,7 @@ export default {
             this.$http.get(`/api/maps/${this.finaleChapter}`, { cache: true })
             .then(res => {
                 this.mapTotals = res.data.totals
-                this.bestPlayerWin = res.data.best;
+                this.bestSession = res.data.best;
             })
             .catch(err => {
                 console.error('Fetch error', err)
@@ -129,6 +131,17 @@ export default {
                     onAction: () => this.fetchDetails()
                 })
             }).finally(() => this.loading = false)
+        },
+        secondsToHms(d) {
+            d = Number(d);
+            var h = Math.floor(d / 3600);
+            var m = Math.floor(d % 3600 / 60);
+            var s = Math.floor(d % 3600 % 60);
+
+            var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+            var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
+            var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+            return hDisplay + mDisplay + sDisplay; 
         }
     }
 }

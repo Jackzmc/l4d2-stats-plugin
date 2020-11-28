@@ -72,7 +72,7 @@ async function main() {
     app.get('/api/maps/:map',async(req,res) => {
         try {
             const [rows] = await pool.execute("SELECT * FROM `stats_maps` WHERE `map_name` = ? ", [req.params.map.toLowerCase()])
-            let bestMap = { best_time: -1};
+            const [bestTime] = await pool.execute("SELECT stats_games.id,stats_games.steamid,stats_games.campaignID,stats_games.map,stats_games.date_end - stats_games.date_start AS duration, stats_users.last_alias FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid WHERE `date_start` IS NOT NULL AND `map`=?  ORDER BY duration,finale_time asc LIMIT 1", [req.params.map.toLowerCase()])
             let totals = {
                 wins: 0,
                 easy: 0, 
@@ -82,16 +82,13 @@ async function main() {
                 realism: 0
             }
             rows.forEach(map => {
-                if(bestMap.best_time < map.best_time) {
-                    bestMap = map;
-                }
                 for(const total in totals) {
                     if(map[total] > 0)
                         totals[total] += map[total]
                 }
             })
             res.json({
-                best: bestMap,
+                best: bestTime.length > 0 ? bestTime[0] : null,
                 totals
             })
         }catch(err) {
@@ -164,6 +161,45 @@ async function main() {
             }
         }catch(err) {
             console.error('/api/user/:user/totals/:gamemode',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
+    app.get('/api/totals', async(req,res) => {
+        try {
+            const [totals] = await pool.execute(`SELECT 
+            sum(nullif(finale_time,0)) as finale_time, 
+            sum(date_end - date_start) as game_duration,
+            sum(nullif(ZombieKills,0)) as zombie_kills, 
+            sum(nullif(SurvivorDamage,0)) as survivor_ff, 
+            sum(MedkitsUsed) as MedkitsUsed, 
+            sum(PillsUsed) as PillsUsed, 
+            sum(MolotovsUsed) as MolotovsUsed, 
+            sum(PipebombsUsed) as PipebombsUsed, 
+            sum(BoomerBilesUsed) as BoomerBilesUsed, 
+            sum(DamageTaken) as DamageTaken, 
+            sum(MeleeKills) as MeleeKills, 
+            sum(ReviveOtherCount) as ReviveOtherCount, 
+            sum(Deaths) as Deaths, 
+            sum(Incaps) as Incaps, 
+            sum(nullif(boomer_kills,0)) as boomer_kills, 
+            sum(nullif(jockey_kills,0)) as jockey_kills, 
+            sum(nullif(smoker_kills,0)) as smoker_kills, 
+            sum(nullif(spitter_kills,0)) as spitter_kills, 
+            sum(nullif(hunter_kills,0)) as hunter_kills
+            FROM stats_games`)
+            if(totals.length == 0) {
+                return res.status(500).json({error:'Internal Server Error'})
+            }else{
+                let stats = {};
+                for(const key in totals[0]) {
+                    stats[key] = parseInt(totals[0][key])
+                }
+                res.json({
+                    stats
+                })
+            }
+        }catch(err) {
+            console.error('/api/totals',err.message)
             res.status(500).json({error:'Internal Server Error'})
         }
     })
@@ -285,6 +321,9 @@ async function main() {
             console.error('/api/user/:user/totals',err.message)
             res.status(500).json({error:'Internal Server Error'})
         }
+    })
+    app.get('/api/user/:user/times',(req,res) => {
+        //SELECT id,steamid,campaignID,map,date_end - date_start AS duration FROM `stats_games` WHERE `date_start` IS NOT NULL ORDER BY duration desc 
     })
     app.get('/api/user/:user/sessions/:page?',async(req,res) => {
         try {

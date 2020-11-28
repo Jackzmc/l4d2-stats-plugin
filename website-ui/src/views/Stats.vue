@@ -17,25 +17,25 @@
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Games Played</p>
-                <p class="title">{{formatNumber(totals.total_sessions)}}</p>
+                <p class="title"><ICountUp :endVal="totals.total_sessions" /></p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Total Playtime</p>
-                <p class="title">{{formatNumber(totals.game_duration / 60 / 60)}} hours</p>
+                <p class="title"><ICountUp :endVal="totals.game_duration / 60 / 60" /> hours</p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Zombies Killed</p>
-                <p class="title">{{formatNumber(totals.zombie_kills)}}</p>
+                <p class="title"><ICountUp :endVal="totals.zombie_kills" /></p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Unique Players</p>
-                <p class="title">{{formatNumber(totals.total_users)}}</p>
+                <p class="title"><ICountUp :endVal="totals.total_users" /></p>
                 </div>
             </div>
         </nav>
@@ -46,13 +46,13 @@
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Average Game Duration</p>
-                <p class="title">{{formatNumber(averages.game_duration / 60)}} min</p>
+                <p class="title"><ICountUp :endVal="averages.game_duration / 60" /> min</p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Average Zombies Killed</p>
-                <p class="title">{{formatNumber(averages.zombie_kills)}}</p>
+                <p class="title"><ICountUp :endVal="averages.zombie_kills" /></p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
@@ -64,13 +64,13 @@
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Average FF Damage</p>
-                <p class="title">{{formatNumber(averages.survivor_ff)}} HP</p>
+                <p class="title"><ICountUp :endVal="averages.survivor_ff" />HP</p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Average Ping</p>
-                <p class="title">{{formatNumber(averages.ping)}} ms</p>
+                <p class="title"><ICountUp :endVal="averages.ping" /> ms</p>
                 </div>
             </div>
         </nav>
@@ -99,6 +99,7 @@
 <script>
 import { getMapImage } from '../js/map'
 import SummaryBit from '../components/SummaryBit';
+import ICountUp from 'vue-countup-v2';
 export default {
     data() {
         return {
@@ -108,7 +109,8 @@ export default {
         }
     },
     components: {
-        SummaryBit
+        SummaryBit,
+        ICountUp
     },
     mounted() {
         Promise.all([

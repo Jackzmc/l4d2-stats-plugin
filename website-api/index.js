@@ -34,10 +34,12 @@ async function main() {
     })
     app.get('/api/top/:page?',async(req,res) => {
         try {
+            const MAX_RESULTS = req.query.max_results ? parseInt(req.query.max_results) || 10 : 10;
+
             const selectedPage = req.params.page || 0;
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(req.params.page) - 1);
-            const offset = pageNumber * 10;
-            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats_users` ORDER BY `points` DESC, `minutes_played` DESC LIMIT ?,10", [offset])
+            const offset = pageNumber * MAX_RESULTS;
+            const [rows] = await pool.execute("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats_users` ORDER BY `points` DESC, `minutes_played` DESC LIMIT ?,?", [offset, MAX_RESULTS])
             res.json({
                 users: rows,
             });

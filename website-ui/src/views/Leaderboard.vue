@@ -25,7 +25,7 @@
             paginated 
             backend-pagination 
             :current-page="top_page" 
-            per-page=10
+            per-page=12
             :total="players_total" 
 
             @page-change="onTopPageChange" 
@@ -108,7 +108,7 @@ export default {
     refreshTop() {
       console.debug('Loading users for page' + this.top_page)
       this.loading = true;
-      this.$http.get(`/api/top/${this.top_page}`, { cache: true })
+      this.$http.get(`/api/top/${this.top_page}?max_results=12`, { cache: true })
       .then((r) => {
         this.top_today = r.data.users;
       })

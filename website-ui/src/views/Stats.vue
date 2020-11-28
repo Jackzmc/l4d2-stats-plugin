@@ -58,7 +58,7 @@
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Players per Game</p>
-                <p class="title">{{averages.avgPlayers}}</p>
+                <p class="title"><ICountUpaverages :endVal="averages.avgPlayers" /></p>
                 </div>
             </div>
             <div class="level-item has-text-centered">

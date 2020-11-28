@@ -63,7 +63,8 @@ const routes = [
     component: () => import(/* webpackChunkName: "times" */ '@/views/SessionDetails.vue')
   },
   {
-    path: '/stats',
+    path: '/summary',
+    alias: ['/stats'],
     name: status,
     component: () => import(/* webpackChunkName: "stats" */ '@/views/Stats.vue')
   },

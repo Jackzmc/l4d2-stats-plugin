@@ -17,7 +17,7 @@
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Games Played</p>
-                <p class="title"><ICountUp :endVal="totals.total_sessions" /></p>
+                <p class="title"><ICountUp :endVal="totals.total_games" /></p>
                 </div>
             </div>
             <div class="level-item has-text-centered">

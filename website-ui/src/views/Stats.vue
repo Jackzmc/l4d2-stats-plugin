@@ -11,7 +11,7 @@
         </div>
     </section>
     <br>
-    <div class="container">
+    <div class="container" v-if="totals && averages">
         <p class="title is-6">Totals</p>
         <nav class="level">
             <div class="level-item has-text-centered">
@@ -24,6 +24,12 @@
                 <div>
                 <p class="heading">Total Playtime</p>
                 <p class="title"><ICountUp :endVal="totals.game_duration / 60 / 60" /> hours</p>
+                </div>
+            </div>
+            <div class="level-item has-text-centered">
+                <div>
+                <p class="heading">Total FF Damage</p>
+                <p class="title"><ICountUp :endVal="totals.survivor_ff" /> HP</p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
@@ -58,13 +64,13 @@
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Players per Game</p>
-                <p class="title"><ICountUpaverages :endVal="averages.avgPlayers" /></p>
+                <p class="title"><ICountUp :endVal="averages.avgPlayers" /></p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Average FF Damage</p>
-                <p class="title"><ICountUp :endVal="averages.survivor_ff" />HP</p>
+                <p class="title"><ICountUp :endVal="averages.survivor_ff" /> HP</p>
                 </div>
             </div>
             <div class="level-item has-text-centered">

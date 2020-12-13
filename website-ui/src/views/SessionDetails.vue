@@ -3,18 +3,38 @@
     <section class="hero is-dark">
         <div v-if="session" class="hero-body">
             <div class="container">
-            <h1 class="title">
-                Session #{{session.id}}
-            </h1>
-            <p class="subtitle is-4">{{session.last_alias}} - {{session.points | formatNumber}} points</p>
+                <div class="columns">
+                    <div class="column">
+                        <b-button tag="router-link" :to="'/sessions/details/' + (session.id - 1)" icon-left="chevron-circle-left" type="is-dark" size="is-large" />
+                    </div>
+                    <div class="column">
+                        <h1 class="title">
+                            Session #{{session.id}}
+                        </h1>
+                        <p class="subtitle is-4">{{session.last_alias}} - {{session.points | formatNumber}} points</p>
+                    </div>
+                    <div class="column">
+                        <b-button tag="router-link" :to="'/sessions/details/' + (session.id + 1)" icon-left="chevron-circle-right" type="is-dark" size="is-large" />
+                    </div>
+                </div>
             </div>
         </div>
         <div v-else class="hero-body">
             <div class="container">
-            <h1 class="title">
-                Session #{{$route.params.id}}
-            </h1>
-            <p class="subtitle is-4">Not Found</p>
+                <div class="columns">
+                    <div class="column" >
+                        <b-button v-if="sessionIdNumber > 0" tag="router-link" :to="'/sessions/details/' + (sessionIdNumber - 1)" icon-left="chevron-circle-left" type="is-dark" size="is-large" />
+                    </div>
+                    <div class="column">
+                        <h1 class="title">
+                            Session #{{$route.params.id}}
+                        </h1>
+                        <p class="subtitle is-4">Not Found</p>
+                    </div>
+                    <div class="column">
+                        <b-button v-if="sessionIdNumber > 0" tag="router-link" :to="'/sessions/details/' + (sessionIdNumber + 1)" icon-left="chevron-circle-right" type="is-dark" size="is-large" />
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -185,6 +205,9 @@ export default {
         BarChart
     },
     computed: {
+        sessionIdNumber() {
+            return parseInt(this.$route.params.id);
+        },
         specialKills() {
             if(!this.session) return []
             return getChartData('Special Kills',[

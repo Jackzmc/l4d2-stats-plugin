@@ -720,32 +720,36 @@ public void Event_GrenadeDenonate(Event event, const char[] name, bool dontBroad
 public void OnEntityCreated(int entity) {
 	char class[32];
 	GetEntityClassname(entity, class, sizeof(class));
+
+	int wpn;
+	char name[32];
+	float throwtime;
+
 	if(StrContains(class,"_projectile",true)) {
 		for(int i = 1; i < MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && IsPlayerAlive(i) && GetClientTeam(i) == 2 && !IsFakeClient(i)) {
 				//Get the player's current weapon. 
-				int wpn = GetEntPropEnt(i, Prop_Data, "m_hActiveWeapon");
+				wpn = GetEntPropEnt(i, Prop_Data, "m_hActiveWeapon");
 				if (IsValidEntity(wpn)) {
 					//Acquire the technical name of the weapon
-					char name[32];
 					GetEntityClassname(wpn, name, sizeof(name));
 
 					//Check for name of throwable, and if the m_fThrowTime is > 0 (aka has been thrown and not just out)
 					if(StrEqual(name, "weapon_vomitjar",true)) {
-						float throwtime = GetEntPropFloat(wpn, Prop_Send, "m_fThrowTime");
+						throwtime = GetEntPropFloat(wpn, Prop_Send, "m_fThrowTime");
 						if(throwtime > 0.0) {
 							IncrementStat(i, "throws_puke", 1);
 							break;
 						}
 						//PrintToServer("[#%d (%N)] test1=%f test2=%d owner=%d", i, i, test, test2, owner);
 					}else if(StrEqual(name, "weapon_molotov", true)) {
-						float throwtime = GetEntPropFloat(wpn, Prop_Send, "m_fThrowTime");
+						throwtime = GetEntPropFloat(wpn, Prop_Send, "m_fThrowTime");
 						if(throwtime > 0.0) {
 							IncrementStat(i, "throws_molotov", 1);
 							break;
 						}
 					}else if(StrEqual(name, "weapon_pipe_bomb", true)) {
-						float throwtime = GetEntPropFloat(wpn, Prop_Send, "m_fThrowTime");
+						throwtime = GetEntPropFloat(wpn, Prop_Send, "m_fThrowTime");
 						if(throwtime > 0.0) {
 							IncrementStat(i, "throws_pipe", 1);
 							break;

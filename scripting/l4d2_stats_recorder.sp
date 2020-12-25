@@ -1,7 +1,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-//#define DEBUG
+//#define DEBUG 0
 #define PLUGIN_VERSION "1.0"
 
 #include <sourcemod>
@@ -129,9 +129,9 @@ public void OnPluginStart()
 	//Used to transition checkpoint statistics for stats_games
 	HookEvent("round_end", Event_RoundEnd);
 	HookEvent("map_transition", Event_MapTransition);
-
+	#if defined DEBUG
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
-
+	#endif
 	//CreateTimer(60.0, Timer_FlushStats, _, TIMER_REPEAT);
 }
 
@@ -226,13 +226,13 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			char query[255];
 			g_db.Escape(name, escaped_name, escaped_name_size);
 			Format(query, sizeof(query), "UPDATE stats_users SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, steamidcache[client]);
-			#if defined debug
+			#if defined DEBUG
 			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
 			#endif 
 			SQL_TQuery(g_db, DBCT_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
 		}else{
 			//Incase user does not have a steamid in the cache: to prevent stat loss, fetch steamid and retry.
-			#if defined debug
+			#if defined DEBUG
 			LogError("Incrementing stat (%s) for client %N (%d) [%s] failure: No steamid or is bot", name, client, client, steamidcache[client]);
 			#endif
 			//attempt to fetch it
@@ -296,7 +296,7 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			SQL_GetError(g_db, error, sizeof(error));
 			LogError("[l4d2_stats_recorder] RecordCampaign for %d failed. Query: `%s` | Error: %s", client, query, error);
 		}
-		#if defined debug
+		#if defined DEBUG
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
 		#endif
 	}
@@ -498,6 +498,7 @@ public void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, a
 ////////////////////////////
 // COMMANDS
 ///////////////////////////
+#if defined DEBUG
 public Action Command_DebugStats(int client, int args) {
 	if(client == 0 && !IsDedicatedServer()) {
 		ReplyToCommand(client, "This command must be used as a player.");
@@ -512,6 +513,7 @@ public Action Command_DebugStats(int client, int args) {
 	}
 	return Plugin_Handled;
 }
+#endif
 
 ////////////////////////////
 // EVENTS 
@@ -789,10 +791,10 @@ public void Event_MapTransition(Event event, const char[] name, bool dontBroadca
 }
 
 public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
-	PrintToServer("[l4d2_stats_recorder] round_end: resetting stats");
+	PrintToServer("[l4d2_stats_recorder] round_end; flushing");
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-			ResetSessionStats(i, false);
+			//ResetSessionStats(i, false);
 			FlushQueuedStats(i);
 		}
 	}

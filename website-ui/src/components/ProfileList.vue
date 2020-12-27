@@ -2,7 +2,7 @@
     <b-table 
         v-bind="$attrs" 
         ref="profileList" 
-        :default-sort="[points, minutes_played]"
+        
 
         @page-change="page => $emit('page-change', page)" 
     >

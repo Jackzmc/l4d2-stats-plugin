@@ -55,6 +55,26 @@
               <b-menu-item label="Top Scavenge"></b-menu-item>
             </b-menu-list>
           </div>-->
+          <div class="box">
+            <h5 class="title is-5">Top Statistics</h5>
+            <b-carousel :interval="60000" :pause-info="false" :arrow="false">
+              <b-carousel-item v-for="stat in $options.STATS" :key="stat">
+                  <section :class="`hero is-medium is-a`">
+                      <div class="hero-body has-text-centered">
+                          <h6 class="title is-6">{{$options.STAT_DISPLAY_NAMES[stat]}}</h6>
+                          <ol style="text-align: left !important">
+                            <li v-for="player in stats.data[stat]" :key="player.steamid">
+                              <router-link :to="'/user/' + player.steamid" class="has-text-info has-text-weight-bold">
+                                {{player.last_alias}}
+                              </router-link>
+                              <span> - {{player.value | formatNumber}} {{$options.STAT_VALUE_NAMES[stat]}}</span>
+                            </li>
+                          </ol>
+                      </div>
+                  </section>
+              </b-carousel-item>
+            </b-carousel>
+          </div>
         </div>
       </div>
     </div>
@@ -69,6 +89,21 @@ export default {
   components: {
     ProfileList
   },
+  STATS: ['deaths', 'ffDamage', 'healOthers', 'revivedOthers', 'survivorIncaps'],
+  STAT_DISPLAY_NAMES: {
+    deaths: 'Most Deaths',
+    ffDamage: 'Most Friendly Fire Damage',
+    healOthers: 'Healed the Most Players',
+    revivedOthers: 'Revived the Most Players',
+    survivorIncaps: 'Most Incaps'
+  },
+  STAT_VALUE_NAMES: {
+    deaths: 'deaths',
+    ffDamage: 'HP',
+    healOthers: 'heals',
+    revivedOthers: 'revives',
+    survivorIncaps: 'incaps'
+  },
   data() {
     return {
       top_today: [],
@@ -76,19 +111,27 @@ export default {
       failure: false,
       players_total: 0,
       search: '',
-      loading: true
+      loading: true,
+      stats: {
+        loading: true,
+        data: null
+      }
     }
   },
   mounted() {
     let currentRoutePage = !isNaN(this.$route.params.page) ? parseInt(this.$route.params.page) : 0
     if(currentRoutePage <= 0) currentRoutePage = 1;
     this.top_page = currentRoutePage;
-    this.refreshInfo();
-    this.refreshTop();
+    Promise.all([
+      this.refreshInfo(),
+      this.refreshTop(),
+    ]).then(() => {
+      this.refreshStats()
+    })
   },
   methods: {
     refreshInfo() {
-      this.$http.get(`/api/info`, { cache: true })
+      return this.$http.get(`/api/info`, { cache: true })
       .then((r) => {
         this.players_total = r.data.total_users;
       })
@@ -108,7 +151,7 @@ export default {
     refreshTop() {
       console.debug('Loading users for page' + this.top_page)
       this.loading = true;
-      this.$http.get(`/api/top/${this.top_page}?max_results=12`, { cache: true })
+      return this.$http.get(`/api/top/users/${this.top_page}?max_results=12`, { cache: true })
       .then((r) => {
         this.top_today = r.data.users;
       })
@@ -124,6 +167,25 @@ export default {
             onAction: () => this.refreshTop()
         })
       }).finally(() => this.loading = false)
+    },
+    refreshStats() {
+      const stats = window.localStorage.getItem('l4d2_stats_topstats');
+      if(stats) {
+        const json = JSON.parse(stats);
+        if(Date.now() - json.timestamp <= 1000 * 60 * 60 * 24) {
+          this.stats.loading = false;
+          this.stats.data = json.stats;
+          return;
+        }
+      }
+      this.$http.get(`/api/top/stats`, { cache: true })
+      .then((r) => {
+        this.stats.data = r.data;
+      })
+      .catch(err => {
+        console.error('Fetch stats failed. ', err)
+      })
+      .finally(() => this.stats.loading = false)
     },
     onTopPageChange(page) {
       this.top_page = page;
@@ -141,3 +203,14 @@ export default {
   ]
 }
 </script>
+
+<style>
+.hero.is-medium .hero-body {
+  padding-top: 0 !important;
+  padding-bottom: 40px !important;
+}
+.carousel .carousel-indicator .indicator-item .indicator-style.is-dots {
+  height: 15px !important;
+  width: 15px !important;
+}
+</style>

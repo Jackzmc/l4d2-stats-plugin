@@ -57,7 +57,7 @@
           </div>-->
           <div class="box">
             <h5 class="title is-5">Top Statistics</h5>
-            <b-carousel :interval="60000" :pause-info="false" :arrow="false">
+            <b-carousel :interval="60000" :pause-info="false" :arrow="false" v-if="!stats.loading&&stats.data != null">
               <b-carousel-item v-for="stat in $options.STATS" :key="stat">
                   <section :class="`hero is-medium is-a`">
                       <div class="hero-body has-text-centered">
@@ -74,6 +74,7 @@
                   </section>
               </b-carousel-item>
             </b-carousel>
+            <p v-else>Loading</p>
           </div>
         </div>
       </div>

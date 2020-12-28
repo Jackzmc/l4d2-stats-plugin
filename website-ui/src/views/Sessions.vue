@@ -131,7 +131,7 @@ export default {
                 case 0: return "Easy"
                 case 1: return "Normal";
                 case 2: return "Advanced"
-                case 4: return "Expert"
+                case 3: return "Expert"
             }
         },
         getRGB(campaignID) {

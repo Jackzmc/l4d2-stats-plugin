@@ -13,9 +13,9 @@
             <b-navbar-item  tag="router-link" to="/top">
                 Leaderboards
             </b-navbar-item>
-            <b-navbar-item tag="router-link" to="/maps">
+            <!-- <b-navbar-item tag="router-link" to="/maps">
                 Maps List
-            </b-navbar-item>
+            </b-navbar-item> -->
             <b-navbar-item tag="router-link" to="/summary">
                 Summary
             </b-navbar-item>

@@ -99,11 +99,7 @@
         <p><b>Most Played Difficulty:</b></p>
         <p>{{ mostPlayedDifficulty }}</p>
     </div>
-    <hr>
-    <div class="container">
-        <h4 class="title is-4">Top Lists</h4>
-    </div>
-    <br>
+    <br><br>
 </div>
 </template>
 <script>
@@ -212,3 +208,9 @@ export default {
     }
 }
 </script>
+
+<style>
+img {
+    object-fit: contain;
+}
+</style>

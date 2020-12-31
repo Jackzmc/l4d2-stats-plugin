@@ -727,6 +727,7 @@ public void OnEntityCreated(int entity) {
 	}
 }
 void EntityCreateCallback(int entity) {
+	if(!HasEntProp(entity, Prop_Send, "m_hOwnerEntity")) return;
 	char class[32];
 
 	GetEntityClassname(entity, class, sizeof(class));

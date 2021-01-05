@@ -126,6 +126,7 @@ public void OnPluginStart()
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("gauntlet_finale_start", Event_FinaleStart);
 	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
+	HookEvent("player_disconnect", Event_PlayerDisconnect);
 	//Used to transition checkpoint statistics for stats_games
 	HookEvent("round_end", Event_RoundEnd);
 	HookEvent("map_transition", Event_MapTransition);
@@ -165,16 +166,17 @@ public void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[
 /////////////////////////////////
 // PLAYER AUTH
 /////////////////////////////////
-
 public void OnClientAuthorized(int client, const char[] auth) {
 	if(client > 0 && !IsFakeClient(client)) {
 		strcopy(steamidcache[client], 32, auth);
 		SetupUserInDB(client, steamidcache[client]);
 	}
 }
-public void OnClientDisconnect(int client) {
+public void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) {
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	bool isBot = event.GetBool("bot");
 	//Check if any pending stats to send.
-	if(!IsFakeClient(client)) {
+	if(!isBot) {
 		FlushQueuedStats(client);
 		steamidcache[client][0] = '\0';
 		points[client] = 0;
@@ -310,7 +312,7 @@ public void FlushQueuedStats(int client) {
 	char query[1023];
 	int minutes_played = (GetTime() - startedPlaying[client]) / 60;
 	//Incase somehow startedPlaying[client] not set (plugin reloaded?), defualt to 0
-	if(minutes_played >= 2147483646) {
+	if(minutes_played >= 2147483645) {
 		startedPlaying[client] = GetTime();
 		minutes_played = 0;
 	}
@@ -727,7 +729,7 @@ public void OnEntityCreated(int entity) {
 	}
 }
 void EntityCreateCallback(int entity) {
-	if(!HasEntProp(entity, Prop_Send, "m_hOwnerEntity")) return;
+	if(!HasEntProp(entity, Prop_Send, "m_hOwnerEntity") || !IsValidEntity(entity)) return;
 	char class[32];
 
 	GetEntityClassname(entity, class, sizeof(class));

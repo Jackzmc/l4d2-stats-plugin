@@ -18,6 +18,7 @@ public Plugin myinfo =
 	version = PLUGIN_VERSION, 
 	url = ""
 };
+static ConVar hServerTags;
 static Database g_db;
 static char steamidcache[MAXPLAYERS+1][32];
 bool lateLoaded = false, bVersus, bRealism;
@@ -100,6 +101,8 @@ public void OnPluginStart()
 			}
 		}
 	}
+
+	hServerTags = CreateConVar("l4d2_statsrecorder_tags", "", "A comma-seperated list of tags that will be used to identity this server.");
 
 	ConVar hGamemode = FindConVar("mp_gamemode");
 	hGamemode.GetString(gamemode, sizeof(gamemode));

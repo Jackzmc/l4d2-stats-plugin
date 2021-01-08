@@ -1,143 +1,159 @@
 {
-    "c1": {
-        "title": "Dead Center",
-        "image": "c1_dead_center.jpeg",
-        "chapters": [
-            "c1m1_hotel",
-            "c1m2_streets",
-            "c1m3_mall",
-            "c1m4_atrium"
-        ]
+    "official": {
+        "c1": {
+            "title": "Dead Center",
+            "image": "c1_dead_center.jpeg",
+            "chapters": [
+                "c1m1_hotel",
+                "c1m2_streets",
+                "c1m3_mall",
+                "c1m4_atrium"
+            ]
+        },
+        "c2": {
+            "title": "Dark Carnival",
+            "image": "c2_dark_carnival.jpeg",
+            "chapters": [
+                "c2m1_highway",
+                "c2m2_fairgrounds",
+                "c2m3_coaster",
+                "c2m4_barns",
+                "c2m5_concert"
+            ]
+        },
+        "c3": {
+            "title": "Swamp Fever",
+            "image": "c3_swamp_fever.jpeg",
+            "chapters": [
+                "c3m1_plankcountry",
+                "c3m2_swamp",
+                "c3m3_shantytown",
+                "c3m4_plantation"
+            ]
+        },
+        "c4": {
+            "title": "Hard Rain",
+            "image": "c4_hard_rain.jpeg",
+            "chapters": [
+                "c4m1_milltown_a",
+                "c4m2_sugarmill_a",
+                "c4m3_sugarmill_b",
+                "c4m4_milltown_b",
+                "c4m5_milltown_escape"
+            ]
+        },
+        "c5": {
+            "title": "The Parish",
+            "image": "c5_the_parish.jpeg",
+            "chapters": [
+                "c5m1_waterfront",
+                "c5m2_park",
+                "c5m3_cemetery",
+                "c5m4_quarter",
+                "c5m5_bridge"
+            ]
+        },
+        "c6": {
+            "title": "The Passing",
+            "image": "c6_the_passing.jpeg",
+            "chapters": [
+                "c6m1_riverbank",
+                "c6m2_bedlam",
+                "c6m3_port"
+            ]
+        },
+        "c7": {
+            "title": "The Sacrifice",
+            "image": "c7_the_sacrifice.jpeg",
+            "chapters": [
+                "c7m1_docks",
+                "c7m2_barge",
+                "c7m3_port"
+            ]
+        },
+        "c8": {
+            "title": "No Mercy",
+            "image": "c8_no_mercy.jpeg",
+            "chapters": [
+                "c8m1_apartment",
+                "c8m2_subway",
+                "c8m3_sewers",
+                "c8m4_interior",
+                "c8m5_rooftop"
+            ]
+        },
+        "c9": {
+            "title": "Crash Course",
+            "image": "c9_death_toll.jpeg",
+            "chapters": [
+                "c9m1_alleys",
+                "c9m2_lots"
+            ]
+        },
+        "c10": {
+            "title": "Death Toll",
+            "image": "c10_crash_course.jpeg",
+            "chapters": [
+                "c10m1_caves",
+                "c10m2_drainage",
+                "c10m3_ranchhouse",
+                "c10m4_mainstreet",
+                "c10m5_houseboat"
+            ]
+        },
+        "c11": {
+            "title": "Dead Air",
+            "image": "c11_dead_air.jpeg",
+            "chapters": [
+                "c11m1_greenhouse",
+                "c11m2_offices",
+                "c11m3_garage",
+                "c11m4_terminal",
+                "c11m5_runway"
+            ]
+        },
+        "c12": {
+            "title": "Blood Harvest",
+            "image": "c12_blood_harvest.jpeg",
+            "chapters": [
+                "c12m1_hilltop",
+                "c12m2_traintunnel",
+                "c12m3_bridge",
+                "c12m4_barn",
+                "c12m5_cornfield"
+            ]
+        },
+        "c13": {
+            "title": "Cold Stream",
+            "image": "c13_cold_stream.png",
+            "chapters": [
+                "c13m1_alpinecreek",
+                "c13m2_southpinestream",
+                "c14m3_memorialbridge",
+                "c14m4_cutthroatcreek"
+            ]
+        },
+        "c14": {
+            "title": "Last Stand",
+            "image": "c14_last_stand.jpg",
+            "chapters": [
+                "c14m1_junkyard",
+                "c14m2_lighthouse"
+            ]
+        }
     },
-    "c2": {
-        "title": "Dark Carnival",
-        "image": "c2_dark_carnival.jpeg",
-        "chapters": [
-            "c2m1_highway",
-            "c2m2_fairgrounds",
-            "c2m3_coaster",
-            "c2m4_barns",
-            "c2m5_concert"
-        ]
-    },
-    "c3": {
-        "title": "Swamp Fever",
-        "image": "c3_swamp_fever.jpeg",
-        "chapters": [
-            "c3m1_plankcountry",
-            "c3m2_swamp",
-            "c3m3_shantytown",
-            "c3m4_plantation"
-        ]
-    },
-    "c4": {
-        "title": "Hard Rain",
-        "image": "c4_hard_rain.jpeg",
-        "chapters": [
-            "c4m1_milltown_a",
-            "c4m2_sugarmill_a",
-            "c4m3_sugarmill_b",
-            "c4m4_milltown_b",
-            "c4m5_milltown_escape"
-        ]
-    },
-    "c5": {
-        "title": "The Parish",
-        "image": "c5_the_parish.jpeg",
-        "chapters": [
-            "c5m1_waterfront",
-            "c5m2_park",
-            "c5m3_cemetery",
-            "c5m4_quarter",
-            "c5m5_bridge"
-        ]
-    },
-    "c6": {
-        "title": "The Passing",
-        "image": "c6_the_passing.jpeg",
-        "chapters": [
-            "c6m1_riverbank",
-            "c6m2_bedlam",
-            "c6m3_port"
-        ]
-    },
-    "c7": {
-        "title": "The Sacrifice",
-        "image": "c7_the_sacrifice.jpeg",
-        "chapters": [
-            "c7m1_docks",
-            "c7m2_barge",
-            "c7m3_port"
-        ]
-    },
-    "c8": {
-        "title": "No Mercy",
-        "image": "c8_no_mercy.jpeg",
-        "chapters": [
-            "c8m1_apartment",
-            "c8m2_subway",
-            "c8m3_sewers",
-            "c8m4_interior",
-            "c8m5_rooftop"
-        ]
-    },
-    "c9": {
-        "title": "Crash Course",
-        "image": "c9_death_toll.jpeg",
-        "chapters": [
-            "c9m1_alleys",
-            "c9m2_lots"
-        ]
-    },
-    "c10": {
-        "title": "Death Toll",
-        "image": "c10_crash_course.jpeg",
-        "chapters": [
-            "c10m1_caves",
-            "c10m2_drainage",
-            "c10m3_ranchhouse",
-            "c10m4_mainstreet",
-            "c10m5_houseboat"
-        ]
-    },
-    "c11": {
-        "title": "Dead Air",
-        "image": "c11_dead_air.jpeg",
-        "chapters": [
-            "c11m1_greenhouse",
-            "c11m2_offices",
-            "c11m3_garage",
-            "c11m4_terminal",
-            "c11m5_runway"
-        ]
-    },
-    "c12": {
-        "title": "Blood Harvest",
-        "image": "c12_blood_harvest.jpeg",
-        "chapters": [
-            "c12m1_hilltop",
-            "c12m2_traintunnel",
-            "c12m3_bridge",
-            "c12m4_barn",
-            "c12m5_cornfield"
-        ]
-    },
-    "c13": {
-        "title": "Cold Stream",
-        "image": "c13_cold_stream.png",
-        "chapters": [
-            "c13m1_alpinecreek",
-            "c13m2_southpinestream",
-            "c14m3_memorialbridge",
-            "c14m4_cutthroatcreek"
-        ]
-    },
-    "c14": {
-        "title": "Last Stand",
-        "image": "c14_last_stand.jpg",
-        "chapters": [
-            "c14m1_junkyard",
-            "c14m2_lighthouse"
-        ]
+    "custom": {
+        "dw_final": {
+            "title": "Dark Wood"
+        },
+        "beldurra03_riverside": {
+            "title": "Beldurra"
+        },
+        "l4d2_city17_05": {
+            "title": "City 17"
+        },
+        "l4d2_bts06_school": {
+            "title": "Back to School"
+        }
     }
 }

@@ -33,7 +33,7 @@
                     <router-link :to='"/user/" + props.row.steamid'><b>{{props.row.last_alias}}</b></router-link>
                 </b-table-column>
                 <b-table-column field="map" label="Map" >
-                    {{ getMapNameByChapter(props.row.map) }}
+                    {{ getMapName(props.row.map) }}
                 </b-table-column>
                 <b-table-column field="survivorDamage" label="Friendly Fire" centered cell-class="number-cell">
                     {{ props.row.SurvivorDamage | formatNumber }}
@@ -76,7 +76,7 @@
 </template>
 
 <script>
-import { getMapNameByChapter } from '../js/map'
+import { getMapName } from '../js/map'
 export default {
     data() {
         return {
@@ -94,7 +94,7 @@ export default {
         document.title = `Sessions - L4D2 Stats Plugin`
     },
     methods: {
-        getMapNameByChapter,
+        getMapName,
         fetchSessions() {
             this.loading = true;
             this.$http.get(`/api/sessions/?page=${this.current_page}&perPage=12`, { cache: true })

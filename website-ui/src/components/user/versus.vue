@@ -71,7 +71,7 @@
 
 <script>
 import { formatDuration } from 'date-fns'
-import { getMapNameByChapter } from '../../js/map'
+import { getMapName } from '../../js/map'
 export default {
     props: ['user'],
     data() {
@@ -83,7 +83,7 @@ export default {
     },
     filters: {
         formatMap(str) {
-            return getMapNameByChapter(str)
+            return getMapName(str)
         },
         formatMS(inp) {
             return formatDuration({seconds: inp / 1000})

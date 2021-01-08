@@ -61,7 +61,7 @@
 
 <script>
 import NoMapImage from '@/assets/no_map_image.png'
-import { getMapNameByChapter, getMapImage} from '../js/map'
+import { getMapName, getMapImage} from '../js/map'
 export default {
     data() {
         return {
@@ -103,7 +103,7 @@ export default {
             //this.$router.replace(`/maps/${sel.map_name}`)
         },
         getCampaignDetailLink(mapName) {
-            const id = getMapNameByChapter(mapName).toLowerCase().replace(/\s/, '-');
+            const id = getMapName(mapName).toLowerCase().replace(/\s/, '-');
             return `/maps/${id}/details`
         }
     },
@@ -128,7 +128,7 @@ export default {
     },
     filters: {
         formatMap(str) {
-            return getMapNameByChapter(str)
+            return getMapName(str)
         },
     }
 }

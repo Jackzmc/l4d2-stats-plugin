@@ -20,7 +20,7 @@
                 </b-button>
             </b-table-column>
             <b-table-column field="map" label="Map" >
-                {{ getMapNameByChapter(props.row.map) }}
+                {{ getMapName(props.row.map) }}
             </b-table-column>
             <b-table-column field="zombieKills" label="Zombie Kills" centered cell-class="number-cell">
                 {{ props.row.zombieKills | formatNumber }}
@@ -62,7 +62,7 @@
 </template>
 
 <script>
-import { getMapNameByChapter } from '../../js/map'
+import { getMapName } from '../../js/map'
 export default {
     props: ['user'],
     data() {
@@ -81,7 +81,7 @@ export default {
         document.title = `Sessions - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
     },
     methods: {
-        getMapNameByChapter,
+        getMapName,
         fetchSessions() {
             this.loading = true;
             this.$http.get(`/api/user/${this.user.steamid}/sessions/${this.current_page}`, { cache: true })

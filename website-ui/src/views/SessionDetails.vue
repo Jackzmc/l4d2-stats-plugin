@@ -184,7 +184,7 @@
 </template>
 
 <script>
-import { getMapNameByChapter} from '../js/map'
+import { getMapName } from '../js/map'
 import {PieChart, BarChart, getChartData } from '../js/graphs.js'
 export default {
     data() {
@@ -269,7 +269,7 @@ export default {
             ], '#62a4b4');
         },
         mapTitle() {
-            return this.session.map ? getMapNameByChapter(this.session.map) : null
+            return this.session.map ? getMapName(this.session.map) : null
         },
         mapId() {
             const title = this.mapTitle;

@@ -154,6 +154,15 @@
         },
         "l4d2_bts06_school": {
             "title": "Back to School"
+        },
+        "deadbeat04_park": {
+            "title": "Dead Beat"
+        },
+        "l4d_yama_5": {
+            "title": "Yama"
+        },
+        "uf4_airfield": {
+            "title": "Urban Flight"
         }
     }
 }

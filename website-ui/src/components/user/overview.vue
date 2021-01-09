@@ -267,10 +267,59 @@
             </tbody>
         </table>
         <hr>
-        <linkanchor id="times" text="Times" />
-        <p>This statistic has no data recorded.</p>
+        <linkanchor id="averages" text="Averages" />
+        <p v-if="!averages">This statistic has no data recorded.</p>
+        <table v-else class="table is-bordered is-fullwidth">
+            <thead>
+            <tr class="has-background-white-ter">
+                <th>Statistic</th>
+                <th align="center">Total</th>
+                <th align="center">Per Session</th>
+                <th align="center">Per Minutes Played</th>
+                <th align="center">Globally</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Deaths</td>
+                <td class="tvalue">{{averages.survivor_deaths | formatNumber}}</td>
+                <td class="tvalue">{{(averages.survivor_deaths / averages.totalSessions).toFixed(2)}}</td>
+                <td class="tvalue">{{(averages.survivor_deaths / averages.minutes_played).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.survivor_deaths / averages.globalTotalSessions).toFixed(2)}}</td>
+            </tr>
+            <tr>
+                <td>Friendly Fire</td>
+                <td class="tvalue">{{averages.survivor_ff | formatNumber}}</td>
+                <td class="tvalue">{{(averages.survivor_ff / averages.totalSessions).toFixed(2)}}</td>
+                <td class="tvalue">{{(averages.survivor_ff / averages.minutes_played).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.survivor_ff / averages.globalTotalSessions).toFixed(2)}}</td>
+            </tr>
+            <tr>
+                <td>Healing Others</td>
+                <td class="tvalue">{{averages.heal_others | formatNumber}}</td>
+                <td class="tvalue">{{(averages.heal_others / averages.totalSessions).toFixed(2)}}</td>
+                <td class="tvalue">{{(averages.heal_others / averages.minutes_played).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.heal_others / averages.globalTotalSessions).toFixed(2)}}</td>
+            </tr>
+            <tr>
+                <td>Revived Others</td>
+                <td class="tvalue">{{averages.revived_others | formatNumber}}</td>
+                <td class="tvalue">{{(averages.revived_others / averages.totalSessions).toFixed(2)}}</td>
+                <td class="tvalue">{{(averages.revived_others / averages.minutes_played).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.revived_others / averages.globalTotalSessions).toFixed(2)}}</td>
+            </tr>
+            <tr>
+                <td>Incaps</td>
+                <td class="tvalue">{{averages.survivor_incaps | formatNumber}}</td>
+                <td class="tvalue">{{(averages.survivor_incaps / averages.totalSessions).toFixed(2)}}</td>
+                <td class="tvalue">{{(averages.survivor_incaps / averages.minutes_played).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.survivor_incaps / averages.globalTotalSessions).toFixed(2)}}</td>
+            </tr>
+            </tbody>
+        </table>
     </div>
-    <div class="column is-4">
+    <!-- TODO: Add like a custom image generation -->
+    <div class="column is-3">
         <div class="box">
             <h5 class="title is-5">Sections</h5>
             <div class="content has-text-left">
@@ -279,17 +328,17 @@
                 <li><a href="#kills">Kills</a></li>
                 <li><a href="#survivorstats">Survivor Stats</a></li>
                 <li><a href="#throwables">Throwable Stats</a></li>
-                <li><a href="#times">Times</a></li>
+                <li><a href="#averages">Averages</a></li>
                 </ul>
             </div>
         </div>
-        <div class="box">
+        <!-- <div class="box">
             <h5 class="title is-5">Best Map</h5>
             <img :src="mapUrl" />
             <p><strong>Dead Center</strong></p>
             <p>0 Wins</p>
             <p>Fastest Time: 5s</p>
-        </div>
+        </div> -->
     </div>
     <br>
 </div>
@@ -303,6 +352,11 @@ import linkanchor from '@/components/linkanchor'
 
 export default {
     props: ['user'],
+    data() {
+        return {
+            averages: null
+        }
+    },
     computed: {
         disabled() {
             return this.error || this.not_found
@@ -321,6 +375,11 @@ export default {
             return NoMapImage
         }
         
+    },
+    watch: {
+        '$route.params.user': () => {
+            this.fetchAverages();
+        }
     },
     methods: {
         formatDateAndRel(inp) {
@@ -349,9 +408,27 @@ export default {
                 return `${minutes} ${min_text}`
             }
         },
+        fetchAverages() {
+            this.$http.get(`/api/user/${this.user.steamid}/averages`)
+            .then(res => {
+                this.averages = res.data;
+            }) 
+            .catch(err => {
+                console.error('Could not load average values', err)
+            })
+        }
     },
     mounted() {
         document.title = `Overview - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
+        document.addEventListener("scroll", () => {
+            if (document.documentElement.scrollTop > 1000 && this.averages === null) {
+                this.averages = false;
+                this.fetchAverages();
+            }
+        })
+    },
+    destroyed() {
+        document.removeEventListener('scroll')
     },
     components: {
         linkanchor

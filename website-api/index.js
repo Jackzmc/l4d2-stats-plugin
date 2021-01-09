@@ -72,6 +72,21 @@ async function main() {
             res.status(500).json({error:"Internal Server Error"})
         }
     })
+    app.get('/api/user/:user/averages',async(req,res) => {
+        if(!req.params.user) return res.status(404).json(null)
+        try {
+            const [totalSessions] = await pool.execute("SELECT (SELECT COUNT(*) as count FROM stats_games WHERE steamid = ?) as count, (SELECT COUNT(*) FROM `stats_games`) AS total_sessions", [req.params.user])
+            const [deaths] = await pool.execute(`SELECT steamid,last_alias,minutes_played,survivor_deaths,survivor_ff,heal_others,revived_others,survivor_incaps FROM \`stats_users\` where steamid = ?`, [req.params.user])
+            res.json({
+                totalSessions: totalSessions[0].count,
+                globalTotalSessions: totalSessions[0].total_sessions,
+                ...deaths[0]
+            });
+        }catch(err) {
+            console.error('[/api/:user/averages]',err.message);
+            res.status(500).json({error:"Internal Server Error"})
+        }
+    })
     app.get('/api/search/:user',async(req,res) => {
         try {
             //TODO: add top_gamemode

@@ -22,7 +22,7 @@ static ConVar hServerTags;
 static Database g_db;
 static char steamidcache[MAXPLAYERS+1][32];
 bool lateLoaded = false, bVersus, bRealism;
-static char gamemode[32];
+static char gamemode[32], serverTags[255];
 
 //Stats that need to be only sent periodically. (note: possibly deaths?)
 static int damageSurvivorGiven[MAXPLAYERS+1];
@@ -103,6 +103,8 @@ public void OnPluginStart()
 	}
 
 	hServerTags = CreateConVar("l4d2_statsrecorder_tags", "", "A comma-seperated list of tags that will be used to identity this server.");
+	hServerTags.GetString(serverTags, sizeof(serverTags));
+	hServerTags.AddChangeHook(CVC_TagsChanged);
 
 	ConVar hGamemode = FindConVar("mp_gamemode");
 	hGamemode.GetString(gamemode, sizeof(gamemode));
@@ -129,7 +131,6 @@ public void OnPluginStart()
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("gauntlet_finale_start", Event_FinaleStart);
 	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
-	HookEvent("player_disconnect", Event_PlayerDisconnect);
 	//Used to transition checkpoint statistics for stats_games
 	HookEvent("round_end", Event_RoundEnd);
 	HookEvent("map_transition", Event_MapTransition);
@@ -143,7 +144,7 @@ public void OnPluginStart()
 public void OnPluginEnd() {
 	for(int i=1; i<=MaxClients;i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
-			FlushQueuedStats(i);
+			FlushQueuedStats(i, false);
 		}
 	}
 }
@@ -155,7 +156,7 @@ public Action Timer_FlushStats(Handle timer) {
 	if(GetClientCount(true) > 0) {
 		for(int i=1; i<=MaxClients;i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
-				FlushQueuedStats(i);
+				FlushQueuedStats(i, false);
 			}
 		}
 	}
@@ -166,6 +167,9 @@ public Action Timer_FlushStats(Handle timer) {
 public void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[] newValue) {
 	strcopy(gamemode, sizeof(gamemode), newValue);
 }
+public void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
+	strcopy(serverTags, sizeof(serverTags), newValue);
+}
 /////////////////////////////////
 // PLAYER AUTH
 /////////////////////////////////
@@ -175,12 +179,10 @@ public void OnClientAuthorized(int client, const char[] auth) {
 		SetupUserInDB(client, steamidcache[client]);
 	}
 }
-public void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast) {
-	int client = GetClientOfUserId(event.GetInt("userid"));
-	bool isBot = event.GetBool("bot");
+public void OnClientDisconnect(int client) {
 	//Check if any pending stats to send.
-	if(!isBot) {
-		FlushQueuedStats(client);
+	if(!IsFakeClient(client)) {
+		FlushQueuedStats(client, true);
 		steamidcache[client][0] = '\0';
 		points[client] = 0;
 		
@@ -261,7 +263,7 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 		}
 
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s')",
 			steamidcache[client],
 			mapname,
 			gamemode,
@@ -291,7 +293,8 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			sJockeyKills[client],
 			sHunterKills[client],
 			sSpitterKills[client],
-			sChargerKills[client]
+			sChargerKills[client],
+			serverTags
 		);
 		SQL_LockDatabase(g_db);
 		bool result = SQL_FastQuery(g_db, query);
@@ -307,7 +310,7 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 	}
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
-public void FlushQueuedStats(int client) {
+public void FlushQueuedStats(int client, bool disconnect) {
 	if(!IsClientConnected(client)) {
 		return;
 	}
@@ -344,7 +347,14 @@ public void FlushQueuedStats(int client) {
 			minigunKills[client],										//kills_minigun
 			steamidcache[client][0]
 		);
-		SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, client);
+		if(disconnect) {
+			SQL_LockDatabase(g_db);
+			SQL_FastQuery(g_db, query);
+			SQL_UnlockDatabase(g_db);
+			ResetInternal(client, true);
+		}else{
+			SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, client);
+		}
 		//And clear them.
 	}
 }
@@ -483,22 +493,25 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 	}
 }
 //After a user's stats were flushed, reset any statistics needed to zero.
-public void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, any data) {
+public void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, int client) {
 	if(db == INVALID_HANDLE || child == INVALID_HANDLE) {
 		LogError("DBCT_FlushQueuedStats returned error: %s", error);
 	}else{
-		int client = data;
-		damageSurvivorFF[client] = 0;
-		damageSurvivorGiven[client] = 0;
-		doorOpens[client] = 0;
-		witchKills[client] = 0;
-		upgradePacksDeployed[client] = 0;
-		molotovDamage[client] = 0;
-		pipeKills[client] = 0;
-		molotovKills[client] = 0;
-		minigunKills[client] = 0;
-		startedPlaying[client] = GetTime();
+		ResetInternal(client, false);
 	}
+}
+public void ResetInternal(int client, bool disconnect) {
+	damageSurvivorFF[client] = 0;
+	damageSurvivorGiven[client] = 0;
+	doorOpens[client] = 0;
+	witchKills[client] = 0;
+	upgradePacksDeployed[client] = 0;
+	molotovDamage[client] = 0;
+	pipeKills[client] = 0;
+	molotovKills[client] = 0;
+	minigunKills[client] = 0;
+	if(!disconnect)
+		startedPlaying[client] = GetTime();
 }
 ////////////////////////////
 // COMMANDS
@@ -686,7 +699,7 @@ public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast)
 }
 public void Event_DoorOpened(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
-	if(event.GetBool("closed") && !IsFakeClient(client)) {
+	if(client > 0 && event.GetBool("closed") && !IsFakeClient(client)) {
 		doorOpens[client]++;
 
 	}
@@ -737,13 +750,14 @@ void EntityCreateCallback(int entity) {
 
 	GetEntityClassname(entity, class, sizeof(class));
 	int entOwner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
-	
-	if(StrEqual(class, "vomitjar_projectile", true)) {
-		IncrementStat(entOwner, "throws_puke", 1);
-	}else if(StrEqual(class, "molotov_projectile", true)) {
-		IncrementStat(entOwner, "throws_molotov", 1);
-	}else if(StrEqual(class, "pipe_bomb_projectile", true)) {
-		IncrementStat(entOwner, "throws_pipe", 1);
+	if(entOwner > 0) {
+		if(StrEqual(class, "vomitjar_projectile", true)) {
+			IncrementStat(entOwner, "throws_puke", 1);
+		}else if(StrEqual(class, "molotov_projectile", true)) {
+			IncrementStat(entOwner, "throws_molotov", 1);
+		}else if(StrEqual(class, "pipe_bomb_projectile", true)) {
+			IncrementStat(entOwner, "throws_pipe", 1);
+		}
 	}
 }
 bool isTransition = false;
@@ -757,7 +771,7 @@ public void OnMapStart() {
 		for(int i = 1; i < MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
 				ResetSessionStats(i, true);
-				FlushQueuedStats(i);
+				FlushQueuedStats(i, false);
 			}
 		}
 	}
@@ -767,7 +781,7 @@ public void Event_MapTransition(Event event, const char[] name, bool dontBroadca
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && !IsFakeClient(i)) {
 			IncrementSessionStat(i);
-			FlushQueuedStats(i);
+			FlushQueuedStats(i, false);
 		}
 	}
 }
@@ -777,7 +791,7 @@ public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
 			//ResetSessionStats(i, false);
-			FlushQueuedStats(i);
+			FlushQueuedStats(i, false);
 		}
 	}
 }

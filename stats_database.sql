@@ -98,7 +98,9 @@ CREATE TABLE `stats_users` (
   `damage_molotov` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `kills_molotov` int(10) UNSIGNED NOT NULL DEFAULT 0,
   `kills_pipe` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `kills_minigun` int(10) UNSIGNED NOT NULL DEFAULT 0
+  `kills_minigun` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `server_tags` text,
+  `characterType` tinyint(3) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 

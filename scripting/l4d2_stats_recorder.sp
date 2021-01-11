@@ -8,6 +8,7 @@
 #include <sdktools>
 #include <geoip>
 #include <sdkhooks>
+#include "jutils.inc"
 //#include <sdkhooks>
 
 public Plugin myinfo = 
@@ -262,8 +263,11 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			PrintToServer("Warn: Client %N for %s | 0 zombie kills", client, uuid);
 		}
 
+		char model[64];
+		GetClientModel(client, model, sizeof(model));
+
 		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s')",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d)",
 			steamidcache[client],
 			mapname,
 			gamemode,
@@ -294,7 +298,8 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 			sHunterKills[client],
 			sSpitterKills[client],
 			sChargerKills[client],
-			serverTags
+			serverTags,
+			GetSurvivorType(model)
 		);
 		SQL_LockDatabase(g_db);
 		bool result = SQL_FastQuery(g_db, query);

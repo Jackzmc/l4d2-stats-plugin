@@ -53,14 +53,24 @@ const routes = [
     component: () => import(/* webpackChunkName: "faq" */ '@/views/FAQ.vue')
   },
   {
+    path: '/campaigns/:id',
+    name: 'Campaign',
+    component: () => import(/* webpackChunkName: "campaignsdetails" */ '@/views/campaigns/Details.vue')
+  },
+  {
+    path: '/campaigns',
+    name: 'Campaigns',
+    component: () => import(/* webpackChunkName: "campaigns" */ '@/views/Campaigns/List.vue')
+  },
+  {
     path: '/sessions/:page?',
     name: 'Sessions',
-    component: () => import(/* webpackChunkName: "times" */ '@/views/Sessions.vue')
+    component: () => import(/* webpackChunkName: "sessions" */ '@/views/Sessions.vue')
   },
   {
     path: '/sessions/details/:id',
     name: 'SessionDetail',
-    component: () => import(/* webpackChunkName: "times" */ '@/views/SessionDetails.vue')
+    component: () => import(/* webpackChunkName: "sessionsdetails" */ '@/views/SessionDetails.vue')
   },
   {
     path: '/summary',

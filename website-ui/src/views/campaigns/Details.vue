@@ -36,7 +36,7 @@
             <div v-for="session in sessions" class="column is-3" :key="session.id">
                 <div class="box">
                     <img class="is-inline-block is-pulled-left" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" />
-                    <h5 class="title is-5">{{session.last_alias}}</h5>
+                    <h6 class="title is-6">{{session.last_alias.substring(0,20)}}</h6>
                     <p class="subtitle is-6">{{session.points | formatNumber}} points</p>
                     <hr class="player-divider">
                     <ul class="has-text-right">

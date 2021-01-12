@@ -60,7 +60,7 @@ const routes = [
   {
     path: '/campaigns',
     name: 'Campaigns',
-    component: () => import(/* webpackChunkName: "campaigns" */ '@/views/Campaigns/List.vue')
+    component: () => import(/* webpackChunkName: "campaigns" */ '@/views/campaigns/List.vue')
   },
   {
     path: '/sessions/:page?',

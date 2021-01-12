@@ -99,42 +99,12 @@ async function main() {
             res.status(500).json({error:"Internal Server Error"})
         }
     })
-    app.get('/api/maps/',async(req,res) => {
+    app.get('/api/campaigns/:id', async(req,res) => {
         try {
-            const [rows] = await pool.execute("SELECT map_name,wins FROM `stats_maps` GROUP BY map_name ORDER BY `wins` DESC ")
-            res.json({
-                maps: rows
-            })
+            const [rows] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid WHERE left(`stats_games`.campaignID,8) = ?", [req.params.id.substring(0,8)])
+            res.json(rows)
         }catch(err) {
-            console.error('[/api/maps]',err.message);
-            res.status(500).json({error:"Internal Server Error"})
-        }
-    })
-    app.get('/api/maps/:map',async(req,res) => {
-        try {
-            const [rows] = await pool.execute("SELECT * FROM `stats_maps` WHERE `map_name` = ?", [req.params.map.toLowerCase()])
-            const [bestTime] = await pool.execute("SELECT stats_games.id,stats_games.steamid,stats_games.campaignID,stats_games.map,stats_games.date_end - stats_games.date_start AS duration, stats_users.last_alias FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid WHERE `date_start` IS NOT NULL AND `map`=?  ORDER BY duration,finale_time asc LIMIT 1", [req.params.map.toLowerCase()])
-            let totals = {
-                wins: 0,
-                easy: 0, 
-                normal: 0,
-                advanced: 0,
-                expert: 0,
-                realism: 0
-            }
-            rows.forEach(map => {
-                for(const total in totals) {
-                    if(map[total] > 0)
-                        totals[total] += map[total]
-                }
-            })
-            res.json({
-                best: bestTime.length > 0 ? bestTime[0] : null,
-                totals,
-                total_played: rows.length
-            })
-        }catch(err) {
-            console.error('[/api/maps]',err.message);
+            console.error('[/api/user/:user]',err.message);
             res.status(500).json({error:"Internal Server Error"})
         }
     })

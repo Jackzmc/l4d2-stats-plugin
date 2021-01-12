@@ -144,7 +144,7 @@
                             <div>
                                 <div class="has-text-left is-inline-block">
                                     <router-link v-if="session.steamid != userRecord.steamid" :to="'/user/' + userRecord.steamid"><b>{{userRecord.last_alias}}</b></router-link>
-                                    <p v-else><b>{{userRecord.last_alias}}</b></p>
+                                    <p v-else><b>{{userRecord.last_alias.substring(0, 40)}}</b></p>
                                 </div>
                                 <div class="is-pulled-right is-inline">
                                     <router-link v-if="session.steamid != userRecord.steamid" :to="'/sessions/details/' + userRecord.id">(view stats)</router-link>
@@ -173,10 +173,16 @@
                         </span>
                         <strong>Average Ping</strong>
                         <p>{{session.ping}} ms</p>
+                        <span v-if="session.server_tags">
+                            <strong>Tags</strong>
+                            <b-taglist>
+                                <b-tag v-for="tag in session.server_tags.split(',')" :key="tag">{{tag}}</b-tag>
+                            </b-taglist>
+                        </span>
                     </div>
                 </div>
                 <em>Campaign ID</em><br>
-                <em>{{session.campaignID}}</em>
+                <em><router-link :to="campaignURL"> {{session.campaignID}}</router-link></em>
             </div>
         </div>
     </div>
@@ -275,7 +281,10 @@ export default {
             const title = this.mapTitle;
             return title ? title.toLowerCase().replace(/\s/, '-') : null
         },
-        
+        campaignURL() {
+            return this.session && this.session.campaignID ? 
+                `/campaigns/${this.session.campaignID.substring(0,8)}` : '#'
+        }
     },
     methods: {
         getDifficulty(inp) {

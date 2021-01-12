@@ -86,13 +86,13 @@
             <div class="column">
                 <p class="title is-6">Most Played Map</p>
                 <figure class="image is-4by3">
-                    <img :src="'/img/' + mostPlayedCampaignImage">
+                    <img :src="'/img/posters/' + mostPlayedCampaignImage">
                 </figure>
             </div>
             <div class="column">
                 <p class="title is-6">Least Played Map</p>
                 <figure class="image is-4by3">
-                    <img :src="'/img/' + leastPlayedCampaignImage">
+                    <img :src="'/img/posters/' + leastPlayedCampaignImage">
                 </figure>
             </div>
         </div>

@@ -118,7 +118,7 @@ export default {
         mapUrl() {
             if(this.selected) {
                 const imageUrl = getMapImage(this.selected.map_name);
-                return imageUrl ? `/img/${imageUrl}` : NoMapImage;
+                return imageUrl ? `/img/posters/${imageUrl}` : NoMapImage;
             }
             return NoMapImage
         }

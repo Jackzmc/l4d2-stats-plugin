@@ -36,7 +36,7 @@
                     <div class="tile is-parent is-8">
                         <article class="tile is-child ">
                         <figure class="image is-4by3">
-                            <img :src="'/img/' + campaign.image">
+                            <img :src="'/img/posters/' + campaign.image">
                         </figure>
                         </article>
                     </div>

@@ -35,7 +35,7 @@
         <div class="columns is-multiline">
             <div v-for="session in sessions" class="column is-3" :key="session.id">
                 <div class="box">
-                    <img class="is-inline-block is-pulled-left" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" />
+                    <img class="is-inline-block is-pulled-left image is-128x128" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" />
                     <h6 class="title is-6">{{session.last_alias.substring(0,20)}}</h6>
                     <p class="subtitle is-6">{{session.points | formatNumber}} points</p>
                     <hr class="player-divider">
@@ -139,7 +139,7 @@ export default {
                 case 5: return "zoey"
                 case 6: return "biker"
                 case 7: return "manager"
-                default: return "gambler"
+                default: return "random"
             }
         }
     }

@@ -19,6 +19,9 @@
             <b-navbar-item tag="router-link" to="/summary">
                 Summary
             </b-navbar-item>
+            <b-navbar-item tag="router-link" to="/campaigns">
+                Campaigns
+            </b-navbar-item>
             <b-navbar-item tag="router-link" to="/sessions">
                 Sessions
             </b-navbar-item>

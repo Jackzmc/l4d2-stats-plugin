@@ -29,7 +29,7 @@
         <br>
         <h4 class="title is-4">Players</h4>
         <div class="columns is-multiline">
-            <div v-for="(session,i) in sessions" class="column is-3" :key="session.id">
+            <div v-for="(session) in sessions" class="column is-3" :key="session.id">
                 <div class="box" style="position: relative">
                     <img class="is-inline-block is-pulled-left image is-128x128" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" />
                     <h6 class="title is-6">{{session.last_alias.substring(0,20)}}</h6>
@@ -42,7 +42,7 @@
                     </ul>
                     <br>
                     <b-button type="is-info" tag="router-link" :to="'/sessions/details/' + session.id" expanded>View Details</b-button>
-                    <div v-if="i == 0" class="ribbon ribbon-top-left"><span>MVP</span></div>
+                    <div v-if="mvp == session.steamid" class="ribbon ribbon-top-left"><span>MVP</span></div>
                 </div>
             </div> 
         </div>
@@ -174,6 +174,7 @@ export default {
             loading: true,
             sessions: [],
             totals: null,
+            mvp: null
         }
     },
     watch: {
@@ -193,7 +194,8 @@ export default {
             this.loading = true;
             this.$http.get(`/api/campaigns/${this.$route.params.id}`)
             .then(r => {
-                this.sessions = r.data;
+                this.mvp = r.data[0].steamid;
+                this.sessions = r.data.sort((a,b) => b.points - a.points);
                 this.totals = r.data.reduce((pv, cv) => {
                     return {
                         ZombieKills: pv.ZombieKills + cv.ZombieKills,

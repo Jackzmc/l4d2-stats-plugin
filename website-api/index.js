@@ -101,8 +101,22 @@ async function main() {
     })
     app.get('/api/campaigns/:id', async(req,res) => {
         try {
-            const [rows] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid WHERE left(`stats_games`.campaignID,8) = ?", [req.params.id.substring(0,8)])
+            const [rows] = await pool.execute("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid  WHERE left(`stats_games`.campaignID,8) = ? ORDER BY SpecialInfectedKills desc, SurvivorDamage asc, ZombieKills desc, DamageTaken asc", [req.params.id.substring(0,8)])
             res.json(rows)
+        }catch(err) {
+            console.error('[/api/user/:user]',err.message);
+            res.status(500).json({error:"Internal Server Error"})
+        }
+    })
+    app.get('/api/campaigns', async(req,res) => {
+        try {
+            const [total] = await pool.execute("SELECT COUNT(dISTINCT campaignID) as total FROM `stats_games`")
+            const [recent] = await pool.execute("SELECT g.campaignID, g.map, g.date_start, g.date_end, difficulty, gamemode,SUM(ZombieKills) as CommonsKilled, SUM(SurvivorDamage) as FF, SUM(Deaths) as Deaths, SUM(MedkitsUsed), (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as ThrowableTotal FROM `stats_games` as g INNER JOIN `stats_users` ON g.steamid = `stats_users`.steamid group by g.campaignID order by date_end desc limit 4")
+            res.json({
+                recentCampaigns: recent,
+                topCampaigns: [],
+                total_campaigns: total[0].total
+            })
         }catch(err) {
             console.error('[/api/user/:user]',err.message);
             res.status(500).json({error:"Internal Server Error"})

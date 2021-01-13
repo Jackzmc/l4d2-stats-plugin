@@ -1,10 +1,10 @@
 <template>
 <div>
     <section class="hero is-dark">
-        <div v-if="sessions.length > 0" class="hero-body">
+        <div class="hero-body">
             <div class="container">
                 <div class="columns">
-                    <div class="column">
+                    <div v-if="$route.params.id && sessions.length > 0 && !loading" class="column">
                         <h1 class="title">
                             Campaign {{$route.params.id.substring(0,8)}}
                         </h1>
@@ -13,14 +13,10 @@
                         <p class="is-size-4">
                             {{mapTitle}} • {{getGamemode(sessions[0].gamemode)}} • {{getDifficulty(sessions[0].difficulty)}} 
                         </p>
+                        <br>
+                        <p class="is-size-5">{{secondsToHms(sessions[0].date_end-sessions[0].date_start)}} long</p>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div v-else class="hero-body">
-            <div class="container">
-                <div class="columns">
-                    <div class="column">
+                    <div v-else-if="!loading" class="column">
                         <h1 class="title">
                             Campaign Not Found
                         </h1>
@@ -33,26 +29,139 @@
         <br>
         <h4 class="title is-4">Players</h4>
         <div class="columns is-multiline">
-            <div v-for="session in sessions" class="column is-3" :key="session.id">
-                <div class="box">
+            <div v-for="(session,i) in sessions" class="column is-3" :key="session.id">
+                <div class="box" style="position: relative">
                     <img class="is-inline-block is-pulled-left image is-128x128" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" />
                     <h6 class="title is-6">{{session.last_alias.substring(0,20)}}</h6>
                     <p class="subtitle is-6">{{session.points | formatNumber}} points</p>
                     <hr class="player-divider">
                     <ul class="has-text-right">
                         <li><span class="has-text-info">{{session.ZombieKills}}</span> commons killed</li>
-                        <li><span class="has-text-info">{{getSpecialKills(session)}}</span>  specials killed</li>
+                        <li><span class="has-text-info">{{session.SpecialInfectedKills}}</span>  specials killed</li>
                         <li><span class="has-text-info">{{session.SurvivorDamage}}</span>  friendly fire HP dealt</li>
                     </ul>
                     <br>
                     <b-button type="is-info" tag="router-link" :to="'/sessions/details/' + session.id" expanded>View Details</b-button>
+                    <div v-if="i == 0" class="ribbon ribbon-top-left"><span>MVP</span></div>
                 </div>
             </div> 
         </div>
     </div>
     <hr>
     <h4 class="title is-4">Statistics</h4>
-
+    <div v-if="totals" class="container is-fluid">
+        <div class="columns">
+            <div class="column">
+                <nav class="level">
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Zombies Killed</p>
+                        <p class="title">{{totals.ZombieKills}}</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Damage Taken</p>
+                        <p class="title">{{totals.DamageTaken}}</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Melee Kills</p>
+                        <p class="title">{{totals.MeleeKills}}</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Friendly Fire Damage Dealt</p>
+                        <p class="title">{{totals.SurvivorDamage}}</p>
+                        </div>
+                    </div>
+                </nav>
+                <div class="tile is-ancestor">
+                    <div class="tile is-vertical">
+                        <div class="tile">
+                            <div class="tile is-parent is-vertical">
+                                <article class="tile is-child notification is-info">
+                                    <p class="title is-4">Throwables Thrown</p>
+                                    <p>&nbsp;</p>
+                                    <nav class="level">
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Molotovs</p>
+                                            <p class="title">{{totals.MolotovsUsed}}</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Pipebombs</p>
+                                            <p class="title">{{totals.PipebombsUsed}}</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Biles</p>
+                                            <p class="title">{{totals.BoomerBilesUsed}}</p>
+                                            </div>
+                                        </div>
+                                    </nav>
+                                </article>
+                            </div>
+                            <div class="tile is-parent is-vertical">
+                                <article class="tile is-child notification" style="background-color: #d6405e">
+                                    <p class="title is-4">Casualties</p>
+                                    <p>&nbsp;</p>
+                                    <nav class="level">
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Incaps</p>
+                                            <p class="title">{{totals.Incaps}}</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Deaths</p>
+                                            <p class="title">{{totals.Deaths}}</p>
+                                            </div>
+                                        </div>
+                                        <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Kits Used</p>
+                                            <p class="title">{{totals.MedkitsUsed}}</p>
+                                            </div>
+                                        </div>
+                                    </nav>
+                                </article>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-3">
+                <div class="box">
+                    <h6 class="title is-6">Meta Information</h6>
+                    <div class="has-text-left">
+                        <strong>Map</strong>
+                        <p><router-link :to='"/maps/" + sessions[0].map + "/details"'>{{mapTitle}}</router-link></p>
+                        <strong>Date Played</strong>
+                        <p>{{formatDate(sessions[0].date_end*1000)}}</p>
+                        <span v-if="sessions[0].date_start">
+                            <strong>Game Duration</strong>
+                            <p>{{secondsToHms((sessions[0].date_end-sessions[0].date_start))}}</p>
+                        </span>
+                        <strong>Average Ping</strong>
+                        <p>{{sessions[0].ping}} ms</p>
+                        <span v-if="sessions[0].server_tags">
+                            <strong>Tags</strong>
+                            <b-taglist>
+                                <b-tag v-for="tag in sessions[0].server_tags.split(',')" :key="tag">{{tag}}</b-tag>
+                            </b-taglist>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <br>
 </div>
 </template>
@@ -64,11 +173,11 @@ export default {
         return {
             loading: true,
             sessions: [],
-            totals: []
+            totals: null,
         }
     },
     watch: {
-        '$route.params.id': 'fetchDetails()'
+        '$route.params.id': 'fetchDetails'
     },
     mounted() {
         this.fetchDetails()
@@ -80,10 +189,26 @@ export default {
     },
     methods: {
         fetchDetails() {
+            if(!this.$route.params.id) return;
             this.loading = true;
             this.$http.get(`/api/campaigns/${this.$route.params.id}`)
             .then(r => {
                 this.sessions = r.data;
+                this.totals = r.data.reduce((pv, cv) => {
+                    return {
+                        ZombieKills: pv.ZombieKills + cv.ZombieKills,
+                        SurvivorDamage: pv.SurvivorDamage + cv.SurvivorDamage,
+                        Deaths: pv.Deaths + cv.Deaths,
+                        DamageTaken: pv.DamageTaken + cv.DamageTaken,
+                        MeleeKills: pv.MeleeKills + cv.MeleeKills,
+                        Incaps: pv.Incaps + cv.Incaps,
+                        MolotovsUsed: pv.MolotovsUsed + cv.MolotovsUsed,
+                        PipebombsUsed: pv.PipebombsUsed + cv.PipebombsUsed,
+                        BoomerBilesUsed: pv.BoomerBilesUsed + cv.BoomerBilesUsed,
+                        MedkitsUsed: pv.MedkitsUsed + cv.MedkitsUsed + cv.FirstAidShared
+                    }
+                });
+                document.title = `${this.mapTitle} Campaign - ${this.$route.params.id} - L4D2 Stats Plugin`
             })
             .catch(err => {
                 console.error('Fetch err', err)
@@ -136,11 +261,22 @@ export default {
                 case 2: return "mechanic"
                 case 3: return "coach"
                 case 4: return "namvet"
-                case 5: return "zoey"
+                case 5: return "teenangst"
                 case 6: return "biker"
                 case 7: return "manager"
                 default: return "random"
             }
+        },
+        secondsToHms(d) {
+            d = Number(d);
+            const h = Math.floor(d / 3600);
+            const m = Math.floor(d % 3600 / 60);
+            //const s = Math.floor(d % 3600 % 60);
+
+            const hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+            const mDisplay = m > 0 ? m + (m == 1 ? " minute " : " minutes ") : "";
+            //const sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+            return hDisplay + mDisplay; 
         }
     }
 }
@@ -150,4 +286,5 @@ export default {
 .player-divider {
     margin: 0.5rem 0;
 }
+@import url('../../css/ribbon.css')
 </style>

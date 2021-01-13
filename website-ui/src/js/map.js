@@ -1,4 +1,5 @@
 import {official, custom} from '../assets/campaigns.json'
+import NoMapImage from '../assets/no_map_image.png';
 
 for(const campaign in official) {
     if(!official[campaign].id) {
@@ -25,9 +26,9 @@ export function getMapName(id) {
 
 export function getMapImage(id) {
     const officialMap = official[id.substring(0,3).replace('m','')];
-    if(officialMap) return officialMap.image;
+    if(officialMap) return '/img/posters/' + officialMap.image;
     const customMap = custom[id];
-    if(customMap) return customMap.image;
+    if(customMap) return '/img/posters/' + customMap.image;
     //Todo: add some custom maps
-    return null;
+    return NoMapImage;
 }

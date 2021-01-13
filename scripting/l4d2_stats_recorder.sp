@@ -139,6 +139,8 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 	#endif
 	//CreateTimer(60.0, Timer_FlushStats, _, TIMER_REPEAT);
+
+	AutoExecConfig(true, "l4d2_stats_recorder");
 }
 
 //When plugin is being unloaded: flush all user's statistics.
@@ -474,12 +476,12 @@ public void DBCT_Generic(Handle db, Handle child, const char[] error, any data)
 		}
     }
 }
-public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] error, any data) {
+public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] error, int difficulty) {
 	if(results != INVALID_HANDLE && SQL_GetRowCount(results) > 0) {
 		SQL_FetchRow(results);
 		char uuid[64];
 		SQL_FetchString(results, 0, uuid, sizeof(uuid));
-		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, data);
+		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, difficulty);
 
 		for(int i = 1; i <= MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
@@ -487,12 +489,15 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 				if(team == 2) {
 					//Get a random UUID
 					IncrementSessionStat(i);
-					RecordCampaign(i, data, uuid);
+					RecordCampaign(i, difficulty, uuid);
 					IncrementStat(i, "finales_won", 1);
 					points[i] += 400;
 				}
 			}
 		}
+		char shortID[9];
+		StrCat(shortID, sizeof(shortID), uuid);
+		PrintToChatAll("View this game's statistics at https://jackz.me/c/%s", shortID);
 	}else{
 		LogError("RecordCampaign, failed to get UUID: %s", error);
 	}

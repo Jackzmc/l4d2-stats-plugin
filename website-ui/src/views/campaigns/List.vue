@@ -104,7 +104,7 @@ export default {
             this.$http.get(`/api/campaigns/?page=${page}&perPage=12`, { cache: true })
             .then(r => {
                 r.data.recentCampaigns.forEach(v => v.campaignID = v.campaignID.substring(0, 8));
-                this.recentCampaigns = r.data.recentCampaigns.reverse();
+                this.recentCampaigns = r.data.recentCampaigns;
                 this.topCampaigns = r.data.topCampaigns;
                 this.total_campaigns = r.data.total_campaigns
             })

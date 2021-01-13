@@ -257,7 +257,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 }
 
 void RecordCampaign(int client, int difficulty, const char[] uuid) {
-	if (client > 0 && steamidcache[client][0] && !IsFakeClient(client)) {
+	if (client > 0) {
 		char query[1023], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
 
@@ -484,14 +484,17 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, difficulty);
 
 		for(int i = 1; i <= MaxClients; i++) {
-			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
-				int team = GetClientTeam(i);
-				if(team == 2) {
-					//Get a random UUID
-					IncrementSessionStat(i);
-					RecordCampaign(i, difficulty, uuid);
-					IncrementStat(i, "finales_won", 1);
-					points[i] += 400;
+			if(IsClientConnected(i) && IsClientInGame(i)) {
+				int client = i;
+				if(IsFakeClient(i)) {
+					client = GetClientOfUserId(GetEntPropEnt(i, Prop_Send, "m_humanSpectatorUserID"));
+					//get real client
+				}
+				if(steamidcache[client][0] && GetClientTeam(client) == 2) {
+					IncrementSessionStat(client);
+					RecordCampaign(client, difficulty, uuid);
+					IncrementStat(client, "finales_won", 1);
+					points[client] += 400;
 				}
 			}
 		}

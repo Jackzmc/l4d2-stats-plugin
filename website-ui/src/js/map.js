@@ -19,7 +19,7 @@ export function getMapName(id) {
     const officialMap = official[id.substring(0,3).replace('m','')];
     if(officialMap) return officialMap.title;
     const customMap = custom[id];
-    if(customMap) return customMap.title;
+    if(customMap && customMap.title) return customMap.title;
     //Todo: add some custom maps
     return id;
 }
@@ -28,7 +28,7 @@ export function getMapImage(id) {
     const officialMap = official[id.substring(0,3).replace('m','')];
     if(officialMap) return '/img/posters/' + officialMap.image;
     const customMap = custom[id];
-    if(customMap) return '/img/posters/' + customMap.image;
+    if(customMap && customMap.image) return '/img/posters/' + customMap.image;
     //Todo: add some custom maps
     return NoMapImage;
 }

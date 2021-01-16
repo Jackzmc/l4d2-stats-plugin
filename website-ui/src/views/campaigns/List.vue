@@ -13,6 +13,37 @@
     <br>
     <div class="container is-fluid">
         <h5 class="title is-5">Recently Played Games</h5>
+        <!-- <b-carousel-list 
+            v-if="recentCampaigns.length > 0" 
+            v-model="selectedRecent" 
+            :data="recentCampaigns" 
+            :items-to-show="4"
+            :items-to-list="1"
+        >
+            <template #item="campaign">
+                <div class="box">
+                    <img class="is-inline-block is-pulled-left image is-128x128" :src="getMapImage(campaign.list.map)" />
+                    <h6 class="title is-6">{{getMapName(campaign.list.map).substring(0,20)}}</h6>
+                    <p class="subtitle is-6">{{getGamemode(campaign.list.gamemode)}} • {{formatDifficulty(campaign.list.difficulty)}}</p>
+                    <hr class="player-divider">
+                    <ul class="has-text-right">
+                        <li><b>{{secondsToHms((campaign.list.date_end-campaign.list.date_start))}}</b> long</li>
+                        <li><b>{{campaign.list.Deaths}}</b> deaths</li>
+                        <li><b>{{campaign.list.CommonsKilled | formatNumber}}</b> commons killed</li>
+                        <li><b>{{campaign.list.FF | formatNumber}}</b> friendly fire dealt</li>
+                    </ul>
+                    <br>
+                    <b-taglist v-if="campaign.list.server_tags">
+                        <b-tag v-for="tag in campaign.list.server_tags.split(',')" :key="tag" :type="getTagType(tag)">
+                            {{tag}}
+                        </b-tag>
+                    </b-taglist>
+                    <span v-else><br><br></span>
+                    <b-button type="is-info" tag="router-link" :to="'/campaigns/' + campaign.campaignID" expanded>View Details</b-button>
+                </div>
+            </template>
+        </b-carousel-list> -->
+        <hr>
         <div class="columns is-multiline">
             <div v-for="campaign in recentCampaigns" class="column is-3" :key="campaign.campaignID">
                 <div class="box">
@@ -92,7 +123,8 @@ export default {
             recentCampaigns: [],
             topCampaigns: [],
             loading: true,
-            total_campaigns: 0
+            total_campaigns: 0,
+            selectedRecent: 0
         }
     },
     mounted() {
@@ -107,7 +139,7 @@ export default {
         getMapImage,
         fetchCampaigns(page = 0) {
             this.loading = true;
-            this.$http.get(`/api/campaigns/?page=${page}&perPage=12`, { cache: true })
+            this.$http.get(`/api/campaigns/?page=${page}&perPage=8`, { cache: true })
             .then(r => {
                 r.data.recentCampaigns.forEach(v => v.campaignID = v.campaignID.substring(0, 8));
                 this.recentCampaigns = r.data.recentCampaigns;

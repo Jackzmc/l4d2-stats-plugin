@@ -16,6 +16,7 @@ export const CAMPAIGNS = { ...official, ...custom };
 
 
 export function getMapName(id) {
+    if(!id) return 'null';
     const officialMap = official[id.substring(0,3).replace('m','')];
     if(officialMap) return officialMap.title;
     const customMap = custom[id];
@@ -25,6 +26,7 @@ export function getMapName(id) {
 }
 
 export function getMapImage(id) {
+    if(!id) return NoMapImage;
     const officialMap = official[id.substring(0,3).replace('m','')];
     if(officialMap) return '/img/posters/official/' + officialMap.image;
     const customMap = custom[id];

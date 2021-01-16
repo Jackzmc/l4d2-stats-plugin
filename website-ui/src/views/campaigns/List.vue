@@ -17,7 +17,7 @@
             <div v-for="campaign in recentCampaigns" class="column is-3" :key="campaign.campaignID">
                 <div class="box">
                     <img class="is-inline-block is-pulled-left image is-128x128" :src="getMapImage(campaign.map)" />
-                    <h6 class="title is-6">{{getMapName(campaign.map)}}</h6>
+                    <h6 class="title is-6">{{getMapName(campaign.map).substring(0,20)}}</h6>
                     <p class="subtitle is-6">{{getGamemode(campaign.gamemode)}} • {{formatDifficulty(campaign.difficulty)}}</p>
                     <hr class="player-divider">
                     <ul class="has-text-right">

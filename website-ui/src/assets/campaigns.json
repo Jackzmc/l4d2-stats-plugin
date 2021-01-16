@@ -163,6 +163,12 @@
         },
         "uf4_airfield": {
             "title": "Urban Flight"
+        },
+        "l4d2_stadium5_stadium": {
+            "title": "Suicide Blitz "
+        },
+        "l4d_deathaboard05_light": {
+            "title": "Death Aboard"
         }
     }
 }

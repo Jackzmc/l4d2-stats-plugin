@@ -88,12 +88,14 @@
                 <figure class="image is-4by3">
                     <img :src="mostPlayedCampaignImage">
                 </figure>
+                <p class="is-family-sans-serif is-size-4">{{getMapName(averages.top_map)}}</p>
             </div>
             <div class="column">
                 <p class="title is-6">Least Played Map</p>
                 <figure class="image is-4by3">
                     <img :src="leastPlayedCampaignImage">
                 </figure>
+                <p class="is-family-sans-serif is-size-4">{{getMapName(averages.least_map)}}</p>
             </div>
         </div>
         <p><b>Most Played Difficulty:</b></p>
@@ -103,7 +105,7 @@
 </div>
 </template>
 <script>
-import { getMapImage } from '../js/map'
+import { getMapImage, getMapName } from '../js/map'
 import SummaryBit from '../components/SummaryBit';
 import ICountUp from 'vue-countup-v2';
 export default {
@@ -143,6 +145,7 @@ export default {
         }
     },
     methods: {
+        getMapName,
         fetchAverage() {
             this.loading = true;
             this.$http.get(`/api/summary`, { cache: true })

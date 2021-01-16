@@ -110,8 +110,16 @@ async function main() {
     })
     app.get('/api/campaigns', async(req,res) => {
         try {
+            let perPage = parseInt(req.query.perPage) || 4;
+            if(perPage > 100) perPage = 100;
+            const selectedPage = req.query.page || 0
+            const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
+            const offset = pageNumber * perPage;
+
+            console.log('fetching campaigns.', pageNumber, offset)
+
             const [total] = await pool.execute("SELECT COUNT(dISTINCT campaignID) as total FROM `stats_games`")
-            const [recent] = await pool.execute("SELECT g.campaignID, g.map, g.date_start, g.date_end, difficulty, gamemode,SUM(ZombieKills) as CommonsKilled, SUM(SurvivorDamage) as FF, SUM(Deaths) as Deaths, SUM(MedkitsUsed), (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as ThrowableTotal, server_tags FROM `stats_games` as g INNER JOIN `stats_users` ON g.steamid = `stats_users`.steamid group by g.campaignID order by date_end desc limit 4")
+            const [recent] = await pool.execute("SELECT g.campaignID, g.map, g.date_start, g.date_end, difficulty, gamemode,SUM(ZombieKills) as CommonsKilled, SUM(SurvivorDamage) as FF, SUM(Deaths) as Deaths, SUM(MedkitsUsed), (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as ThrowableTotal, server_tags FROM `stats_games` as g INNER JOIN `stats_users` ON g.steamid = `stats_users`.steamid group by g.campaignID order by date_end desc limit ?, ?", [offset, perPage])
             res.json({
                 recentCampaigns: recent,
                 topCampaigns: [],

@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <b-navbar>
+    <b-navbar fixed-top>
         <template slot="brand">
             <b-navbar-item tag="router-link" to="/">
                 <h5 class="title is-5">{{title}}</h5>

@@ -132,6 +132,7 @@ public void OnPluginStart()
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("gauntlet_finale_start", Event_FinaleStart);
 	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
+	HookEvent("game_start", Event_GameStart);
 	//Used to transition checkpoint statistics for stats_games
 	HookEvent("round_end", Event_RoundEnd);
 	HookEvent("map_transition", Event_MapTransition);
@@ -487,7 +488,8 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 			if(IsClientConnected(i) && IsClientInGame(i)) {
 				int client = i;
 				if(IsFakeClient(i)) {
-					client = GetClientOfUserId(GetEntPropEnt(i, Prop_Send, "m_humanSpectatorUserID"));
+					if(!HasEntProp(i, Prop_Send, "m_humanSpectatorUserID")) return;
+ 					client = GetClientOfUserId(GetEntPropEnt(i, Prop_Send, "m_humanSpectatorUserID"));
 					//get real client
 				}
 				if(steamidcache[client][0] && GetClientTeam(client) == 2) {
@@ -550,6 +552,15 @@ public Action Command_DebugStats(int client, int args) {
 // EVENTS 
 ////////////////////////////
 //Records the amount of HP done to infected (zombies)
+public Action Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
+	iGameStartTime = GetTime();
+	for(int i = 1; i < MaxClients + 1; i++) {
+		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
+			ResetSessionStats(i, true);
+			FlushQueuedStats(i, false);
+		}
+	}
+}
 public void Event_InfectedHurt(Event event, const char[] name, bool dontBroadcast) {
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	if(attacker > 0 && !IsFakeClient(attacker)) {

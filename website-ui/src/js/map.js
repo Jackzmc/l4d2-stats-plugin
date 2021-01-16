@@ -26,9 +26,9 @@ export function getMapName(id) {
 
 export function getMapImage(id) {
     const officialMap = official[id.substring(0,3).replace('m','')];
-    if(officialMap) return '/img/posters/' + officialMap.image;
+    if(officialMap) return '/img/posters/official/' + officialMap.image;
     const customMap = custom[id];
-    if(customMap && customMap.image) return '/img/posters/' + customMap.image;
+    if(customMap && customMap.image) return '/img/posters/custom/' + customMap.image;
     //Todo: add some custom maps
     return NoMapImage;
 }

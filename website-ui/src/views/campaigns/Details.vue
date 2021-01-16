@@ -6,15 +6,13 @@
                 <div class="columns">
                     <div v-if="$route.params.id && sessions.length > 0 && !loading" class="column">
                         <h1 class="title">
-                            Campaign {{$route.params.id.substring(0,8)}}
+                            {{mapTitle}}
                         </h1>
                         <p class="subtitle is-4">Played {{formatDate(sessions[0].date_end*1000)}}</p>
                         <hr>
                         <p class="is-size-4">
-                            {{mapTitle}} • {{getGamemode(sessions[0].gamemode)}} • {{getDifficulty(sessions[0].difficulty)}} 
+                            {{getGamemode(sessions[0].gamemode)}} • {{getDifficulty(sessions[0].difficulty)}} • {{secondsToHms(sessions[0].date_end-sessions[0].date_start)}} long
                         </p>
-                        <br>
-                        <p class="is-size-5">{{secondsToHms(sessions[0].date_end-sessions[0].date_start)}} long</p>
                     </div>
                     <div v-else-if="!loading" class="column">
                         <h1 class="title">
@@ -30,7 +28,7 @@
         <h4 class="title is-4">Players</h4>
         <div class="columns is-multiline">
             <div v-for="(session) in sessions" class="column is-3" :key="session.id">
-                <div class="box" style="position: relative">
+                <div :class="[{'has-background-grey-lighter': mvp != session.steamid}, 'box']" style="position: relative">
                     <img class="is-inline-block is-pulled-left image is-128x128" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" />
                     <h6 class="title is-6">{{session.last_alias.substring(0,20)}}</h6>
                     <p class="subtitle is-6">{{session.points | formatNumber}} points</p>
@@ -48,10 +46,10 @@
         </div>
     </div>
     <hr>
-    <h4 class="title is-4">Statistics</h4>
     <div v-if="totals" class="container is-fluid">
         <div class="columns">
             <div class="column">
+                <h4 class="title is-4">Statistics</h4>
                 <nav class="level">
                     <div class="level-item has-text-centered">
                         <div>
@@ -139,7 +137,7 @@
             </div>
             <div class="column is-3">
                 <div class="box">
-                    <h6 class="title is-6">Meta Information</h6>
+                    <h6 class="is-6">Meta Information</h6>
                     <div class="has-text-left">
                         <strong>Map</strong>
                         <p><router-link :to='"/maps/" + sessions[0].map + "/details"'>{{mapTitle}}</router-link></p>
@@ -153,8 +151,10 @@
                         <p>{{sessions[0].ping}} ms</p>
                         <span v-if="sessions[0].server_tags">
                             <strong>Tags</strong>
-                            <b-taglist>
-                                <b-tag v-for="tag in sessions[0].server_tags.split(',')" :key="tag">{{tag}}</b-tag>
+                            <b-taglist v-if="sessions[0].server_tags">
+                                <b-tag v-for="tag in sessions[0].server_tags.split(',')" :key="tag" :class="getTagType(tag)">
+                                    {{tag}}
+                                </b-tag>
                             </b-taglist>
                         </span>
                     </div>
@@ -279,6 +279,15 @@ export default {
             const mDisplay = m > 0 ? m + (m == 1 ? " minute " : " minutes ") : "";
             //const sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
             return hDisplay + mDisplay; 
+        },
+        getTagType(tag) {
+            switch(tag.toLowerCase()) {
+                case "dev": return 'is-danger'
+                case "prod": return "is-success"
+                case "old": return "is-warning"
+                case "improved": return "is-dark"
+                default: return ''
+            }
         }
     }
 }

@@ -111,7 +111,7 @@ async function main() {
     app.get('/api/campaigns', async(req,res) => {
         try {
             const [total] = await pool.execute("SELECT COUNT(dISTINCT campaignID) as total FROM `stats_games`")
-            const [recent] = await pool.execute("SELECT g.campaignID, g.map, g.date_start, g.date_end, difficulty, gamemode,SUM(ZombieKills) as CommonsKilled, SUM(SurvivorDamage) as FF, SUM(Deaths) as Deaths, SUM(MedkitsUsed), (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as ThrowableTotal FROM `stats_games` as g INNER JOIN `stats_users` ON g.steamid = `stats_users`.steamid group by g.campaignID order by date_end desc limit 4")
+            const [recent] = await pool.execute("SELECT g.campaignID, g.map, g.date_start, g.date_end, difficulty, gamemode,SUM(ZombieKills) as CommonsKilled, SUM(SurvivorDamage) as FF, SUM(Deaths) as Deaths, SUM(MedkitsUsed), (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as ThrowableTotal, server_tags FROM `stats_games` as g INNER JOIN `stats_users` ON g.steamid = `stats_users`.steamid group by g.campaignID order by date_end desc limit 4")
             res.json({
                 recentCampaigns: recent,
                 topCampaigns: [],

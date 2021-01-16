@@ -27,6 +27,12 @@
                         <li><b>{{campaign.FF | formatNumber}}</b> friendly fire dealt</li>
                     </ul>
                     <br>
+                    <b-taglist v-if="campaign.server_tags">
+                        <b-tag v-for="tag in campaign.server_tags.split(',')" :key="tag" :type="getTagType(tag)">
+                            {{tag}}
+                        </b-tag>
+                    </b-taglist>
+                    <span v-else><br><br></span>
                     <b-button type="is-info" tag="router-link" :to="'/campaigns/' + campaign.campaignID" expanded>View Details</b-button>
                 </div>
             </div> 
@@ -152,6 +158,15 @@ export default {
             const mDisplay = m > 0 ? m + (m == 1 ? " minute " : " minutes ") : "";
             //const sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
             return hDisplay + mDisplay; 
+        },
+        getTagType(tag) {
+            switch(tag.toLowerCase()) {
+                case "dev": return 'is-danger'
+                case "prod": return "is-success"
+                case "old": return "is-warning"
+                case "improved": return "is-dark"
+                default: return ''
+            }
         }
     }
 }

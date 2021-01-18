@@ -484,15 +484,15 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 		SQL_FetchString(results, 0, uuid, sizeof(uuid));
 		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, difficulty);
 
-		for(int i = 1; i <= MaxClients; i++) {
-			if(IsClientConnected(i) && IsClientInGame(i)) {
+		for(int i = 1; i <= MaxClients + 1; i++) {
+			if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2) {
 				int client = i;
 				if(IsFakeClient(i)) {
-					if(!HasEntProp(i, Prop_Send, "m_humanSpectatorUserID")) return;
+					if(!HasEntProp(i, Prop_Send, "m_humanSpectatorUserID")) continue;
  					client = GetClientOfUserId(GetEntPropEnt(i, Prop_Send, "m_humanSpectatorUserID"));
 					//get real client
 				}
-				if(steamidcache[client][0] && GetClientTeam(client) == 2) {
+				if(steamidcache[client][0]) {
 					IncrementSessionStat(client);
 					RecordCampaign(client, difficulty, uuid);
 					IncrementStat(client, "finales_won", 1);

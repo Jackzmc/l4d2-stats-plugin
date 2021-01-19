@@ -171,6 +171,19 @@
         "l4d_deathaboard05_light": {
             "title": "Death Aboard",
             "image": "death_aboard.png"
+        },
+        "ft_m5_finale": {
+            "title": "Fairfield Terror",
+            "image": "fairfield_terror.png"
+        },
+        "bloodtracks_04": {
+            "title": "Blood Tracks"
+        },
+        "the_hive_m5": {
+            "title": "The Hive"
+        },
+        "l4d2_diescraper4_top_361": {
+            "title": "Diescraper Redux"
         }
     }
 }

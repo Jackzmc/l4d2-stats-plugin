@@ -185,7 +185,7 @@ public void OnClientAuthorized(int client, const char[] auth) {
 }
 public void OnClientDisconnect(int client) {
 	//Check if any pending stats to send.
-	if(!IsFakeClient(client)) {
+	if(!IsFakeClient(client) && IsClientInGame(client)) {
 		FlushQueuedStats(client, true);
 		steamidcache[client][0] = '\0';
 		points[client] = 0;
@@ -258,7 +258,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 }
 
 void RecordCampaign(int client, int difficulty, const char[] uuid) {
-	if (client > 0) {
+	if (client > 0 && IsClientConnected(client) && IsClientInGame(client)) {
 		char query[1023], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
 
@@ -319,9 +319,7 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
 public void FlushQueuedStats(int client, bool disconnect) {
-	if(!IsClientConnected(client)) {
-		return;
-	}
+	
 	//Update stats (don't bother checking if 0.)
 	char query[1023];
 	int minutes_played = (GetTime() - startedPlaying[client]) / 60;
@@ -329,6 +327,9 @@ public void FlushQueuedStats(int client, bool disconnect) {
 	if(minutes_played >= 2147483645) {
 		startedPlaying[client] = GetTime();
 		minutes_played = 0;
+	}
+	if(!IsClientConnected(client)) {
+		return;
 	}
 	//TODO: check for entity (1) not valid. possibly on campaign end when not returning to lobby.
 	//Prevent points from being reset by not recording until user has gotten a point. 
@@ -480,11 +481,12 @@ public void DBCT_Generic(Handle db, Handle child, const char[] error, any data)
 public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] error, int difficulty) {
 	if(results != INVALID_HANDLE && SQL_GetRowCount(results) > 0) {
 		SQL_FetchRow(results);
-		char uuid[64];
+		char uuid[64], shortID[9];
 		SQL_FetchString(results, 0, uuid, sizeof(uuid));
 		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, difficulty);
+		StrCat(shortID, sizeof(shortID), uuid);
 
-		for(int i = 1; i <= MaxClients + 1; i++) {
+		for(int i = 1; i <= MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2) {
 				int client = i;
 				if(IsFakeClient(i)) {
@@ -496,13 +498,12 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 					IncrementSessionStat(client);
 					RecordCampaign(client, difficulty, uuid);
 					IncrementStat(client, "finales_won", 1);
+					PrintToChat(client, "View this game's statistics at https://jackz.me/c/%s", shortID);
 					points[client] += 400;
 				}
 			}
 		}
-		char shortID[9];
-		StrCat(shortID, sizeof(shortID), uuid);
-		PrintToChatAll("View this game's statistics at https://jackz.me/c/%s", shortID);
+		
 	}else{
 		LogError("RecordCampaign, failed to get UUID: %s", error);
 	}

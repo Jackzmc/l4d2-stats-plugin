@@ -9,6 +9,7 @@
 #include <geoip>
 #include <sdkhooks>
 #include "jutils.inc"
+#include <left4dhooks>
 //#include <sdkhooks>
 
 public Plugin myinfo = 
@@ -739,7 +740,8 @@ public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroad
 }
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	int difficulty = event.GetInt("difficulty");
-	SQL_TQuery(g_db, DBCT_GetUUIDForCampaign, "SELECT UUID() AS UUID", difficulty, DBPrio_High);
+	if(L4D_IsMissionFinalMap())
+		SQL_TQuery(g_db, DBCT_GetUUIDForCampaign, "SELECT UUID() AS UUID", difficulty, DBPrio_High);
 }
 public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));

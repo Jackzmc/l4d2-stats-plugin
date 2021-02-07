@@ -250,6 +250,15 @@
         },
         "nt05_wake": {
             "title": "Night Terror"
+        },
+        "l4d2_ravenholmwar_4": {
+            "title": "Back To Ravenholm"
+        },
+        "l4d_viennacalling_donauturm": {
+            "title": "Vienna Calling"
+        },
+        "tlv03_riverside": {
+            "title": "The Last Volt"
         }
     }
 }

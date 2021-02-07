@@ -59,7 +59,7 @@
                     </ul>
                     <br>
                     <b-taglist v-if="campaign.server_tags">
-                        <b-tag v-for="tag in campaign.server_tags.split(',')" :key="tag" :type="getTagType(tag)">
+                        <b-tag v-for="tag in parseTags(campaign.server_tags)" :key="tag" :type="getTagType(tag)">
                             {{tag}}
                         </b-tag>
                     </b-taglist>
@@ -199,6 +199,11 @@ export default {
                 case "improved": return "is-dark"
                 default: return ''
             }
+        },
+        parseTags(tags) {
+            const arr = tags.split(',')
+            if(arr.length > 0 && arr[0] === "prod") return arr.slice(1)
+            return arr;
         }
     }
 }

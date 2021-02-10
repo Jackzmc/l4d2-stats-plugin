@@ -116,17 +116,44 @@ async function main() {
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
             const offset = pageNumber * perPage;
 
-            console.log('fetching campaigns.', pageNumber, offset)
+            let selectTag            = req.query.tag || "prod"
+            let gamemodeSearchString = req.query.gamemode && req.query.gamemode !== "all" ? `${req.query.gamemode}` : `%`
+            let mapSearchString      = "" // RLIKE "^c[0-9]m"
+            if(req.query.type) {
+                if(req.query.type === "official") mapSearchString = `AND map RLIKE "^c[0-9]m"`
+                else if(req.query.type === "custom") mapType = `AND map NOT RLIKE "^c[0-9]m"`
+            }
 
             const [total] = await pool.execute("SELECT COUNT(dISTINCT campaignID) as total FROM `stats_games`")
-            const [recent] = await pool.execute("SELECT g.campaignID, g.map, g.date_start, g.date_end, difficulty, gamemode,SUM(ZombieKills) as CommonsKilled, SUM(SurvivorDamage) as FF, SUM(Deaths) as Deaths, SUM(MedkitsUsed), (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as ThrowableTotal, server_tags FROM `stats_games` as g INNER JOIN `stats_users` ON g.steamid = `stats_users`.steamid group by g.campaignID order by date_end desc limit ?, ?", [offset, perPage])
+            const [recent] = await pool.execute(`
+                SELECT COUNT(g.campaignID) as playerCount, 
+                    g.campaignID,
+                    g.map, 
+                    g.date_start, 
+                    g.date_end, 
+                    difficulty, 
+                    gamemode,SUM(ZombieKills) as CommonsKilled, 
+                    SUM(SurvivorDamage) as FF, 
+                    SUM(Deaths) as Deaths, 
+                    SUM(MedkitsUsed), 
+                    (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as ThrowableTotal, 
+                    server_tags 
+                FROM \`stats_games\` as g INNER JOIN \`stats_users\` ON g.steamid = \`stats_users\`.steamid 
+                WHERE FIND_IN_SET(?, server_tags) ${mapSearchString} AND gamemode LIKE ?
+                GROUP BY g.campaignID 
+                ORDER BY date_end DESC LIMIT ?, ?`, 
+            [selectTag, gamemodeSearchString, offset, perPage])
             res.json({
+                meta: {
+                    selectTag,
+                    gamemodeSearchString,
+                    mapSearchString,
+                },
                 recentCampaigns: recent,
-                topCampaigns: [],
                 total_campaigns: total[0].total
             })
         }catch(err) {
-            console.error('[/api/user/:user]',err.message);
+            console.error('[/api/user/:user]',err.stack);
             res.status(500).json({error:"Internal Server Error"})
         }
     })

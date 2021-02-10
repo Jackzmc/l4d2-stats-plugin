@@ -43,7 +43,6 @@
                 </div>
             </template>
         </b-carousel-list> -->
-        <hr>
         <div class="columns is-multiline">
             <div v-for="campaign in recentCampaigns" class="column is-3" :key="campaign.campaignID">
                 <div class="box">
@@ -71,46 +70,68 @@
     </div>
     <hr>
     <div class="container">
-        <h5 class="title is-5">Top Games Played</h5>
-        <b-table 
-            :data="topCampaigns"
-            :loading="loading"
-
-            paginated 
-            backend-pagination 
-            :current-page="1" 
-            per-page=12
-            :total="total_campaigns" 
-            @page-change="onPageChange" 
-
-        >
-        <!-- TODO: background sort -->
-            <template slot-scope="props" >
-                <b-table-column label="View">
-                    <b-button tag="router-link" :to="'/campaigns/' + props.row.campaignID" expanded>View</b-button>
-                </b-table-column>
-                <b-table-column field="map" label="Map" >
-                    {{ getMapName(props.row.map) }}
-                </b-table-column>
-                <b-table-column field="CommonsKilled" label="Commons Killed">
-                    {{ props.row.CommonsKilled }}
-                </b-table-column>
-                <b-table-column field="Deaths" label="Total Deaths" >
-                    {{ props.row.Deaths }}
-                </b-table-column>
-                
-                <b-table-column field="difficulty" label="Difficulty" centered>
-                    {{ formatDifficulty(props.row.difficulty) }}
-                </b-table-column>
-            </template>
-            <template slot="empty">
-                <section class="section">
-                    <div class="content has-text-grey has-text-centered">
-                        <p>There are no recorded campaigns</p>
-                    </div>
-                </section>
-            </template>
-        </b-table>
+        <h5 class="title is-5">Filter Campaigns</h5>
+        <span class="has-text-left">
+        <b-field grouped>
+            <b-field label="Tag Selection">
+                <b-select v-model="filtered.filters.tag">
+                    <option value="prod">All</option>
+                    <!-- <option value="dev" v-if="process.env.NODE_ENV !== 'production'">Dev</option> -->
+                    <option value="lgs">Improved</option>
+                    <option value="public">Public</option>
+                    <optgroup label="Regions">
+                        <option value="tx">Texas</option>
+                    </optgroup>
+                    <optgroup label="Server">
+                        <option value="server-1">Server TX-P1</option>
+                        <option value="server-2">Server TX-P2</option>
+                    </optgroup>
+                </b-select>
+            </b-field>
+            <b-field label="Campaign Map Type">
+                <b-select v-model="filtered.filters.type">
+                    <option value="all">Any</option>
+                    <option value="official">Official Only</option>
+                    <option value="custom">Custom Only</option>
+                </b-select>
+            </b-field>
+            <b-field label="Gamemode">
+                <b-select v-model="filtered.filters.gamemode">
+                    <option value="all">Any</option>
+                    <option value="coop">Coop</option>
+                    <option value="versus">Versus</option>
+                    <option value="TankRun">Tank Run</option>
+                    <option value="RocketDude">RocketDude</option>
+                </b-select>
+            </b-field>
+        </b-field>
+        </span>
+        <hr>
+        <div class="columns is-multiline">
+            <div v-for="campaign in filtered.list" class="column is-3" :key="campaign.campaignID">
+                <div class="box" style="height: 100%">
+                    <h6 class="title is-6">{{getMapName(campaign.map).substring(0,40)}}</h6>
+                    <p class="subtitle is-6">{{getGamemode(campaign.gamemode)}} • {{formatDifficulty(campaign.difficulty)}}</p>
+                    <hr class="player-divider">
+                    <ul class="has-text-left">
+                        <li><b>{{secondsToHms((campaign.date_end-campaign.date_start))}}</b> long</li>
+                        <li><b>{{campaign.Deaths}}</b> deaths</li>
+                        <li><b>{{campaign.CommonsKilled | formatNumber}}</b> commons killed</li>
+                        <li><b>{{campaign.FF | formatNumber}}</b> friendly fire dealt</li>
+                        <li><b>{{campaign.playerCount}}</b> players</li>
+                    </ul>
+                    <br>
+                    <b-taglist v-if="campaign.server_tags">
+                        <b-tag v-for="tag in parseTags(campaign.server_tags)" :key="tag" :type="getTagType(tag)">
+                            {{tag}}
+                        </b-tag>
+                    </b-taglist>
+                    <span v-else><br><br></span>
+                    <b-button type="is-info" tag="router-link" :to="'/campaigns/' + campaign.campaignID" expanded>View Details</b-button>
+                </div>
+            </div> 
+        </div>
+        <br>
     </div>
 </div>
 </template>
@@ -121,10 +142,20 @@ export default {
     data() {
         return {
             recentCampaigns: [],
-            topCampaigns: [],
             loading: true,
             total_campaigns: 0,
-            selectedRecent: 0
+            selectedRecent: 0,
+            filtered: {
+                filters: {
+                    tag: "prod",
+                    type: "all",
+                    gamemode: 'all',
+                    page: 0
+                },
+
+                list: [],
+                loading: true,
+            }
         }
     },
     mounted() {
@@ -132,18 +163,49 @@ export default {
         if(isNaN(routerPage) || routerPage <= 0) routerPage = 1;
         this.current_page = routerPage;*/
         this.fetchCampaigns()
+        this.fetchFilteredCampaigns()
         document.title = `Campaigns - L4D2 Stats Plugin`
+    },
+    watch: {
+        "filtered.filters": {
+            handler(e) {
+                console.log(e)
+                this.fetchFilteredCampaigns()
+            },
+            deep: true
+        }
     },
     methods: {
         getMapName,
         getMapImage,
+        fetchFilteredCampaigns() {
+            this.filtered.loading = true;
+            const queryParams = `?page=${this.filtered.filters.page}&perPage=16&tag=${this.filtered.filters.tag}&gamemode=${this.filtered.filters.gamemode}&type=${this.filtered.filters.type}
+            `.replace(/\s/,'')
+            this.$http.get(`/api/campaigns${queryParams}`, { cache: true })
+            .then(r => {
+                r.data.recentCampaigns.forEach(v => v.campaignID = v.campaignID.substring(0, 8));
+                this.filtered.list = r.data.recentCampaigns
+            })
+            .catch(err => {
+                console.error('Fetch err', err)
+                this.$buefy.snackbar.open({
+                    duration: 5000,
+                    message: 'Failed to fetch filtered campaigns',
+                    type: 'is-danger',
+                    position: 'is-bottom-left',
+                    actionText: 'Retry',
+                    onAction: () => this.fetchFilteredCampaigns()
+                })
+            })
+            .finally(() => this.filtered.loading = false)
+        },
         fetchCampaigns(page = 0) {
             this.loading = true;
             this.$http.get(`/api/campaigns/?page=${page}&perPage=8`, { cache: true })
             .then(r => {
                 r.data.recentCampaigns.forEach(v => v.campaignID = v.campaignID.substring(0, 8));
                 this.recentCampaigns = r.data.recentCampaigns;
-                this.topCampaigns = r.data.topCampaigns;
                 this.total_campaigns = r.data.total_campaigns
             })
             .catch(err => {

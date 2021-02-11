@@ -48,7 +48,7 @@
                 <div class="box">
                     <img class="is-inline-block is-pulled-left image is-128x128" :src="getMapImage(campaign.map)" />
                     <h6 class="title is-6">{{getMapName(campaign.map).substring(0,20)}}</h6>
-                    <p class="subtitle is-6">{{getGamemode(campaign.gamemode)}} • {{formatDifficulty(campaign.difficulty)}}</p>
+                    <p class="subtitle is-6"><span class="has-text-info">{{getGamemode(campaign.gamemode)}}</span> • <span class="has-text-info">{{formatDifficulty(campaign.difficulty)}}</span></p>
                     <hr class="player-divider">
                     <ul class="has-text-right">
                         <li><b>{{secondsToHms((campaign.date_end-campaign.date_start))}}</b> long</li>
@@ -74,7 +74,7 @@
         <span class="has-text-left">
         <b-field grouped>
             <b-field label="Tag Selection">
-                <b-select v-model="filtered.filters.tag">
+                <b-select v-model="filtered.filters.tag" placeholder="Select a tag">
                     <option value="prod">All</option>
                     <!-- <option value="dev" v-if="process.env.NODE_ENV !== 'production'">Dev</option> -->
                     <option value="lgs">Improved</option>
@@ -88,7 +88,7 @@
                     </optgroup>
                 </b-select>
             </b-field>
-            <b-field label="Campaign Map Type">
+            <b-field label="Map Type">
                 <b-select v-model="filtered.filters.type">
                     <option value="all">Any</option>
                     <option value="official">Official Only</option>
@@ -110,8 +110,12 @@
         <div class="columns is-multiline">
             <div v-for="campaign in filtered.list" class="column is-3" :key="campaign.campaignID">
                 <div class="box" style="height: 100%">
-                    <h6 class="title is-6">{{getMapName(campaign.map).substring(0,40)}}</h6>
-                    <p class="subtitle is-6">{{getGamemode(campaign.gamemode)}} • {{formatDifficulty(campaign.difficulty)}}</p>
+                    <h4 class="title is-4">{{getMapName(campaign.map).substring(0,40)}}</h4>
+                    <p class="subtitle is-6">
+                        <span class="has-text-info">{{getGamemode(campaign.gamemode)}}</span> • <span class="has-text-info">{{formatDifficulty(campaign.difficulty)}}</span>
+                        <br>Played <b>{{formatDate(campaign.date_end)}}</b>
+                    </p>
+                    <p class="subtitle is-6"></p>
                     <hr class="player-divider">
                     <ul class="has-text-left">
                         <li><b>{{secondsToHms((campaign.date_end-campaign.date_start))}}</b> long</li>
@@ -147,7 +151,7 @@ export default {
             selectedRecent: 0,
             filtered: {
                 filters: {
-                    tag: "prod",
+                    tag: null,
                     type: "all",
                     gamemode: 'all',
                     page: 0
@@ -163,7 +167,6 @@ export default {
         if(isNaN(routerPage) || routerPage <= 0) routerPage = 1;
         this.current_page = routerPage;*/
         this.fetchCampaigns()
-        this.fetchFilteredCampaigns()
         document.title = `Campaigns - L4D2 Stats Plugin`
     },
     watch: {
@@ -266,7 +269,16 @@ export default {
             const arr = tags.split(',')
             if(arr.length > 0 && arr[0] === "prod") return arr.slice(1)
             return arr;
-        }
+        },
+        formatDate(inp) {
+            if(inp <= 0 || isNaN(inp)) return ""
+            try {
+                const date = new Date(inp * 1000).toLocaleString()
+                return date;
+            }catch(err) {
+                return "Unknown"
+            }
+        },
     }
 }
 

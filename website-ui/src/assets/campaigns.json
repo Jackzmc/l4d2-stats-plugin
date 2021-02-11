@@ -188,7 +188,7 @@
         "wow_map5": {
             "title": "Whispers of Winter"
         },
-        "qe_4_ultimate_test": {
+        "QE_4_ultimate_test": {
             "title": "Questionable Ethics"
         },
         "cbm3_bunker": {
@@ -268,6 +268,21 @@
         },
         "eu05_train_b16": {
             "title": "Tour of Terror"
+        },
+        "oot_boss": {
+            "title": "Kokiri Forest"
+        },
+        "omf_03": {
+            "title": "Our Mutual Fiend"
+        },
+        "l4d2_planb3_v051": {
+            "title": "Plan B"
+        },
+        "l4d2_fallindeath04": {
+            "title": "Fall in Death"
+        },
+        "QE2_ep5": {
+            "title": "Questionable Ethics: Alpha Test"
         }
     }
 }

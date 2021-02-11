@@ -259,6 +259,15 @@
         },
         "tlv03_riverside": {
             "title": "The Last Volt"
+        },
+        "l4d2_daybreak05_rescue": {
+            "title": "Day Break"
+        },
+        "saltwell_5_d": {
+            "title": "SaltHell Park"
+        },
+        "eu05_train_b16": {
+            "title": "Tour of Terror"
         }
     }
 }

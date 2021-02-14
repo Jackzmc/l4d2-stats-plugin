@@ -29,8 +29,12 @@
         <div class="columns is-multiline">
             <div v-for="(session) in sessions" class="column is-3" :key="session.id">
                 <div :class="[{'has-background-grey-lighter': mvp != session.steamid}, 'box']" style="position: relative">
-                    <img class="is-inline-block is-pulled-left image is-128x128" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" />
-                    <h6 class="title is-6">{{session.last_alias.substring(0,20)}}</h6>
+                    <router-link :to="'/user/' + session.steamid"><img class="is-inline-block is-pulled-left image is-128x128" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" /></router-link>
+                    <h6 class="title is-6">
+                        <router-link :to="'/user/' + session.steamid">
+                            {{session.last_alias.substring(0,20)}}
+                        </router-link>
+                    </h6>
                     <p class="subtitle is-6">{{session.points | formatNumber}} points</p>
                     <hr class="player-divider">
                     <ul class="has-text-right">

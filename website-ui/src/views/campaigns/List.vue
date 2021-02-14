@@ -51,7 +51,7 @@
                     <p class="subtitle is-6"><span class="has-text-info">{{getGamemode(campaign.gamemode)}}</span> • <span class="has-text-info">{{formatDifficulty(campaign.difficulty)}}</span></p>
                     <hr class="player-divider">
                     <ul class="has-text-right">
-                        <li><b>{{secondsToHms((campaign.date_end-campaign.date_start))}}</b> long</li>
+                        <li><b>{{getGameDuration((campaign.date_end-campaign.date_start))}}</b> long</li>
                         <li><b>{{campaign.Deaths}}</b> deaths</li>
                         <li><b>{{campaign.CommonsKilled | formatNumber}}</b> commons killed</li>
                         <li><b>{{campaign.FF | formatNumber}}</b> friendly fire dealt</li>
@@ -243,6 +243,16 @@ export default {
                 case 2: return "Advanced"
                 case 3: return "Expert"
             }
+        },
+        getGameDuration(d) {
+            d = Number(d)
+            const h = Math.floor(d / 3600);
+            if(h >= 1) {
+                const m = Math.floor(d % 3600 / 60);
+                return `${h} hour${h == 1?'':'s'} & ${m} min`
+            }
+            const m = Math.round(d / 60)
+            return `${m} minutes`
         },
         secondsToHms(d) {
             d = Number(d);

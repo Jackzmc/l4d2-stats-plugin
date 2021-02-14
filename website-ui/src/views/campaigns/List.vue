@@ -172,7 +172,6 @@ export default {
     watch: {
         "filtered.filters": {
             handler(e) {
-                console.log(e)
                 this.fetchFilteredCampaigns()
             },
             deep: true

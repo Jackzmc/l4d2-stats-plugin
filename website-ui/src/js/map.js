@@ -22,6 +22,7 @@ export function getMapName(id) {
     const customMap = custom[id];
     if(customMap && customMap.title) return customMap.title;
     //Todo: add some custom maps
+    console.warn('Map missing title', id)
     return id;
 }
 

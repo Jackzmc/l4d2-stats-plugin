@@ -20,11 +20,13 @@ public Plugin myinfo =
 	version = PLUGIN_VERSION, 
 	url = ""
 };
-static ConVar hServerTags;
+static ConVar hServerTags, hZDifficulty;
 static Database g_db;
 static char steamidcache[MAXPLAYERS+1][32];
 bool lateLoaded = false, bVersus, bRealism;
-static char gamemode[32], serverTags[255];
+static char gamemode[32], serverTags[255], uuid[64];
+static bool finaleStarted; //Has finale started?
+static int iZDifficulty; //On finale_start populated with z_difficulty
 
 //Stats that need to be only sent periodically. (note: possibly deaths?)
 static int damageSurvivorGiven[MAXPLAYERS+1];
@@ -112,6 +114,8 @@ public void OnPluginStart()
 	hGamemode.GetString(gamemode, sizeof(gamemode));
 	hGamemode.AddChangeHook(CVC_GamemodeChange);
 
+	hZDifficulty = FindConVar("z_difficulty");
+
 	//Hook all events to track statistics
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("player_hurt", Event_PlayerHurt);
@@ -187,10 +191,18 @@ public void OnClientAuthorized(int client, const char[] auth) {
 public void OnClientDisconnect(int client) {
 	//Check if any pending stats to send.
 	if(!IsFakeClient(client) && IsClientInGame(client)) {
+		//Record campaign, incase they leave early.
+		if(finaleStarted && uuid[0] && steamidcache[client][0]) {
+			IncrementSessionStat(client);
+			RecordCampaign(client, iZDifficulty);
+			IncrementStat(client, "finales_won", 1);
+			points[client] += 400;
+		}
+
 		FlushQueuedStats(client, true);
 		steamidcache[client][0] = '\0';
 		points[client] = 0;
-		
+
 		//ResetSessionStats(client); //Can't reset session stats cause transitions!
 	}
 }
@@ -258,7 +270,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 	}
 }
 
-void RecordCampaign(int client, int difficulty, const char[] uuid) {
+void RecordCampaign(int client, int difficulty) {
 	if (client > 0 && IsClientConnected(client) && IsClientInGame(client)) {
 		char query[1023], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
@@ -311,7 +323,7 @@ void RecordCampaign(int client, int difficulty, const char[] uuid) {
 		if(!result) {
 			char error[128];
 			SQL_GetError(g_db, error, sizeof(error));
-			LogError("[l4d2_stats_recorder] RecordCampaign for %d failed. Query: `%s` | Error: %s", client, query, error);
+			LogError("[l4d2_stats_recorder] RecordCampaign for %d failed. UUID %s | Query: `%s` | Error: %s", uuid, client, query, error);
 		}
 		#if defined DEBUG
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
@@ -482,29 +494,8 @@ public void DBCT_Generic(Handle db, Handle child, const char[] error, any data)
 public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] error, int difficulty) {
 	if(results != INVALID_HANDLE && SQL_GetRowCount(results) > 0) {
 		SQL_FetchRow(results);
-		char uuid[64], shortID[9];
 		SQL_FetchString(results, 0, uuid, sizeof(uuid));
 		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, difficulty);
-		StrCat(shortID, sizeof(shortID), uuid);
-
-		for(int i = 1; i <= MaxClients; i++) {
-			if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2) {
-				int client = i;
-				if(IsFakeClient(i)) {
-					if(!HasEntProp(i, Prop_Send, "m_humanSpectatorUserID")) continue;
- 					client = GetClientOfUserId(GetEntPropEnt(i, Prop_Send, "m_humanSpectatorUserID"));
-					//get real client
-				}
-				if(steamidcache[client][0]) {
-					IncrementSessionStat(client);
-					RecordCampaign(client, difficulty, uuid);
-					IncrementStat(client, "finales_won", 1);
-					PrintToChat(client, "View this game's statistics at https://jackz.me/c/%s", shortID);
-					points[client] += 400;
-				}
-			}
-		}
-		
 	}else{
 		LogError("RecordCampaign, failed to get UUID: %s", error);
 	}
@@ -739,9 +730,30 @@ public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroad
 	}
 }
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
+	finaleStarted = false;
 	int difficulty = event.GetInt("difficulty");
-	if(L4D_IsMissionFinalMap())
-		SQL_TQuery(g_db, DBCT_GetUUIDForCampaign, "SELECT UUID() AS UUID", difficulty, DBPrio_High);
+	if(L4D_IsMissionFinalMap()) {
+		char shortID[9];
+		StrCat(shortID, sizeof(shortID), uuid);
+
+		for(int i = 1; i <= MaxClients; i++) {
+			if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2) {
+				int client = i;
+				if(IsFakeClient(i)) {
+					if(!HasEntProp(i, Prop_Send, "m_humanSpectatorUserID")) continue;
+ 					client = GetClientOfUserId(GetEntPropEnt(i, Prop_Send, "m_humanSpectatorUserID"));
+					//get real client
+				}
+				if(steamidcache[client][0]) {
+					IncrementSessionStat(client);
+					RecordCampaign(client, difficulty);
+					IncrementStat(client, "finales_won", 1);
+					PrintToChat(client, "View this game's statistics at https://jackz.me/c/%s", shortID);
+					points[client] += 400;
+				}
+			}
+		}	
+	}
 }
 public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
@@ -753,6 +765,13 @@ public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast
 
 public void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
 	finaleTimeStart = GetTime();
+	//Get UUID on finale_start
+	if(L4D_IsMissionFinalMap()) {
+		finaleStarted = true;
+		SQL_TQuery(g_db, DBCT_GetUUIDForCampaign, "SELECT UUID() AS UUID", _, DBPrio_High);
+
+		iZDifficulty = GetDifficultyInt();
+	}
 }
 public void Event_GrenadeDenonate(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
@@ -815,6 +834,8 @@ public void Event_MapTransition(Event event, const char[] name, bool dontBroadca
 
 public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
 	PrintToServer("[l4d2_stats_recorder] round_end; flushing");
+	if(finaleStarted) finaleStarted = false;
+	
 	for(int i = 1; i < MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
 			//ResetSessionStats(i, false);
@@ -838,4 +859,13 @@ stock bool GetInfectedClassName(int type, char[] buffer, int bufferSize) {
 		default: return false;
 	}
 	return true;
+}
+
+stock int GetDifficultyInt() {
+	char diff[16];
+	hZDifficulty.GetString(diff, sizeof(diff));
+	if(StrEqual(diff, "easy")) return 0;
+	else if(StrEqual(diff, "normal")) return 1;
+	else if(StrEqual(diff, "hard")) return 2;
+	else return 3;
 }

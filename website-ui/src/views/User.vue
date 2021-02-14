@@ -21,10 +21,10 @@
       <nav class="tabs is-boxed is-fullwidth">
         <div class="container">
           <ul>
-            <router-link tag="li" :to="getLink('overview')"><a>Overview</a></router-link>
-            <router-link tag="li" :to="getLink('sessions')"><a>Sessions</a></router-link>
-            <router-link tag="li" :to="getLink('campaign')"><a>Campaign</a></router-link>
-            <router-link tag="li" :to="getLink('versus')">  <a>Versus</a></router-link>
+            <router-link class="tabLink" tag="li" :to="getLink('overview')"><a>Overview</a></router-link>
+            <router-link class="tabLink" tag="li" :to="getLink('sessions')"><a>Sessions</a></router-link>
+            <router-link class="tabLink" tag="li" :to="getLink('campaign')"><a>Campaign</a></router-link>
+            <router-link class="tabLink" tag="li" :to="getLink('versus')">  <a>Versus</a></router-link>
             <!--
             <router-link tag="li" to="survival"><a>Survival</a></router-link>
             <router-link tag="li" to="scavenge"><a>Scavenge</a></router-link> -->
@@ -129,5 +129,8 @@ export default {
 }
 .hero {
   background: linear-gradient(180deg, #008cff 0%, #3a47d5 100%);
+}
+.router-link-exact-active > a {
+  color: blue !important;
 }
 </style>

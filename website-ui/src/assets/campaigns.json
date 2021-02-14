@@ -144,7 +144,8 @@
     },
     "custom": {
         "dw_final": {
-            "title": "Dark Wood"
+            "title": "Dark Wood",
+            "image": "darkwood.jpg"
         },
         "beldurra03_riverside": {
             "title": "Beldurra"
@@ -180,10 +181,12 @@
             "title": "Blood Tracks"
         },
         "the_hive_m5": {
-            "title": "The Hive"
+            "title": "The Hive",
+            "image": "the_hive.jpg"
         },
         "l4d2_diescraper4_top_361": {
-            "title": "Diescraper Redux"
+            "title": "Diescraper Redux",
+            "image": "diescraper_redux.jpg"
         },
         "wow_map5": {
             "title": "Whispers of Winter"
@@ -192,16 +195,19 @@
             "title": "Questionable Ethics"
         },
         "cbm3_bunker": {
-            "title": "Blood Proof"
+            "title": "Blood Proof",
+            "image": "bloodproof.jpg"
         },
         "the_end": {
-            "title": "Dniepr"
+            "title": "Dniepr",
+            "image": "dniepr.jpg"
         },
         "theend_map_05": {
             "title": "TheCurseOfLazarCastle"
         },
         "mnac": {
-            "title": "Warcelona"
+            "title": "Warcelona",
+            "image": "warcelona.jpg"
         },
         "roundhouse": {
             "title": "Redemption II"
@@ -228,10 +234,12 @@
             "title": "Death Trip v5"
         },
         "p84m4_station": {
-            "title": "Precinct 84"
+            "title": "Precinct 84",
+            "image": "precinct_84.jpg"
         },
         "l4d_tbm_5": {
-            "title": "The Bloody Moors"
+            "title": "The Bloody Moors",
+            "image": "the_bloody_moors.jpg"
         },
         "hotel05_rooftop_two": {
             "title": "Dead Vacation"
@@ -246,7 +254,8 @@
             "title": "City of the Dead"
         },
         "bdp_bunker05": {
-            "title": "Burried Deep"
+            "title": "Burried Deep",
+            "image": "buried_deep.jpg"
         },
         "nt05_wake": {
             "title": "Night Terror"

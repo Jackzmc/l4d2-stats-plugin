@@ -13,9 +13,8 @@
     <div class="container has-text-left">
         <div class="column">
             <h5 class="title is-5">What is this?</h5>
-            <p>This is a plugin you can install on any sourcemod l4d2 server, and it will record all the statistics you see on a user's page. This includes kills, deaths, damage and more. This plugin sends the database to a MySQL database which then you can view on this webpage. </p>
+            <p>This is a page for my <a href="https://github.com/Jackzmc/l4d2-stats-plugin">l4d2 stats plugin</a>. View information on how to set it up on the github linked. The plugin records kills, deaths, damage, skills and more from various left 4 dead game sessions and are displayed neatly on this website. This website is home to my personal servers I host, some for friends and some are public (see 'public' tags). </p>
             <hr>
-            <h5 class="title is-5">How are points calculated?</h5>
             <b-collapse :open="false" class="card" animation="slide">
                 <div
                     slot="trigger"
@@ -23,7 +22,7 @@
                     class="card-header"
                     role="button">
                     <p class="card-header-title">
-                        View Amounts
+                        How are points calculated?
                     </p>
                     <a class="card-header-icon">
                         <b-icon
@@ -50,6 +49,34 @@
                             <li><span class="has-text-danger">-20</span> for teammate kill</li>
                             <li><span class="has-text-danger">-1</span> per teammate dmg</li>
                         </ul>
+                    </div>
+                </div>
+            </b-collapse>
+            <b-collapse :open="false" class="card" animation="slide">
+                            <div
+                    slot="trigger"
+                    slot-scope="props"
+                    class="card-header"
+                    role="button">
+                    <p class="card-header-title">
+                        How is campaign MVP calculated?
+                    </p>
+                    <a class="card-header-icon">
+                        <b-icon
+                            :icon="props.open ? 'caret-up' :  'caret-down'">
+                        </b-icon>
+                    </a>
+                </div>
+                <div class="card-content">
+                    <div class="content">
+                        <p>Campaign MVP is determined by the following fields:</p>
+                        <ol>
+                            <li>Special Infected Killed <em>(highest number)</em></li>
+                            <li>Survivor FF Count <em>(lowest number)</em></li>
+                            <li>Zombie Kills <em>(highest number)</em></li>
+                            <li>Damage Taken <em>(lowest number)</em></li>
+                        </ol>
+                        <p>When a campaign is fetched, the list of sessions for that campaign are sorted in the order listed above. The first player in the list will be assigned the MVP.</p>
                     </div>
                 </div>
             </b-collapse>

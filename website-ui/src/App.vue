@@ -26,7 +26,7 @@
                 Sessions
             </b-navbar-item>
             <b-navbar-item tag="router-link" to="/faq">
-                FAQ
+                About & FAQ
             </b-navbar-item>
         </template>
 

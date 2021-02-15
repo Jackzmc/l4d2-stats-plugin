@@ -7,6 +7,7 @@
                     <div v-if="$route.params.id && sessions.length > 0 && !loading" class="column">
                         <h1 class="title">
                             {{mapTitle}}
+                            <a v-if="$SHARE_URL" style="color: white" @click="getShareLink()"><b-icon icon="share" /></a>
                         </h1>
                         <p class="subtitle is-4">Played {{formatDate(sessions[0].date_end*1000)}}</p>
                         <hr>
@@ -292,6 +293,14 @@ export default {
                 case "improved": return "is-dark"
                 default: return ''
             }
+        },
+        getShareLink() {
+            const url = `${this.$SHARE_URL}${this.$route.params.id.substring(0,8)}`
+            this.$buefy.dialog.alert({
+                title: 'Campaign Share Link',
+                message: `<a href="${url}">${url}</a>`,
+                confirmText: 'OK'
+            })
         }
     }
 }

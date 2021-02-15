@@ -25,7 +25,7 @@ Vue.prototype.$http = Axios.create({
 	// disable the default cache
 	adapter: cacheAdapterEnhancer(Axios.defaults.adapter, { enabledByDefault: false })
 });
-
+Vue.prototype.$SHARE_URL = process.env.VUE_APP_SHARE_URL;
 
 Vue.config.productionTip = false
 Vue.filter('formatNumber', (num) => {

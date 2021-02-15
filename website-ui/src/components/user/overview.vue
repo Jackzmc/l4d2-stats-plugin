@@ -53,27 +53,27 @@
                 <tbody>
                 <tr>
                     <td>Smoker</td>
-                    <td class="tvalue">{{user.kills_smoker}}</td>
+                    <td class="tvalue">{{user.kills_smoker | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Boomer</td>
-                    <td class="tvalue">{{user.kills_boomer}}</td>
+                    <td class="tvalue">{{user.kills_boomer | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Hunter</td>
-                    <td class="tvalue">{{user.kills_hunter}}</td>
+                    <td class="tvalue">{{user.kills_hunter | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Spitter</td>
-                    <td class="tvalue">{{user.kills_spitter}}</td>
+                    <td class="tvalue">{{user.kills_spitter | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Charger</td>
-                    <td class="tvalue">{{user.kills_charger}}</td>
+                    <td class="tvalue">{{user.kills_charger | formatNumber}}</td>
                 </tr>
                 <tr>
                     <td>Jockey</td>
-                    <td class="tvalue">{{user.kills_jockey}}</td>
+                    <td class="tvalue">{{user.kills_jockey | formatNumber}}</td>
                 </tr>
                 </tbody>
             </table>
@@ -108,7 +108,7 @@
                     <td class="tvalue">{{user.ff_kills | formatNumber}}</td>
                 </tr>
                 <tr>
-                    <td>Minigun</td>
+                    <td>Infected With Minigun</td>
                     <td class="tvalue">{{user.kills_minigun | formatNumber}}</td>
                 </tr>
                 </tbody>
@@ -120,7 +120,7 @@
         <linkanchor id="survivorstats" text="Survivor Statistics" />
         <div class="columns">
             <div class="column is-4">
-            <p><u>Damage Dealt</u></p>
+            <p><u>Damages</u></p>
             <br>
             <table class="table is-bordered is-fullwidth">
                 <thead>
@@ -131,7 +131,7 @@
                 </thead>
                 <tbody>
                 <tr>
-                    <td>Total Given</td>
+                    <td>Total Dealt</td>
                     <td class="tvalue">{{user.survivor_damage_give | formatNumber}}</td>
                 </tr>
                 <tr>
@@ -158,7 +158,7 @@
             </table>
             </div>
             <div class="column is-4">
-            <p><u>Item Uses</u></p>
+            <p><u>Item Usage</u></p>
             <br>
             <table class="table is-bordered is-fullwidth">
                 <thead>
@@ -177,7 +177,7 @@
                     <td class="tvalue">{{user.adrenaline_used | formatNumber}}</td>
                 </tr>
                 <tr>
-                    <td>Defibs Used</td>
+                    <td>Defibs</td>
                     <td class="tvalue">{{user.defibs_used | formatNumber}}</td>
                 </tr>
                 <tr>
@@ -185,11 +185,11 @@
                     <td class="tvalue">{{user.packs_used | formatNumber}}</td>
                 </tr>
                 <tr>
-                    <td>Kits (Self)</td>
+                    <td>Kits <em>(Self)</em></td>
                     <td class="tvalue">{{user.heal_self | formatNumber}}</td>
                 </tr>
                 <tr>
-                    <td>Kits (Others)</td>
+                    <td>Kits <em>(Others)</em></td>
                     <td class="tvalue">{{user.heal_others | formatNumber}}</td>
                 </tr>
                 </tbody>
@@ -230,10 +230,47 @@
                     <td>Revived Others</td>
                     <td class="tvalue">{{user.revived_others | formatNumber}}</td>
                 </tr>
+                <!-- rocks_hitby -->
                 </tbody>
             </table>
             </div>
         </div>
+        <hr>
+        <linkanchor id="skills" text="Skills" />
+        <table class="table is-bordered is-fullwidth">
+            <thead>
+            <tr class="has-background-white-ter">
+                <th>Skill</th>
+                <th align="center">Count</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Witches Crowned</td>
+                <td class="tvalue">{{user.witches_crowned | formatNumber}}</td>
+            </tr>
+            <tr>
+                <td>Witches Crowned <em>(angry)</em></td>
+                <td class="tvalue">{{user.witches_crowned_angry | formatNumber}}</td>
+            </tr>
+            <tr>
+                <td>Smokers Self-cleared</td>
+                <td class="tvalue">{{user.smokers_selfcleared | formatNumber}}</td>
+            </tr>
+            <tr>
+                <td>Hunters Deadstopped</td>
+                <td class="tvalue">{{user.hunters_deadstopped | formatNumber}}</td>
+            </tr>
+            <tr>
+                <td>Times Helped Pinned Teammate</td>
+                <td class="tvalue">{{user.cleared_pinned | formatNumber}}</td>
+            </tr>
+            <tr>
+                <td>Times hit by Tank Rock</td>
+                <td class="tvalue">{{user.rocks_hitby | formatNumber}}</td>
+            </tr>
+            </tbody>
+        </table>
         <hr>
         <linkanchor id="throwables" text="Throwable Statistics" />
         <table class="table is-bordered is-fullwidth">
@@ -327,6 +364,7 @@
                 <li><a href="#playerinfo">Player Information</a></li>
                 <li><a href="#kills">Kills</a></li>
                 <li><a href="#survivorstats">Survivor Stats</a></li>
+                <li><a href="#skills">Skills</a></li>
                 <li><a href="#throwables">Throwable Stats</a></li>
                 <li><a href="#averages">Averages</a></li>
                 </ul>

@@ -90,20 +90,22 @@ export default {
   components: {
     ProfileList
   },
-  STATS: ['deaths', 'ffDamage', 'healOthers', 'revivedOthers', 'survivorIncaps'],
+  STATS: [ 'clownHonks', 'deaths', 'ffDamage', 'healOthers', 'revivedOthers', 'survivorIncaps',],
   STAT_DISPLAY_NAMES: {
     deaths: 'Most Deaths',
     ffDamage: 'Most Friendly Fire Damage',
     healOthers: 'Healed the Most Players',
     revivedOthers: 'Revived the Most Players',
-    survivorIncaps: 'Most Incaps'
+    survivorIncaps: 'Most Incaps',
+    clownHonks: 'Most Clown Honks'
   },
   STAT_VALUE_NAMES: {
     deaths: 'deaths',
     ffDamage: 'HP',
     healOthers: 'heals',
     revivedOthers: 'revives',
-    survivorIncaps: 'incaps'
+    survivorIncaps: 'incaps',
+    clownHonks: 'clowns honked'
   },
   data() {
     return {

@@ -230,6 +230,10 @@
                     <td>Revived Others</td>
                     <td class="tvalue">{{user.revived_others | formatNumber}}</td>
                 </tr>
+                <tr>
+                    <td>Clowns Honked</td>
+                    <td class="tvalue">{{user.clowns_honked | formatNumber}}</td>
+                </tr>
                 <!-- rocks_hitby -->
                 </tbody>
             </table>

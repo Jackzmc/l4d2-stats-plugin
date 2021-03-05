@@ -46,7 +46,7 @@
                     </ul>
                     <br>
                     <b-button type="is-info" tag="router-link" :to="'/sessions/details/' + session.id" expanded>View Details</b-button>
-                    <div v-if="mvp === session.steamid && honkMaster && honkMaster !== session.steamid" class="ribbon ribbon-top-left"><span>MVP</span></div>
+                    <div v-if="isMVP(session)" class="ribbon ribbon-top-left"><span>MVP</span></div>
                     <div v-if="honkMaster === session.steamid" class="ribbon ribbon-top-left ribbon-honk"><span>Honk Master</span></div>
                 </div>
             </div>
@@ -218,6 +218,10 @@ export default {
       }
     },
     methods: {
+        isMVP(session) {
+            if(this.honkMaster && this.honkMaster === session.steamid) return false;
+            return this.mvp === session.steamid
+        },
         fetchDetails() {
             if(!this.$route.params.id) return;
             this.loading = true;

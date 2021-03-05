@@ -29,7 +29,7 @@
         <h4 class="title is-4">Players</h4>
         <div class="columns is-multiline">
             <div v-for="(session) in sessions" class="column is-3" :key="session.id">
-                <div :class="[{'has-background-grey-lighter': mvp != session.steamid}, 'box']" style="position: relative">
+                <div :class="[{'bg-mvp': mvp === session.steamid}, 'box']" style="position: relative">
                     <router-link :to="'/user/' + session.steamid"><img class="is-inline-block is-pulled-left image is-128x128" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" /></router-link>
                     <h6 class="title is-6">
                         <router-link :to="'/user/' + session.steamid">
@@ -42,12 +42,14 @@
                         <li><span class="has-text-info">{{session.ZombieKills}}</span> commons killed</li>
                         <li><span class="has-text-info">{{session.SpecialInfectedKills}}</span>  specials killed</li>
                         <li><span class="has-text-info">{{session.SurvivorDamage}}</span>  friendly fire HP dealt</li>
+                        <li v-if="totals.honks > 0"><span class="has-text-info">{{session.honks}}</span>  clown honks</li>
                     </ul>
                     <br>
                     <b-button type="is-info" tag="router-link" :to="'/sessions/details/' + session.id" expanded>View Details</b-button>
-                    <div v-if="mvp == session.steamid" class="ribbon ribbon-top-left"><span>MVP</span></div>
+                    <div v-if="mvp === session.steamid && honkMaster && honkMaster !== session.steamid" class="ribbon ribbon-top-left"><span>MVP</span></div>
+                    <div v-if="honkMaster === session.steamid" class="ribbon ribbon-top-left ribbon-honk"><span>Honk Master</span></div>
                 </div>
-            </div> 
+            </div>
         </div>
     </div>
     <hr>
@@ -153,7 +155,11 @@
                             <p>{{secondsToHms((sessions[0].date_end-sessions[0].date_start))}}</p>
                         </span>
                         <strong>Average Ping</strong>
-                        <p>{{sessions[0].ping}} ms</p>
+                        <p>{{averagePing}} ms</p>
+                        <span v-if="totals.honks > 0">
+                          <strong>Total Honks</strong>
+                          <p>{{totals.honks | formatNumber}}</p>
+                        </span>
                         <span v-if="sessions[0].server_tags">
                             <strong>Tags</strong>
                             <b-taglist v-if="sessions[0].server_tags">
@@ -189,9 +195,27 @@ export default {
         this.fetchDetails()
     },
     computed: {
-        mapTitle() {
-            return this.sessions.length > 0 ? getMapName(this.sessions[0].map) : null;
-        },
+      mapTitle() {
+          return this.sessions.length > 0 ? getMapName(this.sessions[0].map) : null;
+      },
+      honkMaster() {
+        if(this.totals.honks > 0) {
+          let honkCount = 0, honkID = -1;
+          this.sessions.forEach(({honks, steamid}) => {
+            if(honkCount < honks || honkID == -1) {
+              honkID = steamid
+              honkCount = honks
+            }
+          })
+          return honkID
+        }
+        return null;
+      },
+      averagePing() {
+        let pingSum = 0;
+        this.sessions.forEach(({ping}) => pingSum += ping)
+        return Math.round(pingSum / this.sessions.length)
+      }
     },
     methods: {
         fetchDetails() {
@@ -212,7 +236,8 @@ export default {
                         MolotovsUsed: pv.MolotovsUsed + cv.MolotovsUsed,
                         PipebombsUsed: pv.PipebombsUsed + cv.PipebombsUsed,
                         BoomerBilesUsed: pv.BoomerBilesUsed + cv.BoomerBilesUsed,
-                        MedkitsUsed: pv.MedkitsUsed + cv.MedkitsUsed + cv.FirstAidShared
+                        MedkitsUsed: pv.MedkitsUsed + cv.MedkitsUsed + cv.FirstAidShared,
+                        honks: pv.honks + cv.honks
                     }
                 });
                 document.title = `${this.mapTitle} Campaign - ${this.$route.params.id} - L4D2 Stats Plugin`
@@ -283,7 +308,7 @@ export default {
             const hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
             const mDisplay = m > 0 ? m + (m == 1 ? " minute " : " minutes ") : "";
             //const sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
-            return hDisplay + mDisplay; 
+            return hDisplay + mDisplay;
         },
         getTagType(tag) {
             switch(tag.toLowerCase()) {
@@ -309,6 +334,16 @@ export default {
 <style>
 .player-divider {
     margin: 0.5rem 0;
+}
+.bg-mvp {
+  background-color: rgba(0, 255, 52, 0.11) !important;
+}
+.ribbon-honk::before,
+.ribbon-honk::after {
+  border: 5px solid #a025d1;
+}
+.ribbon-honk span {
+  background-color: #a025d1;
 }
 @import url('../../css/ribbon.css')
 </style>

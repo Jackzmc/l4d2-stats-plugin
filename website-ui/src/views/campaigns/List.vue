@@ -13,10 +13,10 @@
     <br>
     <div class="container is-fluid">
         <h5 class="title is-5">Recently Played Games</h5>
-        <!-- <b-carousel-list 
-            v-if="recentCampaigns.length > 0" 
-            v-model="selectedRecent" 
-            :data="recentCampaigns" 
+        <!-- <b-carousel-list
+            v-if="recentCampaigns.length > 0"
+            v-model="selectedRecent"
+            :data="recentCampaigns"
             :items-to-show="4"
             :items-to-list="1"
         >
@@ -65,7 +65,7 @@
                     <span v-else><br><br></span>
                     <b-button type="is-info" tag="router-link" :to="'/campaigns/' + campaign.campaignID" expanded>View Details</b-button>
                 </div>
-            </div> 
+            </div>
         </div>
     </div>
     <hr>
@@ -102,6 +102,16 @@
                     <option value="versus">Versus</option>
                     <option value="TankRun">Tank Run</option>
                     <option value="RocketDude">RocketDude</option>
+                    <option value="Realism">Realism</option>
+                </b-select>
+            </b-field>
+            <b-field label="Difficulty">
+                <b-select v-model="filtered.filters.difficulty">
+                    <option value="all">Any</option>
+                    <option value="0">Easy</option>
+                    <option value="1">Normal</option>
+                    <option value="2">Advanced</option>
+                    <option value="3">Expert</option>
                 </b-select>
             </b-field>
         </b-field>
@@ -133,7 +143,7 @@
                     <span v-else><br><br></span>
                     <b-button type="is-info" tag="router-link" :to="'/campaigns/' + campaign.campaignID" expanded>View Details</b-button>
                 </div>
-            </div> 
+            </div>
         </div>
         <br>
     </div>
@@ -154,6 +164,7 @@ export default {
                     tag: null,
                     type: "all",
                     gamemode: 'all',
+                    difficulty: 'all',
                     page: 0
                 },
 
@@ -182,7 +193,7 @@ export default {
         getMapImage,
         fetchFilteredCampaigns() {
             this.filtered.loading = true;
-            const queryParams = `?page=${this.filtered.filters.page}&perPage=16&tag=${this.filtered.filters.tag}&gamemode=${this.filtered.filters.gamemode}&type=${this.filtered.filters.type}
+            const queryParams = `?page=${this.filtered.filters.page}&perPage=16&tag=${this.filtered.filters.tag}&gamemode=${this.filtered.filters.gamemode}&type=${this.filtered.filters.type}&difficulty=${this.filtered.filters.difficulty}
             `.replace(/\s/,'')
             this.$http.get(`/api/campaigns${queryParams}`, { cache: true })
             .then(r => {
@@ -263,7 +274,7 @@ export default {
             const hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
             const mDisplay = m > 0 ? m + (m == 1 ? " minute " : " minutes ") : "";
             //const sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
-            return hDisplay + mDisplay; 
+            return hDisplay + mDisplay;
         },
         getTagType(tag) {
             switch(tag.toLowerCase()) {

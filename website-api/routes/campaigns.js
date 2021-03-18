@@ -19,6 +19,7 @@ module.exports = (pool) => {
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
             const offset = pageNumber * perPage;
 
+            const difficulty         = isNaN(req.query.difficulty) ? null : parseInt(req.query.difficulty)
             let selectTag            = req.query.tag || "prod"
             let gamemodeSearchString = req.query.gamemode && req.query.gamemode !== "all" ? `${req.query.gamemode}` : `%`
             let mapSearchString      = "" // RLIKE "^c[0-9]m"
@@ -42,15 +43,16 @@ module.exports = (pool) => {
                     (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as ThrowableTotal, 
                     server_tags 
                 FROM \`stats_games\` as g INNER JOIN \`stats_users\` ON g.steamid = \`stats_users\`.steamid 
-                WHERE FIND_IN_SET(?, server_tags) ${mapSearchString} AND gamemode LIKE ?
+                WHERE FIND_IN_SET(?, server_tags) ${mapSearchString} AND gamemode LIKE ? AND ? IS NULL OR difficulty = ?
                 GROUP BY g.campaignID 
                 ORDER BY date_end DESC LIMIT ?, ?`, 
-            [selectTag, gamemodeSearchString, offset, perPage])
+            [selectTag, gamemodeSearchString, difficulty, difficulty, offset, perPage])
             res.json({
                 meta: {
                     selectTag,
                     gamemodeSearchString,
                     mapSearchString,
+                    difficulty
                 },
                 recentCampaigns: recent,
                 total_campaigns: total[0].total

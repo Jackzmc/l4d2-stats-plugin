@@ -41,13 +41,17 @@
                     <ul class="has-text-right">
                         <li><span class="has-text-info">{{session.ZombieKills}}</span> commons killed</li>
                         <li><span class="has-text-info">{{session.SpecialInfectedKills}}</span>  specials killed</li>
-                        <li><span class="has-text-info">{{session.SurvivorDamage}}</span>  friendly fire HP dealt</li>
+                        <li><span class="has-text-info">
+                            <span :class="{'has-text-weight-bold': isMostFF(session)}">{{session.SurvivorDamage}}</span>
+                             friendly fire HP dealt
+                            </span>
+                        </li>
                         <li v-if="totals.honks > 0"><span class="has-text-info">{{session.honks}}</span>  clown honks</li>
                     </ul>
                     <br>
                     <b-button type="is-info" tag="router-link" :to="'/sessions/details/' + session.id" expanded>View Details</b-button>
                     <div v-if="isMVP(session)" class="ribbon ribbon-top-left"><span>MVP</span></div>
-                    <div v-if="honkMaster === session.steamid" class="ribbon ribbon-top-left ribbon-honk"><span>Honk Master</span></div>
+                    <div v-if="isHonkMaster(session)" class="ribbon ribbon-top-left ribbon-honk"><span>Honk Master</span></div>
                 </div>
             </div>
         </div>
@@ -56,7 +60,7 @@
     <div v-if="totals" class="container is-fluid">
         <div class="columns">
             <div class="column">
-                <h4 class="title is-4">Statistics</h4>
+                <h4 class="title is-4">Total Statistics</h4>
                 <nav class="level">
                     <div class="level-item has-text-centered">
                         <div>
@@ -215,12 +219,28 @@ export default {
         let pingSum = 0;
         this.sessions.forEach(({ping}) => pingSum += ping)
         return Math.round(pingSum / this.sessions.length)
+      },
+      mostFF() {
+        let ffCount = 0, id = -1;
+        this.sessions.forEach(({SurvivorDamage, steamid}) => {
+            if(SurvivorDamage > ffCount || steamid == -1 ) {
+                id = steamid
+                ffCount = SurvivorDamage
+            }
+        })
+        return id;
       }
     },
     methods: {
         isMVP(session) {
-            if(this.honkMaster && this.honkMaster === session.steamid) return false;
             return this.mvp === session.steamid
+        },
+        isHonkMaster(session) {
+            if(this.mvp === session.steamid) return false;
+            return this.honkMaster === session.steamid
+        },
+        isMostFF(session) {
+            return this.mostFF === session.steamid
         },
         fetchDetails() {
             if(!this.$route.params.id) return;

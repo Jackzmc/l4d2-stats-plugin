@@ -2,7 +2,7 @@
 #pragma newdecls required
 
 //#define DEBUG 0
-#define PLUGIN_VERSION "1.0"
+#define PLUGIN_VERSION "1.1"
 
 #include <sourcemod>
 #include <sdktools>
@@ -17,7 +17,7 @@
 
 public Plugin myinfo = 
 {
-	name =  "L4D(2) Stats Recorder", 
+	name =  "L4D2 Stats Recorder", 
 	author = "jackzmc", 
 	description = "", 
 	version = PLUGIN_VERSION, 
@@ -25,68 +25,81 @@ public Plugin myinfo =
 };
 static ConVar hServerTags, hZDifficulty;
 static Database g_db;
-static char steamidcache[MAXPLAYERS+1][32];
-bool lateLoaded = false, bVersus, bRealism;
 static char gamemode[32], serverTags[255], uuid[64];
-static bool campaignFinished, skillDetectAvailable; //Has finale started?
-static int iZDifficulty; //On finale_start populated with z_difficulty
+static bool lateLoaded; //Has finale started?
 
-//Stats that need to be only sent periodically. (note: possibly deaths?)
-static int damageSurvivorGiven[MAXPLAYERS+1];
-static int damageInfectedGiven[MAXPLAYERS+1];
-static int damageInfectedRec[MAXPLAYERS+1];
-static int damageSurvivorFF[MAXPLAYERS+1];
-static int doorOpens[MAXPLAYERS+1];
-static int witchKills[MAXPLAYERS+1];
-static int startedPlaying[MAXPLAYERS+1];
-static int points[MAXPLAYERS+1];
-static int upgradePacksDeployed[MAXPLAYERS+1];
-static int finaleTimeStart;
-static int molotovDamage[MAXPLAYERS+1];
-static int pipeKills[MAXPLAYERS+1];
-static int molotovKills[MAXPLAYERS+1];
-static int minigunKills[MAXPLAYERS+1];
-static int iGameStartTime;
-//Used for table: stats_games
-static int m_checkpointZombieKills[MAXPLAYERS+1];
-static int m_checkpointSurvivorDamage[MAXPLAYERS+1];
-static int m_checkpointMedkitsUsed[MAXPLAYERS+1];
-static int m_checkpointPillsUsed[MAXPLAYERS+1];
-static int m_checkpointMolotovsUsed[MAXPLAYERS+1];
-static int m_checkpointPipebombsUsed[MAXPLAYERS+1];
-static int m_checkpointBoomerBilesUsed[MAXPLAYERS+1];
-static int m_checkpointAdrenalinesUsed[MAXPLAYERS+1];
-static int m_checkpointDefibrillatorsUsed[MAXPLAYERS+1];
-static int m_checkpointDamageTaken[MAXPLAYERS+1];
-static int m_checkpointReviveOtherCount[MAXPLAYERS+1];
-static int m_checkpointFirstAidShared[MAXPLAYERS+1];
-static int m_checkpointIncaps[MAXPLAYERS+1];
-static int m_checkpointAccuracy[MAXPLAYERS+1];
-static int m_checkpointDeaths[MAXPLAYERS+1];
-static int m_checkpointMeleeKills[MAXPLAYERS+1];
-static int sBoomerKills[MAXPLAYERS+1];
-static int sSmokerKills[MAXPLAYERS+1];
-static int sJockeyKills[MAXPLAYERS+1];
-static int sHunterKills[MAXPLAYERS+1];
-static int sSpitterKills[MAXPLAYERS+1];
-static int sChargerKills[MAXPLAYERS+1];
-//add:  	m_checkpointDamageToTank
-//add:  	m_checkpointDamageToWitch
+enum struct Game {
+	int difficulty;
+	int startTime;
+	int finaleStartTime;
+	int clownHonks;
+	bool finished;
+	char gamemode[32];
+	char uuid[64];
+}
+
+enum struct Player {
+	char steamid[32];
+	int damageSurvivorGiven;
+	int damageInfectedRec;
+	int damageInfectedGiven;
+	int damageSurvivorFF;
+	int doorOpens;
+	int witchKills;
+	int startedPlaying;
+	int points;
+	int upgradePacksDeployed;
+	int finaleTimeStart;
+	int molotovDamage;
+	int pipeKills;
+	int molotovKills;
+	int minigunKills;
+	int clownsHonked;
+	//Used for table: stats_games;
+	int m_checkpointZombieKills;
+	int m_checkpointSurvivorDamage;
+	int m_checkpointMedkitsUsed;
+	int m_checkpointPillsUsed;
+	int m_checkpointMolotovsUsed;
+	int m_checkpointPipebombsUsed;
+	int m_checkpointBoomerBilesUsed;
+	int m_checkpointAdrenalinesUsed;
+	int m_checkpointDefibrillatorsUsed;
+	int m_checkpointDamageTaken;
+	int m_checkpointReviveOtherCount;
+	int m_checkpointFirstAidShared;
+	int m_checkpointIncaps;
+	int m_checkpointAccuracy;
+	int m_checkpointDeaths;
+	int m_checkpointMeleeKills;
+	int sBoomerKills;
+	int sSmokerKills;
+	int sJockeyKills;
+	int sHunterKills;
+	int sSpitterKills;
+	int sChargerKills;
+
+	void ResetFull() {
+		this.steamid[0] = '\0';
+		this.points = 0;
+	}
+	//add:  	m_checkpointDamageToTank
+	//add:  	m_checkpointDamageToWitch
+}
+static Player players[MAXPLAYERS+1];
+static Game game;
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	if(late) lateLoaded = true;
 }
 //TODO: player_use (Check laser sights usage)
-//TODO: Witch startles
 //TODO: Versus as infected stats
 //TODO: Move kills to queue stats not on demand
-//TODO: map_stats record fastest timestamp
+//TODO: Track if lasers were had?
 
-public void OnPluginStart()
-{
+public void OnPluginStart() {
 	EngineVersion g_Game = GetEngineVersion();
-	if(g_Game != Engine_Left4Dead && g_Game != Engine_Left4Dead2)
-	{
+	if(g_Game != Engine_Left4Dead2) {
 		SetFailState("This plugin is for L4D/L4D2 only.");	
 	}
 	if(!SQL_CheckConfig("stats")) {
@@ -102,7 +115,7 @@ public void OnPluginStart()
 			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i)) {
 				char steamid[32];
 				GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid));
-				strcopy(steamidcache[i], 32, steamid);
+				strcopy(players[i].steamid, 32, steamid);
 				//Recreate user (grabs points, so it won't reset)
 				SetupUserInDB(i, steamid);
 			}
@@ -143,8 +156,10 @@ public void OnPluginStart()
 	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
 	//Used to transition checkpoint statistics for stats_games
 	HookEvent("game_start", Event_GameStart);
+	HookEvent("game_init", Event_GameStart);
 	HookEvent("round_end", Event_RoundEnd);
 	HookEvent("map_transition", Event_MapTransition);
+	AddNormalSoundHook(view_as<NormalSHook>(SoundHook));
 	#if defined DEBUG
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 	#endif
@@ -156,26 +171,11 @@ public void OnPluginStart()
 //When plugin is being unloaded: flush all user's statistics.
 public void OnPluginEnd() {
 	for(int i=1; i<=MaxClients;i++) {
-		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
+		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && players[i].steamid[0]) {
 			FlushQueuedStats(i, false);
 		}
 	}
 }
-//Check if l4d2_skill_detect exists, for some extra skills.
-public void OnAllPluginsLoaded() {
-	skillDetectAvailable = LibraryExists("skill_detect");
-}
-public void OnLibraryRemoved(const char[] name) {
-    if (StrEqual(name, "skill_detect"))
-        skillDetectAvailable = false;
-    
-}
- 
-public void OnLibraryAdded(const char[] name) {
-    if (StrEqual(name, "skill_detect"))
-		skillDetectAvailable = true;
-}
- 
 //////////////////////////////////
 // TIMER
 /////////////////////////////////
@@ -183,7 +183,7 @@ public Action Timer_FlushStats(Handle timer) {
 	//Periodically flush the statistics
 	if(GetClientCount(true) > 0) {
 		for(int i=1; i<=MaxClients;i++) {
-			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && steamidcache[i][0]) {
+			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && players[i].steamid[0]) {
 				FlushQueuedStats(i, false);
 			}
 		}
@@ -193,6 +193,7 @@ public Action Timer_FlushStats(Handle timer) {
 // CONVAR CHANGES
 /////////////////////////////////
 public void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[] newValue) {
+	strcopy(game.gamemode, sizeof(game.gamemode), newValue);
 	strcopy(gamemode, sizeof(gamemode), newValue);
 }
 public void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
@@ -203,8 +204,8 @@ public void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] n
 /////////////////////////////////
 public void OnClientAuthorized(int client, const char[] auth) {
 	if(client > 0 && !IsFakeClient(client)) {
-		strcopy(steamidcache[client], 32, auth);
-		SetupUserInDB(client, steamidcache[client]);
+		strcopy(players[client].steamid, 32, auth);
+		SetupUserInDB(client, players[client].steamid);
 	}
 }
 public void OnClientDisconnect(int client) {
@@ -212,16 +213,16 @@ public void OnClientDisconnect(int client) {
 	if(!IsFakeClient(client) && IsClientInGame(client)) {
 		//Record campaign session, incase they leave early. 
 		//Should only fire if disconnects after escape_vehicle_ready and before finale_win (credits screen)
-		if(campaignFinished && uuid[0] && steamidcache[client][0]) {
+		if(game.finished && uuid[0] && players[client].steamid[0]) {
 			IncrementSessionStat(client);
 			RecordCampaign(client);
 			IncrementStat(client, "finales_won", 1);
-			points[client] += 400;
+			players[client].points += 400;
 		}
 
 		FlushQueuedStats(client, true);
-		steamidcache[client][0] = '\0';
-		points[client] = 0;
+		players[client].steamid[0] = '\0';
+		players[client].points = 0;
 
 		//ResetSessionStats(client); //Can't reset session stats cause transitions!
 	}
@@ -250,7 +251,7 @@ bool ConnectDB() {
 //Setups a user, this tries to fetch user by steamid
 void SetupUserInDB(int client, const char steamid[32]) {
 	if(client > 0 && !IsFakeClient(client)) {
-		startedPlaying[client] = GetTime();
+		players[client].startedPlaying = GetTime();
 		char query[128];
 		Format(query, sizeof(query), "SELECT last_alias,points FROM stats_users WHERE steamid='%s'", steamid);
 		SQL_TQuery(g_db, DBCT_CheckUserExistance, query, GetClientUserId(client));
@@ -260,7 +261,7 @@ void SetupUserInDB(int client, const char steamid[32]) {
 void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriority = false, bool retry = true) {
 	if(client > 0 && !IsFakeClient(client) && IsClientConnected(client)) {
 		//Only run if client valid client, AND has steamid. Not probably necessarily anymore.
-		if (steamidcache[client][0]) {
+		if (players[client].steamid[0]) {
 			if(g_db == INVALID_HANDLE) {
 				LogError("Database handle is invalid.");
 				return;
@@ -269,7 +270,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			char[] escaped_name = new char[escaped_name_size];
 			char query[255];
 			g_db.Escape(name, escaped_name, escaped_name_size);
-			Format(query, sizeof(query), "UPDATE stats_users SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, steamidcache[client]);
+			Format(query, sizeof(query), "UPDATE stats_users SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, players[client].steamid);
 			#if defined DEBUG
 			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
 			#endif 
@@ -282,7 +283,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			//attempt to fetch it
 			char steamid[32];
 			GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
-			steamidcache[client] = steamid;
+			players[client].steamid = steamid;
 			if(retry) {
 				IncrementStat(client, name, amount, lowPriority, false);
 			}
@@ -295,47 +296,48 @@ void RecordCampaign(int client) {
 		char query[1023], mapname[127];
 		GetCurrentMap(mapname, sizeof(mapname));
 
-		if(m_checkpointZombieKills[client] == 0) {
+		if(players[client].m_checkpointZombieKills == 0) {
 			PrintToServer("Warn: Client %N for %s | 0 zombie kills", client, uuid);
 		}
 
 		char model[64];
 		GetClientModel(client, model, sizeof(model));
 
-		int finaleTimeTotal = (finaleTimeStart > 0) ? GetTime() - finaleTimeStart : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d)",
-			steamidcache[client],
+		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d)",
+			players[client].steamid,
 			mapname,
 			gamemode,
 			uuid,
 			finaleTimeTotal,
-			iGameStartTime,
+			game.startTime > 0 ? game.startTime : game.finaleStartTime, //incase iGameStartTime not set: use finaleTimeStart
 			//unix_timestamp(),
-			m_checkpointZombieKills[client],
-			m_checkpointSurvivorDamage[client],
-			m_checkpointMedkitsUsed[client],
-			m_checkpointPillsUsed[client],
-			m_checkpointMolotovsUsed[client],
-			m_checkpointPipebombsUsed[client],
-			m_checkpointBoomerBilesUsed[client],
-			m_checkpointAdrenalinesUsed[client],
-			m_checkpointDefibrillatorsUsed[client],
-			m_checkpointDamageTaken[client],
-			m_checkpointReviveOtherCount[client],
-			m_checkpointFirstAidShared[client],
-			m_checkpointIncaps[client],
-			m_checkpointDeaths[client],
-			m_checkpointMeleeKills[client],
-			iZDifficulty,
+			players[client].m_checkpointZombieKills,
+			players[client].m_checkpointSurvivorDamage,
+			players[client].m_checkpointMedkitsUsed,
+			players[client].m_checkpointPillsUsed,
+			players[client].m_checkpointMolotovsUsed,
+			players[client].m_checkpointPipebombsUsed,
+			players[client].m_checkpointBoomerBilesUsed,
+			players[client].m_checkpointAdrenalinesUsed,
+			players[client].m_checkpointDefibrillatorsUsed,
+			players[client].m_checkpointDamageTaken,
+			players[client].m_checkpointReviveOtherCount,
+			players[client].m_checkpointFirstAidShared,
+			players[client].m_checkpointIncaps,
+			players[client].m_checkpointDeaths,
+			players[client].m_checkpointMeleeKills,
+			game.difficulty,
 			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client), //record user ping
-			sBoomerKills[client],
-			sSmokerKills[client],
-			sJockeyKills[client],
-			sHunterKills[client],
-			sSpitterKills[client],
-			sChargerKills[client],
+			players[client].sBoomerKills,
+			players[client].sSmokerKills,
+			players[client].sJockeyKills,
+			players[client].sHunterKills,
+			players[client].sSpitterKills,
+			players[client].sChargerKills,
 			serverTags,
-			GetSurvivorType(model)
+			GetSurvivorType(model),
+			players[client].clownsHonked
 		);
 		SQL_LockDatabase(g_db);
 		bool result = SQL_FastQuery(g_db, query);
@@ -346,44 +348,48 @@ void RecordCampaign(int client) {
 			LogError("[l4d2_stats_recorder] RecordCampaign for %d failed. UUID %s | Query: `%s` | Error: %s", uuid, client, query, error);
 		}
 		#if defined DEBUG
-			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, steamidcache[client]);
+			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, players[client].steamid);
 		#endif
 	}
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
-public void FlushQueuedStats(int client, bool disconnect) {
+void FlushQueuedStats(int client, bool disconnect) {
 	//Update stats (don't bother checking if 0.)
-	int minutes_played = (GetTime() - startedPlaying[client]) / 60;
+	int minutes_played = (GetTime() - players[client].startedPlaying) / 60;
 	//Incase somehow startedPlaying[client] not set (plugin reloaded?), defualt to 0
 	if(minutes_played >= 2147483645) {
-		startedPlaying[client] = GetTime();
+		players[client].startedPlaying = GetTime();
 		minutes_played = 0;
 	}
 	//Prevent points from being reset by not recording until user has gotten a point. 
-	if(points[client] > 0) {
+	if(players[client].points > 0) {
 		char query[1023];
-		Format(query, sizeof(query), "UPDATE stats_users SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d WHERE steamid='%s'",
-			damageSurvivorGiven[client], 								//survivor_damage_give
+		Format(query, sizeof(query), "UPDATE stats_users SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d, clowns_honked=clowns_honked+%d WHERE steamid='%s'",
+			//VARIABLE													//COLUMN NAME
+
+			players[client].damageSurvivorGiven, 						//survivor_damage_give
 			GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),   //survivor_damage_rec
-			damageInfectedGiven[client],  							    //infected_damage_give
-			damageInfectedRec[client],   								//infected_damage_rec
-			damageSurvivorFF[client],    								//survivor_ff
+			players[client].damageInfectedGiven,  						//infected_damage_give
+			players[client].damageInfectedRec,   						//infected_damage_rec
+			players[client].damageSurvivorFF,    						//survivor_ff
 			GetEntProp(client, Prop_Send, "m_checkpointZombieKills"), 	//common_kills
 			GetEntProp(client, Prop_Send, "m_checkpointHeadshots"),   	//common_headshots
 			GetEntProp(client, Prop_Send, "m_checkpointMeleeKills"),  	//melee_kills
-			doorOpens[client], 											//door_opens
+			players[client].doorOpens, 									//door_opens
 			GetEntProp(client, Prop_Send, "m_checkpointDamageToTank"),  //damage_to_tank
 			GetEntProp(client, Prop_Send, "m_checkpointDamageToWitch"), //damage_witch
 			minutes_played, 											//minutes_played
-			witchKills[client], 										//kills_witch
-			points[client], 											//points
-			upgradePacksDeployed[client], 								//packs_used
-			molotovDamage[client], 										//damage_molotov
-			pipeKills[client], 											//kills_pipe,
-			molotovKills[client],										//kills_molotov
-			minigunKills[client],										//kills_minigun
-			steamidcache[client][0]
+			players[client].witchKills, 								//kills_witch
+			players[client].points, 									//points
+			players[client].upgradePacksDeployed, 						//packs_used
+			players[client].molotovDamage, 								//damage_molotov
+			players[client].pipeKills, 									//kills_pipe,
+			players[client].molotovKills,								//kills_molotov
+			players[client].minigunKills,								//kills_minigun
+			players[client].clownsHonked,								//clowns_honked
+			players[client].steamid[0]
 		);
+		//If disconnected, can't put on another thread for some reason: Push it out fast
 		if(disconnect) {
 			SQL_LockDatabase(g_db);
 			SQL_FastQuery(g_db, query);
@@ -398,55 +404,71 @@ public void FlushQueuedStats(int client, bool disconnect) {
 //Record a special kill to local variable
 void IncrementSpecialKill(int client, int special) {
 	switch(special) {
-		case 1: sSmokerKills[client]++;
-		case 2: sBoomerKills[client]++;
-		case 3: sHunterKills[client]++;
-		case 4: sSpitterKills[client]++;
-		case 5: sJockeyKills[client]++;
-		case 6: sChargerKills[client]++;
+		case 1: players[client].sSmokerKills++;
+		case 2: players[client].sBoomerKills++;
+		case 3: players[client].sHunterKills++;
+		case 4: players[client].sSpitterKills++;
+		case 5: players[client].sJockeyKills++;
+		case 6: players[client].sChargerKills++;
 	}
 }
-void ResetSessionStats(int i, bool resetAll) {
-	m_checkpointZombieKills[i] =			0;
-	m_checkpointSurvivorDamage[i] = 		0;
-	m_checkpointMedkitsUsed[i] = 			0;
-	m_checkpointPillsUsed[i] = 				0;
-	m_checkpointMolotovsUsed[i] = 			0;
-	m_checkpointPipebombsUsed[i] = 			0;
-	m_checkpointBoomerBilesUsed[i] = 		0;
-	m_checkpointAdrenalinesUsed[i] = 		0;
-	m_checkpointDefibrillatorsUsed[i] = 	0;
-	m_checkpointDamageTaken[i] =			0;
-	m_checkpointReviveOtherCount[i] = 		0;
-	m_checkpointFirstAidShared[i] = 		0;
-	m_checkpointIncaps[i]  = 				0;
-	if(resetAll) 
-		m_checkpointDeaths[i] = 				0;
-	m_checkpointMeleeKills[i] = 			0;
-	sBoomerKills[i]  = 0;
-	sSmokerKills[i]  = 0;
-	sJockeyKills[i]  = 0;
-	sHunterKills[i]  = 0;
-	sSpitterKills[i] = 0;
-	sChargerKills[i] = 0;
+//Called ONLY on game_start
+void ResetSessionStats(int client, bool resetAll) {
+	players[client].m_checkpointZombieKills =			0;
+	players[client].m_checkpointSurvivorDamage = 		0;
+	players[client].m_checkpointMedkitsUsed = 			0;
+	players[client].m_checkpointPillsUsed = 			0;
+	players[client].m_checkpointMolotovsUsed = 			0;
+	players[client].m_checkpointPipebombsUsed = 		0;
+	players[client].m_checkpointBoomerBilesUsed = 		0;
+	players[client].m_checkpointAdrenalinesUsed = 		0;
+	players[client].m_checkpointDefibrillatorsUsed = 	0;
+	players[client].m_checkpointDamageTaken =			0;
+	players[client].m_checkpointReviveOtherCount = 		0;
+	players[client].m_checkpointFirstAidShared = 		0;
+	players[client].m_checkpointIncaps  = 				0;
+	if(resetAll) players[client].m_checkpointDeaths = 	0;
+	players[client].m_checkpointMeleeKills = 			0;
+	players[client].sBoomerKills  = 0;
+	players[client].sSmokerKills  = 0;
+	players[client].sJockeyKills  = 0;
+	players[client].sHunterKills  = 0;
+	players[client].sSpitterKills = 0;
+	players[client].sChargerKills = 0;
+	players[client].clownsHonked  = 0;
 }
-void IncrementSessionStat(int i) {
-	m_checkpointZombieKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointZombieKills");
-	m_checkpointSurvivorDamage[i] += 		damageSurvivorFF[i];
-	m_checkpointMedkitsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMedkitsUsed");
-	m_checkpointPillsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointPillsUsed");
-	m_checkpointMolotovsUsed[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMolotovsUsed");
-	m_checkpointPipebombsUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointPipebombsUsed");
-	m_checkpointBoomerBilesUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointBoomerBilesUsed");
-	m_checkpointAdrenalinesUsed[i] += 		GetEntProp(i, Prop_Send, "m_checkpointAdrenalinesUsed");
-	m_checkpointDefibrillatorsUsed[i] += 	GetEntProp(i, Prop_Send, "m_checkpointDefibrillatorsUsed");
-	m_checkpointDamageTaken[i] +=			GetEntProp(i, Prop_Send, "m_checkpointDamageTaken");
-	m_checkpointReviveOtherCount[i] += 		GetEntProp(i, Prop_Send, "m_checkpointReviveOtherCount");
-	m_checkpointFirstAidShared[i] += 		GetEntProp(i, Prop_Send, "m_checkpointFirstAidShared");
-	m_checkpointIncaps[i]  += 				GetEntProp(i, Prop_Send, "m_checkpointIncaps");
-	m_checkpointDeaths[i] += 				GetEntProp(i, Prop_Send, "m_checkpointDeaths");
-	m_checkpointMeleeKills[i] += 			GetEntProp(i, Prop_Send, "m_checkpointMeleeKills");
-	PrintToServer("[l4d2_stats_recorder] Incremented checkpoint stats for %N", i);
+//Called via FlushQueuedStats which is called on disconnects / map transitions / game_start or round_end
+void ResetInternal(int client, bool disconnect) {
+	players[client].damageSurvivorFF 		= 0;
+	players[client].damageSurvivorGiven 	= 0;
+	players[client].doorOpens 				= 0;
+	players[client].witchKills 				= 0;
+	players[client].upgradePacksDeployed 	= 0;
+	players[client].molotovDamage 			= 0;
+	players[client].pipeKills 				= 0;
+	players[client].molotovKills 			= 0;
+	players[client].minigunKills 			= 0;
+	if(!disconnect) {
+		players[client].startedPlaying = GetTime();
+	}
+}
+void IncrementSessionStat(int client) {
+	players[client].m_checkpointZombieKills += 			GetEntProp(client, Prop_Send, "m_checkpointZombieKills");
+	players[client].m_checkpointSurvivorDamage += 		players[client].damageSurvivorFF;
+	players[client].m_checkpointMedkitsUsed += 			GetEntProp(client, Prop_Send, "m_checkpointMedkitsUsed");
+	players[client].m_checkpointPillsUsed += 			GetEntProp(client, Prop_Send, "m_checkpointPillsUsed");
+	players[client].m_checkpointMolotovsUsed += 		GetEntProp(client, Prop_Send, "m_checkpointMolotovsUsed");
+	players[client].m_checkpointPipebombsUsed += 		GetEntProp(client, Prop_Send, "m_checkpointPipebombsUsed");
+	players[client].m_checkpointBoomerBilesUsed += 		GetEntProp(client, Prop_Send, "m_checkpointBoomerBilesUsed");
+	players[client].m_checkpointAdrenalinesUsed += 		GetEntProp(client, Prop_Send, "m_checkpointAdrenalinesUsed");
+	players[client].m_checkpointDefibrillatorsUsed += 	GetEntProp(client, Prop_Send, "m_checkpointDefibrillatorsUsed");
+	players[client].m_checkpointDamageTaken +=			GetEntProp(client, Prop_Send, "m_checkpointDamageTaken");
+	players[client].m_checkpointReviveOtherCount += 	GetEntProp(client, Prop_Send, "m_checkpointReviveOtherCount");
+	players[client].m_checkpointFirstAidShared += 		GetEntProp(client, Prop_Send, "m_checkpointFirstAidShared");
+	players[client].m_checkpointIncaps  += 				GetEntProp(client, Prop_Send, "m_checkpointIncaps");
+	players[client].m_checkpointDeaths += 				GetEntProp(client, Prop_Send, "m_checkpointDeaths");
+	players[client].m_checkpointMeleeKills += 			GetEntProp(client, Prop_Send, "m_checkpointMeleeKills");
+	PrintToServer("[l4d2_stats_recorder] Incremented checkpoint stats for %N", client);
 }
 
 /////////////////////////////////
@@ -474,24 +496,24 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 		//user does not exist in db, create now
 
 		char query[255]; 
-		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", steamidcache[client], safe_alias, country_name);
+		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", players[client].steamid, safe_alias, country_name);
 		SQL_TQuery(g_db, DBCT_Generic, query);
-		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, steamidcache[client]);
+		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, players[client].steamid);
 	}else{
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
 		while(SQL_FetchRow(queryHandle)) {
 			int field_num;
 			if(SQL_FieldNameToNum(queryHandle, "points", field_num)) {
-				points[client] = SQL_FetchInt(queryHandle, field_num);
+				players[client].points = SQL_FetchInt(queryHandle, field_num);
 			}
 		}
-		if(points[client] == 0) {
+		if(players[client].points == 0) {
 			PrintToServer("[l4d2_stats_recorder] Warning: Existing player %N (%d) has no points", client, client);
 		}
 		char query[255];
 		int connections_amount = lateLoaded ? 0 : 1;
 
-		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, steamidcache[client]);
+		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, players[client].steamid);
 		SQL_TQuery(g_db, DBCT_Generic, query);
 	}
 }
@@ -510,7 +532,7 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 	if(results != INVALID_HANDLE && SQL_GetRowCount(results) > 0) {
 		SQL_FetchRow(results);
 		SQL_FetchString(results, 0, uuid, sizeof(uuid));
-		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, iZDifficulty);
+		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, game.difficulty);
 	}else{
 		LogError("RecordCampaign, failed to get UUID: %s", error);
 	}
@@ -522,19 +544,6 @@ public void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, i
 	}else{
 		ResetInternal(client, false);
 	}
-}
-public void ResetInternal(int client, bool disconnect) {
-	damageSurvivorFF[client] = 0;
-	damageSurvivorGiven[client] = 0;
-	doorOpens[client] = 0;
-	witchKills[client] = 0;
-	upgradePacksDeployed[client] = 0;
-	molotovDamage[client] = 0;
-	pipeKills[client] = 0;
-	molotovKills[client] = 0;
-	minigunKills[client] = 0;
-	if(!disconnect)
-		startedPlaying[client] = GetTime();
 }
 ////////////////////////////
 // COMMANDS
@@ -559,12 +568,28 @@ public Action Command_DebugStats(int client, int args) {
 ////////////////////////////
 // EVENTS 
 ////////////////////////////
+public Action SoundHook(int[] clients, int& numClients, char[] sample, int& entity, int& channel, float& volume, int& level, int& pitch, int& flags, char[] soundEntry, int& seed) {
+	if(numClients > 0 && StrContains(sample, "clown") > -1) {
+		float zPos[3], survivorPos[3];
+		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", zPos);
+		for(int i = 0; i < numClients; i++) {
+			int client = clients[i];
+			GetClientAbsOrigin(client, survivorPos);
+			if(survivorPos[0] == zPos[0] && survivorPos[1] == zPos[1] && survivorPos[2] == zPos[2]) {
+				game.clownHonks++;
+				players[client].clownsHonked++;
+				return Plugin_Continue;
+			}
+		}
+	}
+	return Plugin_Continue;
+}
 //Records the amount of HP done to infected (zombies)
 public void Event_InfectedHurt(Event event, const char[] name, bool dontBroadcast) {
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		int dmg = event.GetInt("amount");
-		damageSurvivorGiven[attacker] += dmg;
+		players[attacker].damageSurvivorGiven += dmg;
 	}
 }
 public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadcast) {
@@ -577,14 +602,14 @@ public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadca
 		GetClientWeapon(attacker, wpn_name, sizeof(wpn_name));
 
 		if(headshot) {
-			points[attacker]+=2;
+			players[attacker].points +=2;
 		}else{
-			points[attacker]++;
+			players[attacker].points++;
 		}
 		if(using_minigun) {
-			minigunKills[attacker]++;
+			players[attacker].minigunKills++;
 		}else if(blast) {
-			pipeKills[attacker]++;
+			players[attacker].pipeKills++;
 		}
 	}
 }
@@ -600,18 +625,18 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 		event.GetString("weapon", wpn_name, sizeof(wpn_name));
 
 		if(attacker_team == 2) {
-			damageSurvivorGiven[attacker] += dmg;
+			players[attacker].damageSurvivorGiven += dmg;
 
 			if(victim_team == 3 && StrEqual(wpn_name, "inferno", true)) {
-				molotovDamage[attacker] += dmg;
-				points[attacker]++; //give points (not per dmg tho)
+				players[attacker].molotovDamage += dmg;
+				players[attacker].points++; //give points (not per dmg tho)
 			}
 		}else if(attacker_team == 3) {
-			damageInfectedGiven[attacker] += dmg;
+			players[attacker].damageInfectedGiven += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
-			points[attacker]--;
-			damageSurvivorFF[attacker] += dmg;
+			players[attacker].points--;
+			players[attacker].damageSurvivorFF += dmg;
 		}
 	}
 }
@@ -637,15 +662,15 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 					IncrementSpecialKill(attacker, victim_class);
 					Format(statname, sizeof(statname), "kills_%s", class);
 					IncrementStat(attacker, statname, 1);
-					points[attacker] += 5; //special kill
+					players[attacker].points += 5; //special kill
 				}
 				if(StrEqual(wpn_name, "inferno", true) || StrEqual(wpn_name, "entityflame", true)) {
-					molotovKills[attacker]++;
+					players[attacker].molotovKills++;
 				}
 				IncrementStat(victim, "infected_deaths", 1);
 			}else if(victim_team == 2) {
 				IncrementStat(attacker, "ff_kills", 1);
-				points[attacker] -= 30; //30 point lost for killing teammate
+				players[attacker].points -= 30; //30 point lost for killing teammate
 			}
 		}
 	}
@@ -654,7 +679,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 public void Event_MeleeKill(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
-		points[client]++;
+		players[client].points++;
 	}
 }
 public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast) {
@@ -664,21 +689,21 @@ public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast)
 
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		if(solo) {
-			points[attacker] += 100;
+			players[attacker].points += 100;
 			IncrementStat(attacker, "tanks_killed_solo", 1);
 		}
 		if(melee_only) {
-			points[attacker] += 150;
+			players[attacker].points += 150;
 			IncrementStat(attacker, "tanks_killed_melee", 1);
 		}
-		points[attacker] += 200;
+		players[attacker].points += 200;
 		IncrementStat(attacker, "tanks_killed", 1);
 	}
 }
 public void Event_DoorOpened(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && event.GetBool("closed") && !IsFakeClient(client)) {
-		doorOpens[client]++;
+		players[client].doorOpens++;
 
 	}
 }
@@ -709,18 +734,18 @@ public void Event_ItemUsed(Event event, const char[] name, bool dontBroadcast) {
 			if(subject == client) {
 				IncrementStat(client, "heal_self", 1);
 			}else{
-				points[client] += 10;
+				players[client].points += 10;
 				IncrementStat(client, "heal_others", 1);
 			}
 		}else if(StrEqual(name, "revive_success", true)) {
 			int subject = GetClientOfUserId(event.GetInt("subject"));
 			if(subject != client) {
 				IncrementStat(client, "revived_others", 1);
-				points[client] += 3;
+				players[client].points += 3;
 				IncrementStat(subject, "revived", 1);
 			}
 		}else if(StrEqual(name, "defibrillator_used", true)) {
-			points[client]+=9;
+			players[client].points += 9;
 			IncrementStat(client, "defibs_used", 1);
 		}else{
 			IncrementStat(client, name, 1);
@@ -731,8 +756,8 @@ public void Event_ItemUsed(Event event, const char[] name, bool dontBroadcast) {
 public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
-		upgradePacksDeployed[client]++;
-		points[client]+=3;
+		players[client].upgradePacksDeployed++;
+		players[client].points+=3;
 	}
 }
 public void Event_CarAlarm(Event event, const char[] name, bool dontBroadcast) {
@@ -744,8 +769,8 @@ public void Event_CarAlarm(Event event, const char[] name, bool dontBroadcast) {
 public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
-		witchKills[client]++;
-		points[client]+=100;
+		players[client].witchKills++;
+		players[client].points += 100;
 	}
 }
 
@@ -761,10 +786,8 @@ public void Event_GrenadeDenonate(Event event, const char[] name, bool dontBroad
 }
 ///THROWABLE TRACKING
 //This is used to track throwable throws 
-public void OnEntityCreated(int entity) {
-	char class[32];
-	GetEntityClassname(entity, class, sizeof(class));
-	if(StrContains(class, "_projectile", true) > -1 && HasEntProp(entity, Prop_Send, "m_hOwnerEntity")) {
+public void OnEntityCreated(int entity, const char[] classname) {
+	if(IsValidEntity(entity) && StrContains(classname, "_projectile", true) > -1 && HasEntProp(entity, Prop_Send, "m_hOwnerEntity")) {
 		RequestFrame(EntityCreateCallback, entity);
 	}
 }
@@ -774,7 +797,7 @@ void EntityCreateCallback(int entity) {
 
 	GetEntityClassname(entity, class, sizeof(class));
 	int entOwner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
-	if(entOwner > 0) {
+	if(entOwner > 0 && entOwner <= MaxClients) {
 		if(StrContains(class, "vomitjar", true) > -1) {
 			IncrementStat(entOwner, "throws_puke", 1);
 		}else if(StrContains(class, "molotov", true) > -1) {
@@ -787,7 +810,9 @@ void EntityCreateCallback(int entity) {
 bool isTransition = false;
 ////MAP EVENTS
 public Action Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
-	iGameStartTime = GetTime();
+	game.startTime = GetTime();
+	game.clownHonks = 0;
+	PrintToServer("[l4d2_stats_recorder] Started recording statistics");
 	for(int i = 1; i <= MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
 			ResetSessionStats(i, true);
@@ -799,15 +824,7 @@ public void OnMapStart() {
 	if(isTransition) {
 		isTransition = false;
 	}else{
-		PrintToServer("[l4d2_stats_recorder] Started recording statistics");
-		iGameStartTime = GetTime();
-		iZDifficulty = GetDifficultyInt();
-		for(int i = 1; i <= MaxClients; i++) {
-			if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-				ResetSessionStats(i, true);
-				FlushQueuedStats(i, false);
-			}
-		}
+		game.difficulty = GetDifficultyInt();
 	}
 }
 public void Event_MapTransition(Event event, const char[] name, bool dontBroadcast) {
@@ -821,7 +838,7 @@ public void Event_MapTransition(Event event, const char[] name, bool dontBroadca
 }
 public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
 	PrintToServer("[l4d2_stats_recorder] round_end; flushing");
-	campaignFinished = false;
+	game.finished = false;
 	
 	for(int i = 1; i <= MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
@@ -839,22 +856,22 @@ if player disconnects && campaignFinished: record their session. Won't be record
 */
 //Fetch UUID from finale start, should be ready for events finale_win OR escape_vehicle_ready
 public void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
-	finaleTimeStart = GetTime();
-	iZDifficulty = GetDifficultyInt();
+	game.finaleStartTime = GetTime();
+	game.difficulty = GetDifficultyInt();
 	SQL_TQuery(g_db, DBCT_GetUUIDForCampaign, "SELECT UUID() AS UUID", _, DBPrio_High);
 }
 public Action Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast) {
 	//Get UUID on finale_start
 	if(L4D_IsMissionFinalMap()) {
-		iZDifficulty = GetDifficultyInt();
-		campaignFinished = true;
+		game.difficulty = GetDifficultyInt();
+		game.finished = true;
 	}
 }
 
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	if(!L4D_IsMissionFinalMap()) return;
-	iZDifficulty = event.GetInt("difficulty");
-	campaignFinished = false;
+	game.difficulty = event.GetInt("difficulty");
+	game.finished = false;
 	char shortID[9];
 	StrCat(shortID, sizeof(shortID), uuid);
 
@@ -866,16 +883,34 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 				client = GetClientOfUserId(GetEntPropEnt(i, Prop_Send, "m_humanSpectatorUserID"));
 				//get real client
 			}
-			if(steamidcache[client][0]) {
+			if(players[client].steamid[0]) {
+				players[client].points += 400;
 				IncrementSessionStat(client);
 				RecordCampaign(client);
 				IncrementStat(client, "finales_won", 1);
 				PrintToChat(client, "View this game's statistics at https://jackz.me/c/%s", shortID);
-				points[client] += 400;
+				if(game.clownHonks > 0) {
+					PrintToChat(client, "%d clowns were honked this session, you honked %d", game.clownHonks, players[client].clownsHonked);
+				}
 			}
 		}
 	}	
+	if(game.clownHonks > 0) {
+		int honks, honker = -1;
+		for(int j = 1; j <= MaxClients; j++) {
+			if(players[j].clownsHonked > 0 && (players[j].clownsHonked > honks || honker == -1) && !IsFakeClient(j)) {
+				honker = j;
+				honks = players[j].clownsHonked;
+			}
+		}
+		if(honker > -1 && honks > 0)
+			PrintToChatAll("%N had the most clown honks with a count of %d", honker, honks);
+	}
+	for(int i = 1; i <= MaxClients; i++) {
+		players[i].clownsHonked = 0;
+	}
 }
+
 ////////////////////////////
 // FORWARD EVENTS
 ///////////////////////////

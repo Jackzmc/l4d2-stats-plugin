@@ -2,7 +2,7 @@
 <div>
     <section class="hero is-dark">
         <div class="hero-body">
-            <div class="container">
+            <div class="container has-text-centered">
             <h1 class="title">
                 {{campaignTitle}}
             </h1>
@@ -29,10 +29,10 @@
                         <p class="title">Statistics</p>
                         <p>{{mapTotals.wins}} Wins</p>
                         <hr>
-                        
+
                         </article>
                     </div>
-                    
+
                     <div class="tile is-parent is-8">
                         <article class="tile is-child ">
                         <figure class="image is-4by3">
@@ -41,7 +41,7 @@
                         </article>
                     </div>
                 </div>
-                
+
             </div>
             <div class="tile is-parent is-2">
                 <article class="tile is-child has-text-left">
@@ -80,7 +80,7 @@ export default {
         }
     },
     mounted() {
-        
+
         this.fetchDetails();
     },
     watch: {
@@ -94,17 +94,17 @@ export default {
     methods: {
         humanReadable(minutes) {
             if(minutes <= 0) return "N/A minutes"
-            let hours = Math.floor(minutes / 60);  
+            let hours = Math.floor(minutes / 60);
             const days = Math.floor(hours / 24);
             minutes = minutes % 60;
             const day_text = days == 1 ? 'day' : 'days'
             const min_text = minutes == 1 ? 'minute' : 'minutes'
             const hour_text = hours == 1 ? 'hour' : 'hours'
             if(days >= 1) {
-                hours = hours % 24; 
+                hours = hours % 24;
                 return `${days} ${day_text}, ${hours} ${hour_text}`
             }else if(hours >= 1) {
-                return `${hours} ${hour_text}, ${minutes} ${min_text}` 
+                return `${hours} ${hour_text}, ${minutes} ${min_text}`
             }else{
                 return `${minutes} ${min_text}`
             }
@@ -143,7 +143,7 @@ export default {
             var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
             var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
             var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
-            return hDisplay + mDisplay + sDisplay; 
+            return hDisplay + mDisplay + sDisplay;
         }
     }
 }

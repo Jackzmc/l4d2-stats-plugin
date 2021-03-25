@@ -2,7 +2,7 @@
 <div>
     <section class="hero is-dark">
         <div class="hero-body">
-            <div class="container">
+            <div class="container has-text-centered">
             <h1 class="title">
                 Times
             </h1>

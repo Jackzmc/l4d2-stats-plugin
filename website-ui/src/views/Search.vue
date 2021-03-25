@@ -2,7 +2,7 @@
 <div>
     <section class="hero is-dark">
         <div class="hero-body">
-            <div class="container">
+            <div class="container has-text-centered">
             <h1 class="title">
                 Search results for '{{this.query}}'
             </h1>
@@ -45,7 +45,7 @@ export default {
             .then(res => {
                 this.results = res.data;
                 this.size = res.data.length;
-            }) 
+            })
             .catch(err => {
                 console.error('Fetch error', err)
                 this.$buefy.snackbar.open({
@@ -66,16 +66,16 @@ export default {
     },
     filters: {
         humanReadable(minutes) {
-            let hours = Math.floor(minutes / 60);  
+            let hours = Math.floor(minutes / 60);
             const days = Math.floor(hours / 24);
             minutes = minutes % 60;
             const min_text = minutes == 1 ? 'minute' : 'minutes'
             const hour_text = hours == 1 ? 'hour' : 'hours'
             if(days >= 1) {
-                hours = hours % 24; 
+                hours = hours % 24;
                 return `${days} days, ${hours} ${hour_text}`
             }else if(hours >= 1) {
-                return `${hours} ${hour_text}, ${minutes} ${min_text}` 
+                return `${hours} ${hour_text}, ${minutes} ${min_text}`
             }else{
                 return `${minutes} ${min_text}`
             }
@@ -85,7 +85,7 @@ export default {
         },
         pluralMode(inp) {
             const number = parseInt(inp);
-            return (number == 1) ? "" : "s" 
+            return (number == 1) ? "" : "s"
         }
     },
 }

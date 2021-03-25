@@ -2,7 +2,7 @@
 <div>
     <section class="hero is-dark">
         <div class="hero-body">
-            <div class="container">
+            <div class="container has-text-centered">
             <h1 class="title">
                 Campaigns
             </h1>
@@ -11,7 +11,7 @@
         </div>
     </section>
     <br>
-    <div class="container is-fluid">
+    <div class="container is-fluid has-text-centered">
         <h5 class="title is-5">Recently Played Games</h5>
         <!-- <b-carousel-list
             v-if="recentCampaigns.length > 0"

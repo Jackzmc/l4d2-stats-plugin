@@ -12,9 +12,9 @@ import vueDebounce from 'vue-debounce'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faCog, faSearch, faShare, faSyncAlt, faAngleLeft, faAngleRight, faCaretDown, faCaretUp, faTimesCircle, faLink, faChevronCircleLeft, faChevronCircleRight, faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faCog, faSearch, faShare, faSyncAlt, faAngleLeft, faAngleRight, faCaretDown, faCaretUp, faTimesCircle, faLink, faChevronCircleLeft, faChevronCircleRight, faCheck, faArrowUp } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faCog, faSearch, faShare, faSyncAlt, faAngleLeft, faAngleRight, faCaretDown, faCaretUp, faTimesCircle, faLink, faChevronCircleLeft, faChevronCircleRight, faCheck);
+library.add(faCog, faSearch, faShare, faSyncAlt, faAngleLeft, faAngleRight, faCaretDown, faCaretUp, faTimesCircle, faLink, faChevronCircleLeft, faChevronCircleRight, faCheck, faArrowUp);
 
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 Vue.use(vueDebounce)

@@ -37,7 +37,7 @@
                   <b-autocomplete
                     v-debounce:400ms="onSearchAutocomplete"
                     v-model="search.query"
-                    placeholder="Search for user..."  
+                    placeholder="Search for user..."
                     icon="search"
                     :data="search.autocomplete"
                     clearable
@@ -58,9 +58,6 @@
                 </p>
               </b-field>
               </form>
-            </b-navbar-item>
-            <b-navbar-item tag="div">
-                {{version}}
             </b-navbar-item>
         </template>
     </b-navbar>
@@ -108,7 +105,7 @@ export default {
       .then(res => {
           this.search.autocomplete = res.data;
           this.search.last_autocomplete = query;
-      }) 
+      })
       .catch(err => {
           console.error('Failed to fetch autocomplete results', err)
       })
@@ -130,7 +127,6 @@ export default {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
 }
 

@@ -2,8 +2,8 @@
   <div class="home">
     <section class="hero is-dark">
       <div class="hero-body">
-        <div class="container">
-          <h1 class="title">
+        <div class="container has-text-centered">
+          <h1 class="title" >
             L4D2 Leaderboards
           </h1>
           <h2 class="subtitle">
@@ -16,19 +16,19 @@
     <div class="container is-fluid">
       <div class="columns">
         <div class="column">
-          <ProfileList 
-            height="100%" 
+          <ProfileList
+            height="100%"
             :data="top_today"
-            :loading="loading" 
+            :loading="loading"
 
-            striped sticky-header 
-            paginated 
-            backend-pagination 
-            :current-page="top_page" 
+            striped sticky-header
+            paginated
+            backend-pagination
+            :current-page="top_page"
             per-page=12
-            :total="players_total" 
+            :total="players_total"
 
-            @page-change="onTopPageChange" 
+            @page-change="onTopPageChange"
           />
         </div>
         <div class="column is-3">
@@ -184,6 +184,7 @@ export default {
       this.$http.get(`/api/top/stats`, { cache: true })
       .then((r) => {
         this.stats.data = r.data;
+
       })
       .catch(err => {
         console.error('Fetch stats failed. ', err)

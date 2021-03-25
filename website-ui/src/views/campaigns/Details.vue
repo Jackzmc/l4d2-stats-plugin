@@ -2,7 +2,7 @@
 <div>
     <section class="hero is-dark">
         <div class="hero-body">
-            <div class="container">
+            <div class="container ">
                 <div class="columns">
                     <div v-if="$route.params.id && sessions.length > 0 && !loading" class="column">
                         <h1 class="title">

@@ -36,28 +36,26 @@
     </nav>
     <hr>
     <b-table :data="maps">
-        <template slot-scope="props">
-            <b-table-column field="map" label="Map" >
+            <b-table-column field="map" label="Map" v-slot="props">
                 <router-link :to="'/maps/' + props.row.map">
                     <strong>{{ props.row.map| formatMap }}</strong>
                 </router-link>
             </b-table-column>
-            <b-table-column field="wins" label="Wins" centered cell-class="number-cell">
+            <b-table-column field="wins" label="Wins" centered cell-class="number-cell" v-slot="props">
                 {{ props.row.wins | formatNumber }}
             </b-table-column>
-            <b-table-column field="difficulty.easy" label="Times on Easy" centered cell-class="number-cell">
+            <b-table-column field="difficulty.easy" label="Times on Easy" centered cell-class="number-cell" v-slot="props">
                 {{ props.row.difficulty.easy | formatNumber }}
             </b-table-column>
-            <b-table-column field="difficulty.normal" label="Times on Normal" centered cell-class="number-cell">
+            <b-table-column field="difficulty.normal" label="Times on Normal" centered cell-class="number-cell" v-slot="props">
                 {{ props.row.difficulty.normal | formatNumber }}
             </b-table-column>
-            <b-table-column field="difficulty.advanced" label="Times on Advanced" centered cell-class="number-cell">
+            <b-table-column field="difficulty.advanced" label="Times on Advanced" centered cell-class="number-cell" v-slot="props">
                 {{ props.row.difficulty.advanced | formatNumber }}
             </b-table-column>
-            <b-table-column field="difficulty.expert" label="Times on Expert" centered cell-class="number-cell">
+            <b-table-column field="difficulty.expert" label="Times on Expert" centered cell-class="number-cell" v-slot="props">
                 {{ props.row.difficulty.expert | formatNumber }}
             </b-table-column>
-        </template>
         <template slot="empty">
             <section class="section">
                 <div class="content has-text-grey has-text-centered">

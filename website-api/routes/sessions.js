@@ -9,7 +9,7 @@ module.exports = (pool) => {
             const selectedPage = req.query.page || 0
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
             const offset = pageNumber * perPage;
-            const [rows] = await pool.query("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid order by `stats_games`.id asc LIMIT ?,?", [offset, perPage])
+            const [rows] = await pool.query("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid order by `stats_games`.id desc LIMIT ?,?", [offset, perPage])
             const [total] = await pool.execute("SELECT COUNT(*)  AS total_sessions FROM `stats_games`");
             return res.json({
                 sessions: rows,

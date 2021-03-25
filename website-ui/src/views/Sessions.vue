@@ -2,7 +2,7 @@
 <div>
     <section class="hero is-dark">
         <div class="hero-body">
-            <div class="container">
+            <div class="container has-text-centered">
             <h1 class="title">
                 Sessions
             </h1>
@@ -12,56 +12,54 @@
     </section>
     <br>
     <div class="container is-fluid">
-        <b-table 
+        <b-table
             :data="sessions"
             :loading="loading"
 
-            paginated 
-            backend-pagination 
-            :current-page="current_page" 
+            paginated
+            backend-pagination
+            :current-page="current_page"
             per-page=12
-            :total="total_sessions" 
-            @page-change="onPageChange" 
+            :total="total_sessions"
+            @page-change="onPageChange"
 
         >
         <!-- TODO: background sort -->
-            <template slot-scope="props" >
-                <b-table-column label="View" :style="'background-color:' + getRGB(props.row.campaignID)">
-                    <b-button tag="router-link" :to="'/sessions/details/' + props.row.id" expanded>View</b-button>
+                <b-table-column v-slot="props" label="View">
+                    <b-button tag="router-link" :to="'/sessions/details/' + props.row.id" expanded  :style="'background-color:' + getRGB(props.row.campaignID)"> View</b-button>
                 </b-table-column>
-                <b-table-column field="steamid" label="User" >
+                <b-table-column v-slot="props" field="steamid" label="User">
                     <router-link :to='"/user/" + props.row.steamid'><b>{{props.row.last_alias}}</b></router-link>
                 </b-table-column>
-                <b-table-column field="map" label="Map" >
+                <b-table-column v-slot="props" field="map" label="Map">
                     {{ getMapName(props.row.map) }}
                 </b-table-column>
-                <b-table-column field="survivorDamage" label="Friendly Fire" centered cell-class="number-cell">
+                <b-table-column v-slot="props" field="survivorDamage" label="Friendly Fire" centered cell-class="number-cell">
                     {{ props.row.SurvivorDamage | formatNumber }}
                 </b-table-column>
-                <b-table-column field="DamageTaken" label="Damage Taken" centered cell-class="number-cell">
+                <b-table-column v-slot="props" field="DamageTaken" label="Damage Taken" centered cell-class="number-cell">
                     {{ props.row.DamageTaken | formatNumber }}
                 </b-table-column>
-                <b-table-column field="MedkitsUsed" label="Medkits Used" centered cell-class="number-cell">
+                <b-table-column v-slot="props" field="MedkitsUsed" label="Medkits Used" centered cell-class="number-cell">
                     {{ props.row.MedkitsUsed | formatNumber }}
                 </b-table-column>
-                <b-table-column label="Total Throwables" centered cell-class="number-cell">
+                <b-table-column v-slot="props" label="Total Throwables" centered cell-class="number-cell">
                     {{ getThrowableCount(props.row) | formatNumber }}
                 </b-table-column>
-                <b-table-column label="Total Pills/Shots Used" centered cell-class="number-cell">
+                <b-table-column v-slot="props" label="Total Pills/Shots Used" centered cell-class="number-cell">
                     {{ getPillShotCount(props.row) | formatNumber }}
                 </b-table-column>
-                <b-table-column field="incaps" label="Incaps" centered cell-class="number-cell">
+                <b-table-column v-slot="props" field="incaps" label="Incaps" centered cell-class="number-cell">
                     {{ props.row.incaps | formatNumber }}
                 </b-table-column>
-                <b-table-column field="deaths" label="Deaths" centered cell-class="number-cell">
+                <b-table-column v-slot="props" field="deaths" label="Deaths" centered cell-class="number-cell">
                     {{ props.row.deaths | formatNumber }}
                 </b-table-column>
-                <b-table-column field="difficulty" label="Difficulty" centered>
+                <b-table-column v-slot="props" field="difficulty" label="Difficulty" centered>
                     {{ formatDifficulty(props.row.difficulty) }}
                 </b-table-column>
-            </template>
-            <template slot="detail" slot-scope="props">
-            <pre>{{props.row}}</pre>
+            <template #detail="props">
+              <pre>{{props.row}}</pre>
             </template>
             <template slot="empty">
                 <section class="section">

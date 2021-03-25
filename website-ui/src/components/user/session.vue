@@ -2,54 +2,52 @@
 <div>
     <h2 class='title is-2'>Games Played</h2>
     <p class="subtitle is-4">{{total_sessions}} total sessions</p>
-    <b-table 
+    <b-table
         :data="sessions"
         :loading="loading"
 
-        paginated 
-        backend-pagination 
-        :current-page="current_page" 
+        paginated
+        backend-pagination
+        :current-page="current_page"
         per-page=20
-        :total="total_sessions" 
-        @page-change="onPageChange" 
+        :total="total_sessions"
+        @page-change="onPageChange"
     >
-        <template slot-scope="props">
-            <b-table-column label="View">
-                <b-button type="is-info" tag="router-link" size="is-small" :to="'/sessions/details/' + props.row.id + '?from=' + user.steamid">
-                    View
-                </b-button>
-            </b-table-column>
-            <b-table-column field="map" label="Map" >
-                {{ getMapName(props.row.map) }}
-            </b-table-column>
-            <b-table-column field="zombieKills" label="Zombie Kills" centered cell-class="number-cell">
-                {{ props.row.zombieKills | formatNumber }}
-            </b-table-column>
-            <b-table-column field="survivorDamage" label="Friendly Fire" centered cell-class="number-cell">
-                {{ props.row.SurvivorDamage | formatNumber }}
-            </b-table-column>
-            <b-table-column field="MedkitsUsed" label="Medkits Used" centered cell-class="number-cell">
-                {{ props.row.MedkitsUsed | formatNumber }}
-            </b-table-column>
-            <b-table-column label="Total Throwables" centered cell-class="number-cell">
-                {{ getThrowableCount(props.row) | formatNumber }}
-            </b-table-column>
-            <b-table-column label="Total Pills/Shots Used" centered cell-class="number-cell">
-                {{ getPillShotCount(props.row) | formatNumber }}
-            </b-table-column>
-            <b-table-column field="incaps" label="Incaps" centered cell-class="number-cell">
-                {{ props.row.incaps | formatNumber }}
-            </b-table-column>
-            <b-table-column field="deaths" label="Deaths" centered cell-class="number-cell">
-                {{ props.row.deaths | formatNumber }}
-            </b-table-column>
-            <b-table-column field="DamageTaken" label="Damage Taken" centered cell-class="number-cell">
-                {{ props.row.DamageTaken | formatNumber }}
-            </b-table-column>
-            <b-table-column field="difficulty" label="Difficulty" centered>
-                {{ formatDifficulty(props.row.difficulty) }}
-            </b-table-column>
-        </template>
+          <b-table-column label="View" v-slot="props">
+              <b-button type="is-info" tag="router-link" size="is-small" :to="'/sessions/details/' + props.row.id + '?from=' + user.steamid">
+                  View
+              </b-button>
+          </b-table-column>
+          <b-table-column field="map" label="Map" v-slot="props">
+              {{ getMapName(props.row.map) }}
+          </b-table-column>
+          <b-table-column field="zombieKills" label="Zombie Kills" centered cell-class="number-cell" v-slot="props">
+              {{ props.row.zombieKills | formatNumber }}
+          </b-table-column>
+          <b-table-column field="survivorDamage" label="Friendly Fire" centered cell-class="number-cell" v-slot="props">
+              {{ props.row.SurvivorDamage | formatNumber }}
+          </b-table-column>
+          <b-table-column field="MedkitsUsed" label="Medkits Used" centered cell-class="number-cell" v-slot="props">
+              {{ props.row.MedkitsUsed | formatNumber }}
+          </b-table-column>
+          <b-table-column label="Total Throwables" centered cell-class="number-cell"  v-slot="props">
+              {{ getThrowableCount(props.row) | formatNumber }}
+          </b-table-column>
+          <b-table-column label="Total Pills/Shots Used" centered cell-class="number-cell" v-slot="props">
+              {{ getPillShotCount(props.row) | formatNumber }}
+          </b-table-column>
+          <b-table-column field="incaps" label="Incaps" centered cell-class="number-cell" v-slot="props">
+              {{ props.row.incaps | formatNumber }}
+          </b-table-column>
+          <b-table-column field="deaths" label="Deaths" centered cell-class="number-cell" v-slot="props">
+              {{ props.row.deaths | formatNumber }}
+          </b-table-column>
+          <b-table-column field="DamageTaken" label="Damage Taken" centered cell-class="number-cell" v-slot="props">
+              {{ props.row.DamageTaken | formatNumber }}
+          </b-table-column>
+          <b-table-column field="difficulty" label="Difficulty" centered v-slot="props" >
+              {{ formatDifficulty(props.row.difficulty) }}
+          </b-table-column>
         <template slot="empty">
             <section class="section">
                 <div class="content has-text-grey has-text-centered">

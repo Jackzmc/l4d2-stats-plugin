@@ -2,7 +2,7 @@
 <div>
     <section class="hero is-dark">
         <div class="hero-body">
-            <div class="container">
+            <div class="container has-text-centered">
             <h1 class="title">
                 Statistics
             </h1>
@@ -82,7 +82,7 @@
         </nav>
         <SummaryBit :values="averages" />
         <hr>
-        <div class="columns">
+        <div class="columns has-text-centered">
             <div class="column">
                 <p class="title is-6">Most Played Map</p>
                 <figure class="image is-4by3">
@@ -98,8 +98,10 @@
                 <p class="is-family-sans-serif is-size-4">{{getMapName(averages.least_map)}}</p>
             </div>
         </div>
-        <p><b>Most Played Difficulty:</b></p>
-        <p>{{ mostPlayedDifficulty }}</p>
+        <span class='has-text-centered'>
+          <p><b>Most Played Difficulty:</b></p>
+          <p>{{ mostPlayedDifficulty }}</p>
+        </span>
     </div>
     <br><br>
 </div>
@@ -174,7 +176,7 @@ export default {
             this.$http.get(`/api/totals`, { cache: true })
             .then(r => {
                 this.totals = r.data.stats
-                
+
             })
             .catch(err => {
                 console.error('Fetch err', err)

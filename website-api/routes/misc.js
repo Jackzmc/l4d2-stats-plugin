@@ -55,7 +55,7 @@ module.exports = (pool) => {
             (SELECT COUNT(*) FROM \`stats_games\`) AS total_sessions,
             (SELECT COUNT(distinct(campaignID)) from stats_games) AS total_games,
             (SELECT COUNT(*) FROM \`stats_users\`) AS total_users
-            FROM stats_games`)
+            FROM stats_games WHERE date_start > 0`)
             const [mapTotals] = await pool.execute("SELECT map,COUNT(*) as count FROM stats_games GROUP BY map ORDER BY COUNT(map) DESC")
             if(totals.length == 0) {
                 return res.status(500).json({error:'Internal Server Error'})
@@ -107,7 +107,7 @@ module.exports = (pool) => {
             avg(nullif(spitter_kills,0)) as spitter_kills, 
             avg(nullif(hunter_kills,0)) as hunter_kills,
             avg(nullif(charger_kills,0)) as charger_kills
-            FROM stats_games`)
+            FROM stats_games WHERE date_start > 0`)
             if(topStats.length == 0 || maps.length == 0 || userCount.length == 0) {
                 return res.status(500).json({error:'Internal Server Error'})
             }else{

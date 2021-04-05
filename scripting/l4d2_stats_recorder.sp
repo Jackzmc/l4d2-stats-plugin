@@ -37,9 +37,16 @@ enum struct Game {
 	char gamemode[32];
 	char uuid[64];
 
+	StringMap weaponUsages; //<char[] weapon name, int usage>
+
 	bool IsVersusMode() {
 		return StrEqual(this.gamemode, "versus") || StrEqual(this.gamemode, "scavenge");
 	}
+}
+
+enum struct WeaponStatistics {
+	int usage;
+	char name[64];
 }
 
 enum struct Player {
@@ -83,9 +90,16 @@ enum struct Player {
 	int sSpitterKills;
 	int sChargerKills;
 
+	WeaponStatistics mostUsedWeapon;
+	WeaponStatistics activeWeapon;
+
 	void ResetFull() {
 		this.steamid[0] = '\0';
 		this.points = 0;
+		this.mostUsedWeapon.usage = 0;
+		this.mostUsedWeapon.name[0] = '\0';
+		this.activeWeapon.usage = 0;
+		this.activeWeapon.name[0] = '\0';
 	}
 	//add:  	m_checkpointDamageToTank
 	//add:  	m_checkpointDamageToWitch
@@ -119,7 +133,6 @@ public void OnPluginStart() {
 			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i)) {
 				char steamid[32];
 				GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid));
-				strcopy(players[i].steamid, 32, steamid);
 				//Recreate user (grabs points, so it won't reset)
 				SetupUserInDB(i, steamid);
 			}
@@ -168,9 +181,12 @@ public void OnPluginStart() {
 	#if defined DEBUG
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 	#endif
-	//CreateTimer(60.0, Timer_FlushStats, _, TIMER_REPEAT);
+	//Creates timer to handle getting player's most used weapon
+	CreateTimer(30.0, Timer_UpdateWeaponStats, _, TIMER_REPEAT);
 
 	AutoExecConfig(true, "l4d2_stats_recorder");
+
+	game.weaponUsages = new StringMap();
 }
 
 //When plugin is being unloaded: flush all user's statistics.
@@ -180,6 +196,7 @@ public void OnPluginEnd() {
 			FlushQueuedStats(i, false);
 		}
 	}
+	delete game.weaponUsages;
 }
 //////////////////////////////////
 // TIMER
@@ -193,6 +210,49 @@ public Action Timer_FlushStats(Handle timer) {
 			}
 		}
 	}
+}
+//TODO: Timer to check active against main and quicker timer that holds active weapon ent index
+public Action Timer_UpdateWeaponStats(Handle timer) {
+	for(int i=1; i<=MaxClients;i++) {
+		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
+			int activeWeaponEnt = GetPlayerWeaponSlot(i, 0);
+			if(activeWeaponEnt > 0) {
+				char name[64];
+				GetEntityClassname(activeWeaponEnt, name, sizeof(name));
+
+				//Update the global weapon usage list:
+				int prevWeaponCount;
+				if(game.weaponUsages.GetValue(name, prevWeaponCount)) {
+					game.weaponUsages.SetValue(name, prevWeaponCount + 1);
+				}else{
+					game.weaponUsages.SetValue(name, 1);
+				}
+			
+				if(StrEqual(name, players[i].activeWeapon.name)) {
+					//Up the current active weapon's count 
+					players[i].activeWeapon.usage++;
+
+					//Finally, if active usage is greater than active usage
+					if(players[i].activeWeapon.usage > players[i].mostUsedWeapon.usage) {
+						players[i].mostUsedWeapon = players[i].activeWeapon;
+					}
+				}else{
+					//If active != stored active, reset
+					strcopy(players[i].activeWeapon.name, 64, name);
+					//Reset to either: 0, or mostUsedWeapon count if same
+					if(StrEqual(name, players[i].mostUsedWeapon.name)) {
+						//Set active usage to mostUsedWeapon usage, and increment both vars by 1
+						players[i].activeWeapon.usage = players[i].mostUsedWeapon.usage += 1;
+					}else{
+						players[i].activeWeapon.usage = 0;
+					}
+				}
+				PrintToServer(">>> Player %N mostUsedWeapon is %s [%d]", i, players[i].mostUsedWeapon.name, players[i].mostUsedWeapon.usage);
+				PrintToServer(">>> Player %N activeWeapon is %s [%d]", i, players[i].activeWeapon.name, players[i].activeWeapon.usage);
+			}
+		}
+	}
+	return Plugin_Continue;
 }
 /////////////////////////////////
 // CONVAR CHANGES
@@ -209,8 +269,9 @@ public void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] n
 /////////////////////////////////
 public void OnClientAuthorized(int client, const char[] auth) {
 	if(client > 0 && !IsFakeClient(client)) {
-		strcopy(players[client].steamid, 32, auth);
-		SetupUserInDB(client, players[client].steamid);
+		char steamid[32];
+		strcopy(steamid, sizeof(steamid), auth);
+		SetupUserInDB(client, steamid);
 	}
 }
 public void OnClientDisconnect(int client) {
@@ -256,8 +317,13 @@ bool ConnectDB() {
 //Setups a user, this tries to fetch user by steamid
 void SetupUserInDB(int client, const char steamid[32]) {
 	if(client > 0 && !IsFakeClient(client)) {
+		players[client].ResetFull();
+
+		strcopy(players[client].steamid, 32, steamid);
 		players[client].startedPlaying = GetTime();
 		char query[128];
+		
+
 		Format(query, sizeof(query), "SELECT last_alias,points FROM stats_users WHERE steamid='%s'", steamid);
 		SQL_TQuery(g_db, DBCT_CheckUserExistance, query, GetClientUserId(client));
 	}
@@ -294,6 +360,10 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			}
 		}
 	}
+}
+
+void RecordCampaignWeapons() {
+	//TODO: Stub
 }
 
 void RecordCampaign(int client) {
@@ -818,7 +888,8 @@ bool isTransition = false;
 public Action Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
 	game.startTime = GetTime();
 	game.clownHonks = 0;
-	PrintToServer("[l4d2_stats_recorder] Started recording statistics");
+	game.weaponUsages.Clear();
+	PrintToServer("[l4d2_stats_recorder] Started recording statistics for new session");
 	for(int i = 1; i <= MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
 			ResetSessionStats(i, true);

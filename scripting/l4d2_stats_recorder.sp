@@ -8,7 +8,6 @@
 #include <sdktools>
 #include <geoip>
 #include <sdkhooks>
-#include "jutils.inc"
 #include <left4dhooks>
 
 #undef REQUIRE_PLUGIN
@@ -33,9 +32,14 @@ enum struct Game {
 	int startTime;
 	int finaleStartTime;
 	int clownHonks;
+	bool isVersusSwitched;
 	bool finished;
 	char gamemode[32];
 	char uuid[64];
+
+	bool IsVersusMode() {
+		return StrEqual(this.gamemode, "versus") || StrEqual(this.gamemode, "scavenge");
+	}
 }
 
 enum struct Player {
@@ -158,6 +162,7 @@ public void OnPluginStart() {
 	HookEvent("game_start", Event_GameStart);
 	HookEvent("game_init", Event_GameStart);
 	HookEvent("round_end", Event_RoundEnd);
+	HookEvent("versus_round_start", Event_VersusRoundStart);
 	HookEvent("map_transition", Event_MapTransition);
 	AddNormalSoundHook(view_as<NormalSHook>(SoundHook));
 	#if defined DEBUG
@@ -304,7 +309,7 @@ void RecordCampaign(int client) {
 		GetClientModel(client, model, sizeof(model));
 
 		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d)",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`round_switched`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,%b)",
 			players[client].steamid,
 			mapname,
 			gamemode,
@@ -337,7 +342,8 @@ void RecordCampaign(int client) {
 			players[client].sChargerKills,
 			serverTags,
 			GetSurvivorType(model),
-			players[client].clownsHonked
+			players[client].clownsHonked,
+			game.isVersusSwitched
 		);
 		SQL_LockDatabase(g_db);
 		bool result = SQL_FastQuery(g_db, query);
@@ -827,6 +833,11 @@ public void OnMapStart() {
 		game.difficulty = GetDifficultyInt();
 	}
 }
+public Action Event_VersusRoundStart(Event event, const char[] name, bool dontBroadcast) {
+	if(game.IsVersusMode) {
+		game.isVersusSwitched = !game.isVersusSwitched; 
+	}
+}
 public void Event_MapTransition(Event event, const char[] name, bool dontBroadcast) {
 	isTransition = true;
 	for(int i = 1; i <= MaxClients; i++) {
@@ -858,6 +869,10 @@ if player disconnects && campaignFinished: record their session. Won't be record
 public void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
 	game.finaleStartTime = GetTime();
 	game.difficulty = GetDifficultyInt();
+	//Use the same UUID for versus
+	//FIXME: This was causing UUID to not fire another new one for back-to-back-cop
+	//if(game.IsVersusMode && game.isVersusSwitched) return;
+	
 	SQL_TQuery(g_db, DBCT_GetUUIDForCampaign, "SELECT UUID() AS UUID", _, DBPrio_High);
 }
 public Action Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast) {
@@ -958,4 +973,25 @@ stock int GetDifficultyInt() {
 	else if(StrEqual(diff, "hard", false)) return 2;
 	else if(StrEqual(diff, "impossible", false)) return 3;
 	else return 1;
+}
+stock int GetSurvivorType(const char[] modelName) {
+	if(StrContains(modelName,"biker",false) > -1) {
+		return 6;
+	}else if(StrContains(modelName,"teenangst",false) > -1) {
+		return 5;
+	}else if(StrContains(modelName,"namvet",false) > -1) {
+		return 4;
+	}else if(StrContains(modelName,"manager",false) > -1) {
+		return 7;
+	}else if(StrContains(modelName,"coach",false) > -1) {
+		return 2;
+	}else if(StrContains(modelName,"producer",false) > -1) {
+		return 1;
+	}else if(StrContains(modelName,"gambler",false) > -1) {
+		return 0;
+	}else if(StrContains(modelName,"mechanic",false) > -1) {
+		return 3;
+	}else{
+		return -1;
+	}
 }

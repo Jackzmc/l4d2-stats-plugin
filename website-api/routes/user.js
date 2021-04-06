@@ -78,7 +78,24 @@ module.exports = (pool) => {
             const value = rows.length > 0 ? rows[0].value : 0;
             res.json({value})
         }catch(err) {
-            console.error('/api/user/:user/totals/:gamemode',err.message)
+            console.error('/api/user/:user/flags/:flag',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
+    router.get('/:user/top', async(req,res) => {
+        try {
+            const [top_map] = await pool.execute("SELECT map as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? GROUP BY `map` ORDER BY count desc", [req.params.user])
+            const [top_character] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [req.params.user]) 
+            const [top_weapon] = await pool.execute("SELECT top_weapon as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND top_weapon IS NOT NULL GROUP BY `top_weapon` ORDER BY count DESC LIMIT 1 ", [req.params.user])
+            const [top_session] = await pool.execute("SELECT *, map, date_end - date_start as difference FROM stats_games WHERE date_end > 0 AND date_start > 0 AND steamid = ? ORDER BY difference ASC LIMIT 1", [req.params.user])
+            res.json({
+                topMap: top_map.length > 0 ? top_map[0] : null, //SELECT map, COUNT(*) as c FROM `stats_games` WHERE steamid = 'STEAM_1:0:49243767' GROUP BY `map` ORDER BY c desc
+                topCharacter: top_character.length > 0 ? top_character[0] : null,
+                topWeapon: top_weapon.length > 0 ? top_weapon[0].k : null,
+                bestSessionByTime: top_session.length > 0 ? top_session[0] : null
+            })
+        }catch(err) {
+            console.error('/api/user/:user/top',err.message)
             res.status(500).json({error:'Internal Server Error'})
         }
     })

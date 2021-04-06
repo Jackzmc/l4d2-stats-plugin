@@ -46,6 +46,7 @@ enum struct Game {
 
 enum struct WeaponStatistics {
 	int usage;
+	float damage;
 	char name[64];
 }
 
@@ -90,6 +91,8 @@ enum struct Player {
 	int sSpitterKills;
 	int sChargerKills;
 
+	//TODO: Hook player_reload
+
 	WeaponStatistics mostUsedWeapon;
 	WeaponStatistics activeWeapon;
 
@@ -108,6 +111,7 @@ static Player players[MAXPLAYERS+1];
 static Game game;
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
+	CreateNative("Stats_GetPoints", Native_GetPoints);
 	if(late) lateLoaded = true;
 }
 //TODO: player_use (Check laser sights usage)
@@ -152,6 +156,7 @@ public void OnPluginStart() {
 	//Hook all events to track statistics
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("player_hurt", Event_PlayerHurt);
+	HookEvent("weapon_reload", Event_WeaponReload);
 	HookEvent("player_incapacitated", Event_PlayerIncap);
 	HookEvent("pills_used", Event_ItemUsed);
 	HookEvent("defibrillator_used", Event_ItemUsed);
@@ -215,41 +220,7 @@ public Action Timer_FlushStats(Handle timer) {
 public Action Timer_UpdateWeaponStats(Handle timer) {
 	for(int i=1; i<=MaxClients;i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-			int activeWeaponEnt = GetPlayerWeaponSlot(i, 0);
-			if(activeWeaponEnt > 0) {
-				char name[64];
-				GetEntityClassname(activeWeaponEnt, name, sizeof(name));
-
-				//Update the global weapon usage list:
-				int prevWeaponCount;
-				if(game.weaponUsages.GetValue(name, prevWeaponCount)) {
-					game.weaponUsages.SetValue(name, prevWeaponCount + 1);
-				}else{
-					game.weaponUsages.SetValue(name, 1);
-				}
-			
-				if(StrEqual(name, players[i].activeWeapon.name)) {
-					//Up the current active weapon's count 
-					players[i].activeWeapon.usage++;
-
-					//Finally, if active usage is greater than active usage
-					if(players[i].activeWeapon.usage > players[i].mostUsedWeapon.usage) {
-						players[i].mostUsedWeapon = players[i].activeWeapon;
-					}
-				}else{
-					//If active != stored active, reset
-					strcopy(players[i].activeWeapon.name, 64, name);
-					//Reset to either: 0, or mostUsedWeapon count if same
-					if(StrEqual(name, players[i].mostUsedWeapon.name)) {
-						//Set active usage to mostUsedWeapon usage, and increment both vars by 1
-						players[i].activeWeapon.usage = players[i].mostUsedWeapon.usage += 1;
-					}else{
-						players[i].activeWeapon.usage = 0;
-					}
-				}
-				PrintToServer(">>> Player %N mostUsedWeapon is %s [%d]", i, players[i].mostUsedWeapon.name, players[i].mostUsedWeapon.usage);
-				PrintToServer(">>> Player %N activeWeapon is %s [%d]", i, players[i].activeWeapon.name, players[i].activeWeapon.usage);
-			}
+			UpdateWeaponStats(i);
 		}
 	}
 	return Plugin_Continue;
@@ -426,6 +397,43 @@ void RecordCampaign(int client) {
 		#if defined DEBUG
 			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, players[client].steamid);
 		#endif
+	}
+}
+void UpdateWeaponStats(int client) {
+	int activeWeaponEnt = GetPlayerWeaponSlot(client, 0);
+	if(activeWeaponEnt > 0) {
+		char name[64];
+		GetEntityClassname(activeWeaponEnt, name, sizeof(name));
+
+		//Update the global weapon usage list:
+		int prevWeaponCount;
+		if(game.weaponUsages.GetValue(name, prevWeaponCount)) {
+			game.weaponUsages.SetValue(name, prevWeaponCount + 1);
+		}else{
+			game.weaponUsages.SetValue(name, 1);
+		}
+	
+		if(StrEqual(name, players[client].activeWeapon.name)) {
+			//Up the current active weapon's count 
+			players[client].activeWeapon.usage++;
+
+			//Finally, if active usage is greater than active usage
+			if(players[client].activeWeapon.usage > players[client].mostUsedWeapon.usage) {
+				players[client].mostUsedWeapon.damage = 0.0;
+			}
+		}else{
+			//If active != stored active, reset
+			strcopy(players[client].activeWeapon.name, 64, name);
+			//Reset to either: 0, or mostUsedWeapon count if same
+			if(StrEqual(name, players[client].mostUsedWeapon.name)) {
+				//Set active usage to mostUsedWeapon usage, and increment both vars by 1
+				players[client].activeWeapon.usage = players[client].mostUsedWeapon.usage += 1;
+			}else{
+				players[client].activeWeapon.usage = 0;
+			}
+		}
+		PrintToServer(">>> Player %N mostUsedWeapon is %s [%d]", client, players[client].mostUsedWeapon.name, players[client].mostUsedWeapon.usage);
+		PrintToServer(">>> Player %N activeWeapon is %s [%d]", client, players[client].activeWeapon.name, players[client].activeWeapon.usage);
 	}
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
@@ -659,6 +667,12 @@ public Action SoundHook(int[] clients, int& numClients, char[] sample, int& enti
 		}
 	}
 	return Plugin_Continue;
+}
+public Action Event_WeaponReload(Event event, const char[] name, bool dontBroadcast) {
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	if(client > 0 && !IsFakeClient(client)) {
+		UpdateWeaponStats(client);
+	}
 }
 //Records the amount of HP done to infected (zombies)
 public void Event_InfectedHurt(Event event, const char[] name, bool dontBroadcast) {
@@ -1018,6 +1032,13 @@ public void OnHunterDeadstop(int survivor, int hunter) {
 public void OnSpecialClear( int clearer, int pinner, int pinvictim, int zombieClass, float timeA, float timeB, bool withShove ) {
 	IncrementStat(clearer, "cleared_pinned", 1);
 	IncrementStat(pinvictim, "times_pinned", 1);
+}
+////////////////////////////
+// NATIVES
+///////////////////////////
+public any Native_GetPoints(Handle plugin, int numParams) {
+	int client = GetNativeCell(1);
+	return players[client].points;
 }
 
 ////////////////////////////

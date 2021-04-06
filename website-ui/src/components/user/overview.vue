@@ -115,7 +115,7 @@
             </table>
             </div>
         </div>
-        
+
         <hr>
         <linkanchor id="survivorstats" text="Survivor Statistics" />
         <div class="columns">
@@ -374,6 +374,37 @@
                 </ul>
             </div>
         </div>
+        <span v-if="topStats">
+        <div class="box" style="height: 170px">
+          <div class="columns">
+            <div class="column is-6">
+              <img class="is-pulled-left image is-128x128" :src="'/img/portraits/' + getModelName(topStats.topCharacter.k) + '.png'" />
+            </div>
+            <div class="column">
+              <h4 class="title is-4">Top Played Character</h4>
+              <h4 class="subtitle is-4 has-text-centered">{{getCharacterName(topStats.topCharacter.k)}}</h4>
+              <p class="subtitle is-6 has-text-centered">{{topStats.topCharacter.count}} times played</p>
+            </div>
+          </div>
+        </div>
+        <div class="box has-text-centered">
+          <h4 class="title is-4">Most Played Map</h4>
+          <h4 class="subtitle is-4">{{mostPlayedMapTitle}}</h4>
+          <p class="subtitle is-6 has-text-centered">{{topStats.topMap.count}} times played</p>
+        </div>
+        <div class="box has-text-centered">
+          <h4 class="title is-4">Most Used Weapon</h4>
+          <h4 class="subtitle is-4">{{topStats.topWeapon}}</h4>
+        </div>
+        <div class="box has-text-centered">
+          <h4 class="title is-4">Best Session Time</h4>
+          <h4 class="subtitle is-4">
+            <router-link :to="'/sessions/details/' + topStats.bestSessionByTime.id">{{secondsToHms(topStats.bestSessionByTime.difference)}}</router-link>
+          </h4>
+          <p>{{$options.getMapName(topStats.bestSessionByTime.map)}}</p>
+          <p>{{getGamemode(topStats.bestSessionByTime.gamemode)}} • {{getDifficulty(topStats.bestSessionByTime.difficulty)}}</p>
+        </div>
+        </span>
         <!-- <div class="box">
             <h5 class="title is-5">Best Map</h5>
             <img :src="mapUrl" />
@@ -392,11 +423,15 @@ import SteamID from 'steamid'
 import NoMapImage from '@/assets/no_map_image.png'
 import linkanchor from '@/components/linkanchor'
 
+import { getMapName } from '@/js/map'
+
 export default {
+    getMapName,
     props: ['user'],
     data() {
         return {
-            averages: null
+            averages: null,
+            topStats: null
         }
     },
     computed: {
@@ -415,15 +450,56 @@ export default {
                 }
             }
             return NoMapImage
+        },
+        mostPlayedMapTitle() {
+          return getMapName(this.topStats?.topMap.k)
         }
-        
+
     },
     watch: {
         '$route.params.user': () => {
-            this.fetchAverages();
+            this.fetchAverages()
+            .then(() => this.fetchTopStats())
         }
     },
     methods: {
+        getModelName(number) {
+            switch(number) {
+                case 0: return "gambler";
+                case 1: return "producer"
+                case 2: return "mechanic"
+                case 3: return "coach"
+                case 4: return "namvet"
+                case 5: return "teenangst"
+                case 6: return "biker"
+                case 7: return "manager"
+                default: return "random"
+            }
+        },
+        getCharacterName(number) {
+            switch(number) {
+                case 0: return "Nick";
+                case 1: return "Rochelle"
+                case 2: return "Ellis"
+                case 3: return "Coach"
+                case 4: return "Bill"
+                case 5: return "Zoey"
+                case 6: return "Francis"
+                case 7: return "Louis"
+                default: return ""
+            }
+        },
+        secondsToHms(d) {
+            d = Number(d);
+            const h = Math.floor(d / 3600);
+            const m = Math.floor(d % 3600 / 60);
+            //const s = Math.floor(d % 3600 % 60);
+
+            const hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
+            const mDisplay = m > 0 ? m + (m == 1 ? " minute " : " minutes ") : "";
+            //const sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
+            return hDisplay + mDisplay;
+        },
         formatDateAndRel(inp) {
             if(inp <= 0 || isNaN(inp)) return ""
             try {
@@ -435,30 +511,55 @@ export default {
             }
         },
         humanReadable(minutes) {
-            let hours = Math.floor(minutes / 60);  
+            let hours = Math.floor(minutes / 60);
             const days = Math.floor(hours / 24);
             minutes = minutes % 60;
             const day_text = days == 1 ? 'day' : 'days'
             const min_text = minutes == 1 ? 'minute' : 'minutes'
             const hour_text = hours == 1 ? 'hour' : 'hours'
             if(days >= 1) {
-                hours = hours % 24; 
+                hours = hours % 24;
                 return `${days} ${day_text}, ${hours} ${hour_text}`
             }else if(hours >= 1) {
-                return `${hours} ${hour_text}, ${minutes} ${min_text}` 
+                return `${hours} ${hour_text}, ${minutes} ${min_text}`
             }else{
                 return `${minutes} ${min_text}`
             }
         },
         fetchAverages() {
-            this.$http.get(`/api/user/${this.user.steamid}/averages`)
+            return this.$http.get(`/api/user/${this.user.steamid}/averages`)
             .then(res => {
                 this.averages = res.data;
-            }) 
+            })
             .catch(err => {
                 console.error('Could not load average values', err)
             })
-        }
+        },
+        fetchTopStats() {
+            return this.$http.get(`/api/user/${this.user.steamid}/top`)
+            .then(res => {
+                this.topStats = res.data
+            })
+            .catch(() => {})
+        },
+        getDifficulty(inp) {
+            switch(inp) {
+                case 0: return "Easy"
+                case 1: return "Normal"
+                case 2: return "Advanced"
+                case 3: return "Expert"
+            }
+        },
+        getGamemode(inp) {
+            switch(inp) {
+                case "coop": return "Campaign"
+                case "tankrun": return "TankRun"
+                case "rocketdude": return "RocketDude"
+                default: {
+                    return inp[0].toUpperCase() + inp.slice(1)
+                }
+            }
+        },
     },
     mounted() {
         document.title = `Overview - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
@@ -468,6 +569,9 @@ export default {
                 this.fetchAverages();
             }
         })
+        if(this.topStats == null) {
+          this.fetchTopStats();
+        }
     },
     destroyed() {
         document.removeEventListener('scroll')

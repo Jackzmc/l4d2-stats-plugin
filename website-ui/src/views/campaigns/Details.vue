@@ -29,7 +29,7 @@
         <h4 class="title is-4">Players</h4>
         <div class="columns is-multiline">
             <div v-for="(session) in sessions" class="column is-3" :key="session.id">
-                <div :class="[{'bg-mvp': mvp === session.steamid}, 'box']" style="position: relative">
+                <div :class="[{'bg-mvp': mvp === session.steamid}, 'box', 'has-text-centered']" style="position: relative">
                     <router-link :to="'/user/' + session.steamid"><img class="is-inline-block is-pulled-left image is-128x128" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" /></router-link>
                     <h6 class="title is-6">
                         <router-link :to="'/user/' + session.steamid">
@@ -92,7 +92,6 @@
                         <div class="tile">
                             <div class="tile is-parent is-vertical">
                                 <article class="tile is-child notification is-info">
-                                    <p class="title is-4">Throwables Thrown</p>
                                     <p>&nbsp;</p>
                                     <nav class="level">
                                         <div class="level-item has-text-centered">
@@ -117,8 +116,7 @@
                                 </article>
                             </div>
                             <div class="tile is-parent is-vertical">
-                                <article class="tile is-child notification" style="background-color: #d6405e">
-                                    <p class="title is-4">Casualties</p>
+                                <article class="tile is-child notification has-text-white" style="background-color: #d6405e">
                                     <p>&nbsp;</p>
                                     <nav class="level">
                                         <div class="level-item has-text-centered">
@@ -148,16 +146,13 @@
             </div>
             <div class="column is-3">
                 <div class="box">
-                    <h6 class="is-6">Meta Information</h6>
                     <div class="has-text-left">
                         <strong>Map</strong>
-                        <p><router-link :to='"/maps/" + sessions[0].map + "/details"'>{{mapTitle}}</router-link></p>
+                        <p>{{mapTitle}} <em class="is-pulled-right">({{sessions[0].map}})</em></p>
                         <strong>Date Played</strong>
                         <p>{{formatDate(sessions[0].date_end*1000)}}</p>
-                        <span v-if="sessions[0].date_start">
-                            <strong>Game Duration</strong>
-                            <p>{{secondsToHms((sessions[0].date_end-sessions[0].date_start))}}</p>
-                        </span>
+                        <strong>Versus Second Round?</strong>
+                        <p>{{sessions[0].flags & 1 == 1 ? 'Yes' : 'No'}}</p>
                         <strong>Average Ping</strong>
                         <p>{{averagePing}} ms</p>
                         <span v-if="totals.honks > 0">
@@ -165,7 +160,7 @@
                           <p>{{totals.honks | formatNumber}}</p>
                         </span>
                         <span v-if="sessions[0].server_tags">
-                            <strong>Tags</strong>
+                            <br>
                             <b-taglist v-if="sessions[0].server_tags">
                                 <b-tag v-for="tag in sessions[0].server_tags.split(',')" :key="tag" :class="getTagType(tag)">
                                     {{tag}}
@@ -244,6 +239,8 @@ export default {
         },
         fetchDetails() {
             if(!this.$route.params.id) return;
+            if(this.$route.name !== "Campaign") return;
+
             this.loading = true;
             this.$http.get(`/api/campaigns/${this.$route.params.id}`)
             .then(r => {

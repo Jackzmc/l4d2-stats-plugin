@@ -107,9 +107,7 @@
                                     <p>&nbsp;</p>
                                     <BarChart :chart-data="usages" />
                                 </article>
-                                <article class="tile is-child notification" style="background-color: #d6405e">
-                                    <p class="title is-4">Misc</p>
-                                    <p>&nbsp;</p>
+                                <article class="tile is-child notification has-text-white" style="background-color: #d6405e">
                                     <nav class="level">
                                         <div class="level-item has-text-centered">
                                             <div>
@@ -138,13 +136,12 @@
             </div>
             <div class="column is-3">
                 <div class="box">
-                    <h5 class="title is-5">Players</h5>
+                    <h5 class="title is-5 has-text-centered">Players</h5>
                     <span class="has-text-left" v-if="users.length > 0">
                         <div v-for="userRecord in users" :key="userRecord.steamid">
                             <div>
                                 <div class="has-text-left is-inline-block">
-                                    <router-link v-if="session.steamid != userRecord.steamid" :to="'/user/' + userRecord.steamid"><b>{{userRecord.last_alias}}</b></router-link>
-                                    <p v-else><b>{{userRecord.last_alias.substring(0, 40)}}</b></p>
+                                    <router-link  :to="'/user/' + userRecord.steamid"><b>{{userRecord.last_alias}}</b></router-link>
                                 </div>
                                 <div class="is-pulled-right is-inline">
                                     <router-link v-if="session.steamid != userRecord.steamid" :to="'/sessions/details/' + userRecord.id">(view stats)</router-link>
@@ -157,10 +154,9 @@
                     </span>
                 </div>
                 <div class="box">
-                    <h6 class="title is-6">Meta Information</h6>
                     <div class="has-text-left">
                         <strong>Map</strong>
-                        <p><router-link :to='"/maps/" + mapId + "/details"'>{{mapTitle}}</router-link></p>
+                        <p>{{mapTitle}} <em class="is-pulled-right">({{session.map}})</em></p>
                         <strong>Gamemode</strong>
                         <p>{{getGamemode(session.gamemode)}}</p>
                         <strong>Difficulty</strong>
@@ -173,10 +169,14 @@
                         </span>
                         <strong>Average Ping</strong>
                         <p>{{session.ping}} ms</p>
+                        <strong>Most Used Weapon</strong>
+                        <p>{{session.top_weapon}}</p>
                         <span v-if="session.server_tags">
-                            <strong>Tags</strong>
-                            <b-taglist>
-                                <b-tag v-for="tag in session.server_tags.split(',')" :key="tag">{{tag}}</b-tag>
+                            <br>
+                            <b-taglist v-if="session.server_tags">
+                                <b-tag v-for="tag in session.server_tags.split(',')" :key="tag" :class="getTagType(tag)">
+                                    {{tag}}
+                                </b-tag>
                             </b-taglist>
                         </span>
                     </div>
@@ -282,11 +282,20 @@ export default {
             return title ? title.toLowerCase().replace(/\s/, '-') : null
         },
         campaignURL() {
-            return this.session && this.session.campaignID ? 
+            return this.session && this.session.campaignID ?
                 `/campaigns/${this.session.campaignID.substring(0,8)}` : '#'
         }
     },
     methods: {
+        getTagType(tag) {
+            switch(tag.toLowerCase()) {
+                case "dev": return 'is-danger'
+                case "prod": return "is-success"
+                case "old": return "is-warning"
+                case "improved": return "is-dark"
+                default: return ''
+            }
+        },
         getDifficulty(inp) {
             switch(inp) {
                 case 0: return "Easy"
@@ -316,6 +325,8 @@ export default {
         },
         getSession() {
             if(!this.$route.params.id) return;
+            if(this.$route.name !== "SessionDetail") return;
+
             this.loading = true;
             this.$http.get(`/api/sessions/${this.$route.params.id}`, { cache: true })
             .then(r => {
@@ -344,7 +355,7 @@ export default {
             var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
             var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
             var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
-            return hDisplay + mDisplay + sDisplay; 
+            return hDisplay + mDisplay + sDisplay;
         }
     }
 }

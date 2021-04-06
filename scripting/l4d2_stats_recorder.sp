@@ -100,9 +100,10 @@ enum struct Player {
 		this.steamid[0] = '\0';
 		this.points = 0;
 		this.mostUsedWeapon.usage = 0;
+		this.mostUsedWeapon.damage = 0.0;
 		this.mostUsedWeapon.name[0] = '\0';
-		this.activeWeapon.usage = 0;
-		this.activeWeapon.name[0] = '\0';
+		this.activeWeapon = this.mostUsedWeapon;
+
 	}
 	//add:  	m_checkpointDamageToTank
 	//add:  	m_checkpointDamageToWitch
@@ -186,8 +187,6 @@ public void OnPluginStart() {
 	#if defined DEBUG
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 	#endif
-	//Creates timer to handle getting player's most used weapon
-	CreateTimer(30.0, Timer_UpdateWeaponStats, _, TIMER_REPEAT);
 
 	AutoExecConfig(true, "l4d2_stats_recorder");
 
@@ -218,7 +217,7 @@ public Action Timer_FlushStats(Handle timer) {
 }
 //TODO: Timer to check active against main and quicker timer that holds active weapon ent index
 public Action Timer_UpdateWeaponStats(Handle timer) {
-	for(int i=1; i<=MaxClients;i++) {
+	for(int i=1; i<=MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
 			UpdateWeaponStats(i);
 		}
@@ -300,7 +299,7 @@ void SetupUserInDB(int client, const char steamid[32]) {
 	}
 }
 //Increments a statistic by X amount
-void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriority = false, bool retry = true) {
+void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriority = false) {
 	if(client > 0 && !IsFakeClient(client) && IsClientConnected(client)) {
 		//Only run if client valid client, AND has steamid. Not probably necessarily anymore.
 		if (players[client].steamid[0]) {
@@ -314,21 +313,9 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			g_db.Escape(name, escaped_name, escaped_name_size);
 			Format(query, sizeof(query), "UPDATE stats_users SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, players[client].steamid);
 			#if defined DEBUG
-			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, steamidcache[client]);
+			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, players[client].steamid);
 			#endif 
 			SQL_TQuery(g_db, DBCT_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
-		}else{
-			//Incase user does not have a steamid in the cache: to prevent stat loss, fetch steamid and retry.
-			#if defined DEBUG
-			LogError("Incrementing stat (%s) for client %N (%d) [%s] failure: No steamid or is bot", name, client, client, steamidcache[client]);
-			#endif
-			//attempt to fetch it
-			char steamid[32];
-			GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid));
-			players[client].steamid = steamid;
-			if(retry) {
-				IncrementStat(client, name, amount, lowPriority, false);
-			}
 		}
 	}
 }
@@ -350,7 +337,7 @@ void RecordCampaign(int client) {
 		GetClientModel(client, model, sizeof(model));
 
 		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`round_switched`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,%b)",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`round_switched`,`top_weapon`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,%b,'%s')",
 			players[client].steamid,
 			mapname,
 			gamemode,
@@ -384,7 +371,8 @@ void RecordCampaign(int client) {
 			serverTags,
 			GetSurvivorType(model),
 			players[client].clownsHonked,
-			game.isVersusSwitched
+			game.isVersusSwitched,
+			players[client].mostUsedWeapon.name
 		);
 		SQL_LockDatabase(g_db);
 		bool result = SQL_FastQuery(g_db, query);
@@ -419,17 +407,20 @@ void UpdateWeaponStats(int client) {
 
 			//Finally, if active usage is greater than active usage
 			if(players[client].activeWeapon.usage > players[client].mostUsedWeapon.usage) {
-				players[client].mostUsedWeapon.damage = 0.0;
+				players[client].mostUsedWeapon = players[client].activeWeapon;
 			}
 		}else{
 			//If active != stored active, reset
 			strcopy(players[client].activeWeapon.name, 64, name);
-			//Reset to either: 0, or mostUsedWeapon count if same
+			
+			//Reset the activeWeapon:
 			if(StrEqual(name, players[client].mostUsedWeapon.name)) {
-				//Set active usage to mostUsedWeapon usage, and increment both vars by 1
-				players[client].activeWeapon.usage = players[client].mostUsedWeapon.usage += 1;
+				//if active is same as mostUsed, set base to mostUsed
+				players[client].activeWeapon = players[client].mostUsedWeapon;
 			}else{
+				//if different weapon, reset to 0
 				players[client].activeWeapon.usage = 0;
+				players[client].activeWeapon.damage = 0.0;
 			}
 		}
 		PrintToServer(">>> Player %N mostUsedWeapon is %s [%d]", client, players[client].mostUsedWeapon.name, players[client].mostUsedWeapon.usage);
@@ -637,13 +628,11 @@ public Action Command_DebugStats(int client, int args) {
 	if(client == 0 && !IsDedicatedServer()) {
 		ReplyToCommand(client, "This command must be used as a player.");
 	}else {
-		ReplyToCommand(client, "Statistics for %s", steamidcache[client]);
-		ReplyToCommand(client, "m_checkpointAdrenalinesUsed %d", GetEntProp(client, Prop_Send, " m_checkpointAdrenalinesUsed"));
-		ReplyToCommand(client, "m_checkpointAdrenalinesUsed[client] %d", m_checkpointAdrenalinesUsed[client]);
-		ReplyToCommand(client, "damageSurvivorGiven %d", damageSurvivorGiven[client]); 
-		ReplyToCommand(client, "m_checkpointDamageTaken %d", GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"));
-		ReplyToCommand(client, "m_checkpointDamageTaken[client]: %d", m_checkpointDamageTaken[client]);
-		ReplyToCommand(client, "points = %d", points[client]);
+		ReplyToCommand(client, "Statistics for %s", players[client].steamid);
+		ReplyToCommand(client, "mostUsedWeapon is %s [%d]", players[client].mostUsedWeapon.name, players[client].mostUsedWeapon.usage);
+		ReplyToCommand(client, "activeWeapon is %s [%d]", players[client].activeWeapon.name, players[client].activeWeapon.usage);
+		ReplyToCommand(client, "points = %d", players[client].points);
+		ReplyToCommand(client, "Total weapons cache %d", game.weaponUsages.Size);
 	}
 	return Plugin_Handled;
 }
@@ -680,6 +669,7 @@ public void Event_InfectedHurt(Event event, const char[] name, bool dontBroadcas
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		int dmg = event.GetInt("amount");
 		players[attacker].damageSurvivorGiven += dmg;
+		players[attacker].activeWeapon.damage += dmg;
 	}
 }
 public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadcast) {
@@ -716,6 +706,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 
 		if(attacker_team == 2) {
 			players[attacker].damageSurvivorGiven += dmg;
+			players[attacker].activeWeapon.damage += dmg;
 
 			if(victim_team == 3 && StrEqual(wpn_name, "inferno", true)) {
 				players[attacker].molotovDamage += dmg;
@@ -723,6 +714,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 			}
 		}else if(attacker_team == 3) {
 			players[attacker].damageInfectedGiven += dmg;
+			players[attacker].activeWeapon.damage += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
 			players[attacker].points--;

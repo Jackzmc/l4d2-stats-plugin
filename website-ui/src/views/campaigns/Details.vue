@@ -60,7 +60,7 @@
     <div v-if="totals" class="container is-fluid">
         <div class="columns">
             <div class="column">
-                <h4 class="title is-4">Total Statistics</h4>
+                <h4 class="title is-4">Statistics</h4>
                 <nav class="level">
                     <div class="level-item has-text-centered">
                         <div>
@@ -151,8 +151,10 @@
                         <p>{{mapTitle}} <em class="is-pulled-right">({{sessions[0].map}})</em></p>
                         <strong>Date Played</strong>
                         <p>{{formatDate(sessions[0].date_end*1000)}}</p>
-                        <strong>Versus Second Round?</strong>
-                        <p>{{sessions[0].flags & 1 == 1 ? 'Yes' : 'No'}}</p>
+                        <span v-if="isVersusGame">
+                          <strong>Versus Second Round?</strong>
+                          <p>{{sessions[0].flags & 1 == 1 ? 'Yes' : 'No'}}</p>
+                        </span>
                         <strong>Average Ping</strong>
                         <p>{{averagePing}} ms</p>
                         <span v-if="totals.honks > 0">
@@ -172,6 +174,9 @@
             </div>
         </div>
     </div>
+    <!-- TODO: Add more campaign details.
+    <hr>
+    -->
     <br>
 </div>
 </template>
@@ -194,6 +199,11 @@ export default {
         this.fetchDetails()
     },
     computed: {
+      isVersusGame() {
+        if(this.sessions.length == 0) return false;
+        const gamemode = this.sessions[0].gamemode;
+        return gamemode === "versus" || gamemode === "scavenge"
+      },
       mapTitle() {
           return this.sessions.length > 0 ? getMapName(this.sessions[0].map) : null;
       },

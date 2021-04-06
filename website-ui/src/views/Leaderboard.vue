@@ -56,7 +56,6 @@
             </b-menu-list>
           </div>-->
           <div class="box">
-            <h5 class="title is-5">Top Statistics</h5>
             <b-carousel :interval="60000" :pause-info="false" :arrow="false" v-if="!stats.loading&&stats.data != null">
               <b-carousel-item v-for="stat in $options.STATS" :key="stat">
                   <section :class="`hero is-medium is-a`">
@@ -90,14 +89,15 @@ export default {
   components: {
     ProfileList
   },
-  STATS: [ 'clownHonks', 'deaths', 'ffDamage', 'healOthers', 'revivedOthers', 'survivorIncaps',],
+  STATS: [ 'clownHonks', 'deaths', 'ffDamage', 'healOthers', 'revivedOthers', 'survivorIncaps', 'timesMVP'],
   STAT_DISPLAY_NAMES: {
     deaths: 'Most Deaths',
     ffDamage: 'Most Friendly Fire Damage',
     healOthers: 'Healed the Most Players',
     revivedOthers: 'Revived the Most Players',
     survivorIncaps: 'Most Incaps',
-    clownHonks: 'Most Clown Honks'
+    clownHonks: 'Most Clown Honks',
+    timesMVP: 'Most Times MVP'
   },
   STAT_VALUE_NAMES: {
     deaths: 'deaths',
@@ -105,7 +105,8 @@ export default {
     healOthers: 'heals',
     revivedOthers: 'revives',
     survivorIncaps: 'incaps',
-    clownHonks: 'clowns honked'
+    clownHonks: 'clowns honked',
+    timesMVP: 'times'
   },
   data() {
     return {

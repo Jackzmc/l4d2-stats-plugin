@@ -30,14 +30,16 @@ module.exports = (pool) => {
             const [survivorIncaps] = await pool.execute(`SELECT steamid,last_alias,points,survivor_incaps as value FROM \`stats_users\`  
                 WHERE survivor_incaps > 0 ORDER BY \`stats_users\`.\`survivor_incaps\` desc, \`stats_users\`.\`points\` desc limit 10`, []) 
             const [clownHonks] = await pool.execute(`SELECT steamid,last_alias,points,clowns_honked as value FROM \`stats_users\`  
-            WHERE clowns_honked > 0 ORDER BY \`stats_users\`.\`clowns_honked\` desc, \`stats_users\`.\`points\` desc limit 10 `, []) 
+            WHERE clowns_honked > 0 ORDER BY \`stats_users\`.\`clowns_honked\` desc, \`stats_users\`.\`points\` desc limit 10 `, [])
+            const [timesMVP] = await pool.execute(`SELECT g.steamid, u.last_alias, COUNT(*) as value from stats_games g JOIN stats_users u ON u.steamid = g.steamid where g.flags & 2 = 2 GROUP BY g.steamid ORDER BY value DESC LIMIT 10`, []) 
             res.json({
                 deaths,
                 ffDamage,
                 healOthers,
                 revivedOthers,
                 survivorIncaps,
-                clownHonks
+                clownHonks,
+                timesMVP
             });
         }catch(err) {
             console.error('[/api/top]',err.message);

@@ -79,12 +79,15 @@
                     <!-- <option value="dev" v-if="process.env.NODE_ENV !== 'production'">Dev</option> -->
                     <option value="lgs">Improved</option>
                     <option value="public">Public</option>
+                    <option value="server-r">Vanilla Reserved</option>
                     <optgroup label="Regions">
                         <option value="tx">Texas</option>
                     </optgroup>
                     <optgroup label="Server">
                         <option value="server-1">Server TX-P1</option>
                         <option value="server-2">Server TX-P2</option>
+                        <option value="server-3">Server TX-P3</option>
+                        <option value="server-4">Server TX-P4</option>
                     </optgroup>
                 </b-select>
             </b-field>

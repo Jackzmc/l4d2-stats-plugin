@@ -30,5 +30,6 @@ async function main() {
     app.get('*',(req,res) => {
         res.status(404).json({error:'PageNotFound'})
     })
+    return pool;
 };
-main();
+module.exports = main()

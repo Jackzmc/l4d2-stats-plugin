@@ -68,5 +68,19 @@ module.exports = (pool) => {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
+    router.get('/:user/flags/:flag', async(req,res) => {
+        try {
+            const flag = parseInt(req.params.flag)
+            if(isNaN(flag) || flag <= 0) {
+                return res.status(400).json({error: 'Bad Request', reason: 'INVALID_FLAG_TYPE'})
+            }
+            const [rows] = await pool.query("SELECT COUNT(*) as value FROM stats_games where steamid = ? AND flags & ? = ?", [req.params.user, flag, flag])
+            const value = rows.length > 0 ? rows[0].value : 0;
+            res.json({value})
+        }catch(err) {
+            console.error('/api/user/:user/totals/:gamemode',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
     return router;
 }

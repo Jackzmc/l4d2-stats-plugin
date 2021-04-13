@@ -86,7 +86,7 @@ module.exports = (pool) => {
         try {
             const [top_map] = await pool.execute("SELECT map as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? GROUP BY `map` ORDER BY count desc", [req.params.user])
             const [top_character] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [req.params.user]) 
-            const [top_weapon] = await pool.execute("SELECT top_weapon as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND top_weapon IS NOT NULL GROUP BY `top_weapon` ORDER BY count DESC LIMIT 1 ", [req.params.user])
+            const [top_weapon] = await pool.execute("SELECT top_weapon as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND top_weapon IS NOT NULL AND top_weapon != '' GROUP BY `top_weapon` ORDER BY count DESC LIMIT 1 ", [req.params.user])
             const [top_session] = await pool.execute("SELECT *, map, date_end - date_start as difference FROM stats_games WHERE date_end > 0 AND date_start > 0 AND steamid = ? ORDER BY difference ASC LIMIT 1", [req.params.user])
             res.json({
                 topMap: top_map.length > 0 ? top_map[0] : null, //SELECT map, COUNT(*) as c FROM `stats_games` WHERE steamid = 'STEAM_1:0:49243767' GROUP BY `map` ORDER BY c desc

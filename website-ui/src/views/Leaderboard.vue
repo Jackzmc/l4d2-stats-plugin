@@ -155,7 +155,7 @@ export default {
     refreshTop() {
       console.debug('Loading users for page' + this.top_page)
       this.loading = true;
-      return this.$http.get(`/api/top/users/${this.top_page}?max_results=12`, { cache: true })
+      return this.$http.get(`/api/top/users/${this.top_page}`, { cache: true })
       .then((r) => {
         this.top_today = r.data.users;
       })

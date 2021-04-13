@@ -457,7 +457,7 @@ export default {
 
     },
     watch: {
-        '$route.params.user': () => {
+        '$route.params.user': function() {
             this.fetchAverages()
             .then(() => this.fetchTopStats())
         }

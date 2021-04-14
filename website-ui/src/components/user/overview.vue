@@ -316,8 +316,8 @@
                 <th>Statistic</th>
                 <th align="center">Total</th>
                 <th align="center">Per Session</th>
-                <th align="center">Per Minutes Played</th>
-                <th align="center">Globally</th>
+                <th align="center">Per Hour Played</th>
+                <th align="center">Per {{averages.globalTotalSessions}} sessions</th>
             </tr>
             </thead>
             <tbody>
@@ -325,7 +325,7 @@
                 <td>Deaths</td>
                 <td class="tvalue">{{averages.survivor_deaths | formatNumber}}</td>
                 <td class="tvalue">{{(averages.survivor_deaths / averages.totalSessions).toFixed(2)}}</td>
-                <td class="tvalue">{{(averages.survivor_deaths / averages.minutes_played).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.survivor_deaths / hoursPlayed).toFixed(5)}}</td>
                 <td class="tvalue">{{(averages.survivor_deaths / averages.globalTotalSessions).toFixed(2)}}</td>
             </tr>
             <tr>
@@ -339,21 +339,21 @@
                 <td>Healing Others</td>
                 <td class="tvalue">{{averages.heal_others | formatNumber}}</td>
                 <td class="tvalue">{{(averages.heal_others / averages.totalSessions).toFixed(2)}}</td>
-                <td class="tvalue">{{(averages.heal_others / averages.minutes_played).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.heal_others / hoursPlayed).toFixed(5)}}</td>
                 <td class="tvalue">{{(averages.heal_others / averages.globalTotalSessions).toFixed(2)}}</td>
             </tr>
             <tr>
                 <td>Revived Others</td>
                 <td class="tvalue">{{averages.revived_others | formatNumber}}</td>
                 <td class="tvalue">{{(averages.revived_others / averages.totalSessions).toFixed(2)}}</td>
-                <td class="tvalue">{{(averages.revived_others / averages.minutes_played).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.revived_others / hoursPlayed).toFixed(5)}}</td>
                 <td class="tvalue">{{(averages.revived_others / averages.globalTotalSessions).toFixed(2)}}</td>
             </tr>
             <tr>
                 <td>Incaps</td>
                 <td class="tvalue">{{averages.survivor_incaps | formatNumber}}</td>
                 <td class="tvalue">{{(averages.survivor_incaps / averages.totalSessions).toFixed(2)}}</td>
-                <td class="tvalue">{{(averages.survivor_incaps / averages.minutes_played).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.survivor_incaps / hoursPlayed).toFixed(5)}}</td>
                 <td class="tvalue">{{(averages.survivor_incaps / averages.globalTotalSessions).toFixed(2)}}</td>
             </tr>
             </tbody>
@@ -453,8 +453,10 @@ export default {
         },
         mostPlayedMapTitle() {
           return getMapName(this.topStats?.topMap.k)
+        },
+        hoursPlayed() {
+          return this.averages?.minutes_played / 60
         }
-
     },
     watch: {
         '$route.params.user': function() {

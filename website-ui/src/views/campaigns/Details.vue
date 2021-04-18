@@ -70,6 +70,12 @@
                     </div>
                     <div class="level-item has-text-centered">
                         <div>
+                        <p class="heading">Specials Killed</p>
+                        <p class="title">{{totals.SpecialInfectedKills}}</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
                         <p class="heading">Damage Taken</p>
                         <p class="title">{{totals.DamageTaken}}</p>
                         </div>
@@ -268,7 +274,8 @@ export default {
                         PipebombsUsed: pv.PipebombsUsed + cv.PipebombsUsed,
                         BoomerBilesUsed: pv.BoomerBilesUsed + cv.BoomerBilesUsed,
                         MedkitsUsed: pv.MedkitsUsed + cv.MedkitsUsed + cv.FirstAidShared,
-                        honks: pv.honks + cv.honks
+                        honks: pv.honks + cv.honks,
+                        SpecialInfectedKills: pv.SpecialInfectedKills + cv.SpecialInfectedKills
                     }
                 });
                 document.title = `${this.mapTitle} Campaign - ${this.$route.params.id} - L4D2 Stats Plugin`

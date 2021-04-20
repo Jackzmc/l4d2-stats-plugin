@@ -2,7 +2,7 @@ const router = require('express').Router();
 const routeCache = require('route-cache');
 
 module.exports = (pool) => {
-    router.get('/:id', async(req,res) => {
+    router.get('/:id', routeCache.cacheSeconds(120), async(req,res) => {
         try {
             const [rows] = await pool.query("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid  WHERE left(`stats_games`.campaignID,8) = ? ORDER BY SpecialInfectedKills desc, SurvivorDamage asc, ZombieKills desc, DamageTaken asc", [req.params.id.substring(0,8)])
             res.json(rows)

@@ -1,6 +1,16 @@
 const router = require('express').Router();
+const routeCache = require('route-cache');
+
 module.exports = (pool) => {
-    router.get('/:user',async(req,res) => {
+    router.get('/random', routeCache.cacheSeconds(86400), async(req,res) => {
+        try {
+            const [results] = await pool.execute("SELECT * FROM `left4dead2`.`stats_users` ORDER BY RAND() LIMIT 1")
+            return res.json({user: results[0]})
+        }catch(err) {
+            res.status(500).json({error:"Internal Server Error"})
+        }
+    })
+    router.get('/:user', async(req,res) => {
         const user = req.params.user.replace(/\+-/,' ')
 
         try {
@@ -82,7 +92,7 @@ module.exports = (pool) => {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
-    router.get('/:user/top', async(req,res) => {
+    router.get('/:user/top', routeCache.cacheSeconds(60), async(req,res) => {
         try {
             const [top_map] = await pool.execute("SELECT map as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? GROUP BY `map` ORDER BY count desc", [req.params.user])
             const [top_character] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [req.params.user]) 
@@ -117,7 +127,7 @@ module.exports = (pool) => {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
-    router.get('/:user/averages', async(req,res) => {
+    router.get('/:user/averages', routeCache.cacheSeconds(120), async(req,res) => {
         if(!req.params.user) return res.status(404).json(null)
         try {
             const [totalSessions] = await pool.execute("SELECT (SELECT COUNT(*) as count FROM stats_games WHERE steamid = ?) as count, (SELECT COUNT(*) FROM `stats_games`) AS total_sessions", [req.params.user])

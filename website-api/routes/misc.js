@@ -79,7 +79,7 @@ module.exports = (pool) => {
     })
     router.get('/summary', routeCache.cacheSeconds(300), async(req,res) => {
         try {
-            const [maps] = await pool.execute("SELECT map FROM stats_games GROUP BY map ORDER BY COUNT(map) DESC")
+            const [maps] = await pool.execute("SELECT map FROM stats_games WHERE map RLIKE \"^c[0-9]m\" GROUP BY map ORDER BY COUNT(map) DESC")
             const [userCount] = await pool.execute("SELECT AVG(games.players) as avgPlayers FROM (SELECT COUNT(campaignID) as players FROM stats_games GROUP BY `campaignID`) as games")
             const [topStats] = await pool.execute(`SELECT 
             avg(nullif(finale_time,0)) as finale_time, 

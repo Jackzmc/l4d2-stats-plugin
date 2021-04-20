@@ -20,7 +20,7 @@ module.exports = (pool) => {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
-    router.get('/:session', async(req,res) => {
+    router.get('/:session', routeCache.cacheSeconds(120), async(req,res) => {
         try {
             const sessId = parseInt(req.params.session);
             if(isNaN(sessId)) {

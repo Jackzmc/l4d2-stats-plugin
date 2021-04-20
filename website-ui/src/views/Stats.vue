@@ -84,14 +84,14 @@
         <hr>
         <div class="columns has-text-centered">
             <div class="column">
-                <p class="title is-6">Most Played Map</p>
+                <p class="title is-6">Most Played Official Map</p>
                 <figure class="image is-4by3">
                     <img :src="mostPlayedCampaignImage">
                 </figure>
                 <p class="is-family-sans-serif is-size-4">{{getMapName(averages.top_map)}}</p>
             </div>
             <div class="column">
-                <p class="title is-6">Least Played Map</p>
+                <p class="title is-6">Least Played Official Map</p>
                 <figure class="image is-4by3">
                     <img :src="leastPlayedCampaignImage">
                 </figure>

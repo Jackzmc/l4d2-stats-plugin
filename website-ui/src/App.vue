@@ -34,7 +34,7 @@
                   <b-autocomplete
                     v-debounce:400ms="onSearchAutocomplete"
                     v-model="search.query"
-                    placeholder="Search for user..."
+                    placeholder="Search for a user..."
                     icon="search"
                     :data="search.autocomplete"
                     clearable

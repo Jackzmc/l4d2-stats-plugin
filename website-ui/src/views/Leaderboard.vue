@@ -4,10 +4,10 @@
       <div class="hero-body">
         <div class="container has-text-centered">
           <h1 class="title" >
-            L4D2 Leaderboards
+            Leaderboards
           </h1>
           <h2 class="subtitle">
-            <p>Showing top <strong>{{top_today.length}} players</strong> out of <strong>{{players_total | formatNumber}} total</strong></p>
+            <p>Showing the top <strong>{{top_today.length}}</strong> players out of <strong>{{players_total | formatNumber}}</strong> unique total players</p>
           </h2>
         </div>
       </div>
@@ -25,7 +25,7 @@
             paginated
             backend-pagination
             :current-page="top_page"
-            per-page=12
+            :per-page=top_today.length
             :total="players_total"
 
             @page-change="onTopPageChange"
@@ -75,6 +75,12 @@
             </b-carousel>
             <p v-else>Loading</p>
           </div>
+          <div class="box has-text-centered" v-if="randomPlayer">
+            <h6 class="title is-6">Random Player of the Day</h6>
+            <router-link :to="'/user/' + randomPlayer.steamid + '/overview'" class="title">{{randomPlayer.last_alias}}</router-link>
+            <br>
+            <p class="subtitle is-6"><em>{{randomPlayer.points | formatNumber}} points</em></p>
+          </div>
         </div>
       </div>
     </div>
@@ -119,7 +125,8 @@ export default {
       stats: {
         loading: true,
         data: null
-      }
+      },
+      randomPlayer: null
     }
   },
   mounted() {
@@ -131,6 +138,7 @@ export default {
       this.refreshTop(),
     ]).then(() => {
       this.refreshStats()
+      this.refreshRandom()
     })
   },
   methods: {
@@ -191,6 +199,15 @@ export default {
         console.error('Fetch stats failed. ', err)
       })
       .finally(() => this.stats.loading = false)
+    },
+    refreshRandom() {
+      return this.$http.get(`/api/user/random`, { cache: true })
+      .then((r) => {
+        this.randomPlayer = r.data.user
+      })
+      .catch(() => {
+        console.warn('Could not fetch random player')
+      }).finally(() => this.loading = false)
     },
     onTopPageChange(page) {
       this.top_page = page;

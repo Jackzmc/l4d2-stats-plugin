@@ -1,7 +1,7 @@
 <template>
 <div>
-    <h2 class='title is-2'>Games Played</h2>
-    <p class="subtitle is-4">{{total_sessions}} total sessions</p>
+    <h2 class='title is-2'>Sessions</h2>
+    <p class="subtitle is-4"><b>{{total_sessions}}</b> games played</p>
     <b-table
         :data="sessions"
         :loading="loading"

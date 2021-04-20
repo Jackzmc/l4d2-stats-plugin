@@ -13,10 +13,10 @@
                   </router-link>
               </b-tooltip>
           </b-table-column>
-          <b-table-column field="last_alias" label="Player" v-slot="props" >
+          <b-table-column field="last_alias" label="Player Name" v-slot="props" >
               <b-tooltip label="Click to access their profile" position="is-right">
                   <router-link :to="getUserLink(props.row)">
-                      <strong>{{ props.row.last_alias }}</strong>
+                      <p><strong>{{ props.row.last_alias }}</strong></p>
                   </router-link>
               </b-tooltip>
           </b-table-column>
@@ -28,7 +28,7 @@
               {{ formatDateAndRel(props.row.last_join_date * 1000) }}
           </b-table-column>
           <b-table-column field="minutes_played" label="Total Playtime" v-slot="props">
-              <span style="color: blue">{{ humanReadable(props.row.minutes_played) }}</span>
+              {{ humanReadable(props.row.minutes_played) }}
           </b-table-column>
         <template slot="empty">
             <section class="section">

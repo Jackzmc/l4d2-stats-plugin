@@ -6,12 +6,13 @@
             <h1 class="title">
                 Sessions
             </h1>
-            <p class="subtitle is-4">{{total_sessions | formatNumber}} total sessions</p>
+            <p class="subtitle is-4"><b>{{total_sessions | formatNumber}}</b> total games played</p>
             </div>
         </div>
     </section>
     <br>
     <div class="container is-fluid">
+        <h5 class="title is-5">Sorted by Most Recent</h5>
         <b-table
             :data="sessions"
             :loading="loading"

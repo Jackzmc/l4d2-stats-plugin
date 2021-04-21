@@ -7,7 +7,7 @@ A plugin for l4d2 that records statistics for all players on the server and show
 * Sourcemod Plugin
 * MySQL Server
 
-Demo: https://stats.l4d2.jackz.me
+Demo: https://stats.jackz.me
 
 ### Building
 You can build the sourcemod plugin from the scripting/ folder.

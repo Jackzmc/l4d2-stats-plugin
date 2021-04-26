@@ -24,8 +24,8 @@ module.exports = (pool) => {
             let gamemodeSearchString = req.query.gamemode && req.query.gamemode !== "all" ? `${req.query.gamemode}` : `%`
             let mapSearchString      = "" // RLIKE "^c[0-9]m"
             if(req.query.type) {
-                if(req.query.type.toLowerCase() === "official") mapSearchString = `AND map RLIKE "^c[0-9]m"`
-                else if(req.query.type.toLowerCase() === "custom") mapSearchString = `AND map NOT RLIKE "^c[0-9]m"`
+                if(req.query.type.toLowerCase() === "official") mapSearchString = `AND map RLIKE "^c[0-9]+m"`
+                else if(req.query.type.toLowerCase() === "custom") mapSearchString = `AND map NOT RLIKE "^c[0-9]+m"`
             }
 
             const [total] = await pool.execute("SELECT COUNT(DISTINCT campaignID) as total FROM `stats_games`")

@@ -92,17 +92,26 @@ module.exports = (pool) => {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
+    //TODO: points system
     router.get('/:user/top', routeCache.cacheSeconds(60), async(req,res) => {
         try {
             const [top_map] = await pool.execute("SELECT map as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? GROUP BY `map` ORDER BY count desc", [req.params.user])
             const [top_character] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [req.params.user]) 
             const [top_weapon] = await pool.execute("SELECT top_weapon as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND top_weapon IS NOT NULL AND top_weapon != '' GROUP BY `top_weapon` ORDER BY count DESC LIMIT 1 ", [req.params.user])
             const [top_session] = await pool.execute("SELECT *, map, date_end - date_start as difference FROM stats_games WHERE date_end > 0 AND date_start > 0 AND steamid = ? ORDER BY difference ASC LIMIT 1", [req.params.user])
+            const [map_ratio] = await pool.execute('SELECT (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` NOT RLIKE "^c[0-9]+m") as custom,  (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` RLIKE "^c[0-9]+m") as official FROM `stats_games` LIMIT 1', [req.params.user, req.params.user])
+            const totalMapsCount = map_ratio[0].custom + map_ratio[0].official
             res.json({
                 topMap: top_map.length > 0 ? top_map[0] : null, //SELECT map, COUNT(*) as c FROM `stats_games` WHERE steamid = 'STEAM_1:0:49243767' GROUP BY `map` ORDER BY c desc
                 topCharacter: top_character.length > 0 ? top_character[0] : null,
                 topWeapon: top_weapon.length > 0 ? top_weapon[0].k : null,
-                bestSessionByTime: top_session.length > 0 ? top_session[0] : null
+                bestSessionByTime: top_session.length > 0 ? top_session[0] : null,
+                mapsPlayed: {
+                    custom: map_ratio[0].custom,
+                    official: map_ratio[0].official,
+                    total: totalMapsCount,
+                    percentageOfficial: Math.round(map_ratio[0].official / totalMapsCount * 100)
+                }
             })
         }catch(err) {
             console.error('/api/user/:user/top',err.message)

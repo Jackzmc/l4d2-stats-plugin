@@ -391,6 +391,16 @@
           <h4 class="title is-4">Most Played Map</h4>
           <h4 class="subtitle is-4">{{mostPlayedMapTitle}}</h4>
           <p class="subtitle is-6 has-text-centered">{{topStats.topMap.count}} times played</p>
+          <hr>
+          <div class="columns">
+            <div class="column">
+              <p><b>{{topStats.mapsPlayed.official}}</b> official maps played</p>
+              <p><b>{{topStats.mapsPlayed.custom}}</b> custom maps played</p>
+            </div>
+            <div class="column is-3">
+              <p>{{topStats.mapsPlayed.percentageOfficial}}% Official</p>
+            </div>
+          </div>
         </div>
         <div class="box has-text-centered">
           <h4 class="title is-4">Most Used Weapon</h4>

@@ -157,20 +157,32 @@
                     <div class="has-text-left">
                         <strong>Map</strong>
                         <p>{{mapTitle}} <em class="is-pulled-right">({{session.map}})</em></p>
-                        <strong>Gamemode</strong>
-                        <p>{{getGamemode(session.gamemode)}}</p>
-                        <strong>Difficulty</strong>
-                        <p>{{getDifficulty(session.difficulty)}}</p>
+                        <div>
+                          <span class="is-inline-block">
+                          <strong>Gamemode</strong>
+                          <p>{{getGamemode(session.gamemode)}}</p>
+                          </span>
+                          <span class="is-pulled-right">
+                            <strong>Difficulty</strong>
+                            <p>{{getDifficulty(session.difficulty)}}</p>
+                          </span>
+                        </div>
                         <strong>Date Played</strong>
                         <p>{{formatDate(session.date_end*1000)}}</p>
                         <span v-if="session.date_start">
                             <strong>Game Duration</strong>
                             <p>{{secondsToHms((session.date_end-session.date_start))}}</p>
                         </span>
-                        <strong>Average Ping</strong>
-                        <p>{{session.ping}} ms</p>
+                        <span v-if="session.ping > 0">
+                          <strong>Average Ping</strong>
+                          <p>{{session.ping}} ms</p>
+                        </span>
                         <strong>Most Used Weapon</strong>
                         <p>{{session.top_weapon}}</p>
+                        <span v-if="session.minutes_idle > 0">
+                          <strong>Minutes Idle</strong>
+                          <p>{{session.minutes_idle}} minute{{session.minutes_idle > 1 ? 's' : ''}} ({{idlePercentage}}%)</p>
+                        </span>
                         <span v-if="session.server_tags">
                             <br>
                             <b-taglist v-if="session.server_tags">
@@ -211,6 +223,12 @@ export default {
         BarChart
     },
     computed: {
+        idlePercentage() {
+          const gameLength = this.session.date_end - this.session.date_start;
+          if(gameLength > 60)
+            return Math.round(this.session.minutes_idle / (gameLength / 60) * 10000) / 100
+          else return "0"
+        },
         sessionIdNumber() {
             return parseInt(this.$route.params.id);
         },

@@ -26,7 +26,6 @@
     </section>
     <div class="container is-fluid">
         <br>
-        <h4 class="title is-4">Players</h4>
         <div class="columns is-multiline">
             <div v-for="(session) in sessions" class="column is-3" :key="session.id">
                 <div :class="[{'bg-mvp': mvp === session.steamid}, 'box', 'has-text-centered']" style="position: relative">
@@ -36,6 +35,7 @@
                             {{session.last_alias.substring(0,20)}}
                         </router-link>
                     </h6>
+                    <!-- TODO: Show a on hover description of MVP. Left side describes point breakdown, right shows values (3x3, etc) -->
                     <p class="subtitle is-6">{{session.points | formatNumber}} points</p>
                     <hr class="player-divider">
                     <ul class="has-text-right">
@@ -60,7 +60,6 @@
     <div v-if="totals" class="container is-fluid">
         <div class="columns">
             <div class="column">
-                <h4 class="title is-4">Statistics</h4>
                 <nav class="level">
                     <div class="level-item has-text-centered">
                         <div>
@@ -161,8 +160,10 @@
                           <strong>Versus Second Round?</strong>
                           <p>{{sessions[0].flags & 1 == 1 ? 'Yes' : 'No'}}</p>
                         </span>
-                        <strong>Average Ping</strong>
-                        <p>{{averagePing}} ms</p>
+                        <span v-if="averagePing > 0">
+                          <strong>Average Ping</strong>
+                          <p>{{averagePing}} ms</p>
+                        </span>
                         <span v-if="totals.honks > 0">
                           <strong>Total Honks</strong>
                           <p>{{totals.honks | formatNumber}}</p>

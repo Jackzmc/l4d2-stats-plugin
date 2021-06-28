@@ -87,30 +87,31 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td>Tank</td>
-                    <td class="tvalue">{{user.tanks_killed | formatNumber}}</td>
-                </tr>
-                <tr>
-                    <td>Tank (Solo)</td>
-                    <td class="tvalue">{{user.tanks_killed_solo | formatNumber}}</td>
-                </tr>
-                <tr>
-                    <td>Witch</td>
-                    <td class="tvalue">{{user.kills_witch | formatNumber}}</td>
-                </tr>
-                <tr>
-                    <td>Commons</td>
-                    <td class="tvalue">{{user.common_kills | formatNumber}}</td>
-                </tr>
-                <tr>
-                    <td>Teammates</td>
-                    <td class="tvalue">{{user.ff_kills | formatNumber}}</td>
-                </tr>
-                <tr>
-                    <td>Infected With Minigun</td>
-                    <td class="tvalue">{{user.kills_minigun | formatNumber}}</td>
-                </tr>
+                  <tr>
+                      <td>Commons</td>
+                      <td class="tvalue">{{user.common_kills | formatNumber}}</td>
+                  </tr>
+                  <tr>
+                      <td>With Minigun</td>
+                      <td class="tvalue">{{user.kills_minigun | formatNumber}}</td>
+                  </tr>
+                  <tr>
+                      <td>Teammates</td>
+                      <td class="tvalue">{{user.ff_kills | formatNumber}}</td>
+                  </tr>
+                  <tr>
+                      <td>Tank</td>
+                      <td class="tvalue">{{user.tanks_killed | formatNumber}}</td>
+                  </tr>
+                  <tr>
+                      <td>Tank (Solo)</td>
+                      <td class="tvalue">{{user.tanks_killed_solo | formatNumber}}</td>
+                  </tr>
+                  <tr>
+                      <td>Witch</td>
+                      <td class="tvalue">{{user.kills_witch | formatNumber}}</td>
+                  </tr>
+
                 </tbody>
             </table>
             </div>
@@ -317,7 +318,7 @@
                 <th align="center">Total</th>
                 <th align="center">Per Session</th>
                 <th align="center">Per Hour Played</th>
-                <th align="center">Per {{averages.globalTotalSessions}} sessions</th>
+                <th align="center">Per {{averages.globalTotalSessions | formatNumber}} sessions</th>
             </tr>
             </thead>
             <tbody>
@@ -356,6 +357,13 @@
                 <td class="tvalue">{{(averages.survivor_incaps / hoursPlayed).toFixed(5)}}</td>
                 <td class="tvalue">{{(averages.survivor_incaps / averages.globalTotalSessions).toFixed(2)}}</td>
             </tr>
+            <tr>
+                <td>Minutes Spent Idle</td>
+                <td class="tvalue">{{averages.minutes_idle | formatNumber}}</td>
+                <td class="tvalue">{{(averages.minutes_idle / averages.totalSessions).toFixed(2)}}</td>
+                <td class="tvalue">{{(averages.minutes_idle / hoursPlayed).toFixed(5)}}</td>
+                <td class="tvalue">{{(averages.minutes_idle / averages.globalTotalSessions).toFixed(2)}}</td>
+            </tr>
             </tbody>
         </table>
     </div>
@@ -375,22 +383,22 @@
             </div>
         </div>
         <span v-if="topStats">
-        <div class="box" style="height: 170px">
+        <div class="box has-background-info has-text-white" style="height: 170px">
           <div class="columns">
             <div class="column is-6">
               <img class="is-pulled-left image is-128x128" :src="'/img/portraits/' + getModelName(topStats.topCharacter.k) + '.png'" />
             </div>
             <div class="column">
-              <h4 class="title is-4">Top Played Character</h4>
-              <h4 class="subtitle is-4 has-text-centered">{{getCharacterName(topStats.topCharacter.k)}}</h4>
-              <p class="subtitle is-6 has-text-centered">{{topStats.topCharacter.count}} times played</p>
+              <h4 class="title is-4 has-text-white">Top Played Character</h4>
+              <h4 class="subtitle is-4 has-text-centered has-text-white">{{getCharacterName(topStats.topCharacter.k)}}</h4>
+              <p class="subtitle is-6 has-text-centered has-text-white">{{topStats.topCharacter.count}} times played</p>
             </div>
           </div>
         </div>
-        <div class="box has-text-centered">
-          <h4 class="title is-4">Most Played Map</h4>
-          <h4 class="subtitle is-4">{{mostPlayedMapTitle}}</h4>
-          <p class="subtitle is-6 has-text-centered">{{topStats.topMap.count}} times played</p>
+        <div class="box has-text-centered has-background-info has-text-white">
+          <h4 class="title is-4 has-text-white">Most Played Map</h4>
+          <h4 class="subtitle is-4 has-text-white">{{mostPlayedMapTitle}}</h4>
+          <p class="subtitle is-6 has-text-centered has-text-white">{{topStats.topMap.count}} times played</p>
           <hr>
           <div class="columns">
             <div class="column">
@@ -402,14 +410,14 @@
             </div>
           </div>
         </div>
-        <div class="box has-text-centered">
-          <h4 class="title is-4">Most Used Weapon</h4>
-          <h4 class="subtitle is-4">{{topStats.topWeapon}}</h4>
+        <div class="box has-text-centered has-background-info">
+          <h4 class="title is-4 has-text-white">Most Used Weapon</h4>
+          <h4 class="subtitle is-4 has-text-white">{{topStats.topWeapon}}</h4>
         </div>
-        <div class="box has-text-centered">
-          <h4 class="title is-4">Best Session Time</h4>
+        <div class="box has-text-centered has-background-info has-text-white">
+          <h4 class="title is-4 has-text-white">Best Session Time</h4>
           <h4 class="subtitle is-4">
-            <router-link :to="'/sessions/details/' + topStats.bestSessionByTime.id">{{secondsToHms(topStats.bestSessionByTime.difference)}}</router-link>
+            <router-link class="has-text-success button" :to="'/sessions/details/' + topStats.bestSessionByTime.id">{{secondsToHms(topStats.bestSessionByTime.difference)}}</router-link>
           </h4>
           <p>{{$options.getMapName(topStats.bestSessionByTime.map)}}</p>
           <p>{{getGamemode(topStats.bestSessionByTime.gamemode)}} • {{getDifficulty(topStats.bestSessionByTime.difficulty)}}</p>

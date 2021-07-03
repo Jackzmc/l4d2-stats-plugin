@@ -34,8 +34,13 @@
                 <td style="color: blue">{{user.connections | formatNumber}}</td>
             </tr>
             <tr>
-                <th>Time Played</th>
+                <th>Total Time Played</th>
                 <td style="color: blue">{{ humanReadable(user.minutes_played)}}</td>
+            </tr>
+            <tr>
+                <td><b>Play Style</b> <em class="is-pulled-right is-inline">(in alpha)</em></td>
+                <td v-if="playstyle">{{ playstyle }}</td>
+                <td v-else>Loading...</td>
             </tr>
             </tbody>
         </table>
@@ -383,7 +388,7 @@
             </div>
         </div>
         <span v-if="topStats">
-        <div class="box has-background-info has-text-white" style="height: 170px">
+        <div class="box has-background-info has-text-white" style="height: 170px" v-if="topStats.topCharacter">
           <div class="columns">
             <div class="column is-6">
               <img class="is-pulled-left image is-128x128" :src="'/img/portraits/' + getModelName(topStats.topCharacter.k) + '.png'" />
@@ -395,7 +400,7 @@
             </div>
           </div>
         </div>
-        <div class="box has-text-centered has-background-info has-text-white">
+        <div class="box has-text-centered has-background-info has-text-white" v-if="topStats.topMap">
           <h4 class="title is-4 has-text-white">Most Played Map</h4>
           <h4 class="subtitle is-4 has-text-white">{{mostPlayedMapTitle}}</h4>
           <p class="subtitle is-6 has-text-centered has-text-white">{{topStats.topMap.count}} times played</p>
@@ -410,11 +415,11 @@
             </div>
           </div>
         </div>
-        <div class="box has-text-centered has-background-info">
+        <div class="box has-text-centered has-background-info" v-if="topStats.topWeapon">
           <h4 class="title is-4 has-text-white">Most Used Weapon</h4>
           <h4 class="subtitle is-4 has-text-white">{{topStats.topWeapon}}</h4>
         </div>
-        <div class="box has-text-centered has-background-info has-text-white">
+        <div class="box has-text-centered has-background-info has-text-white" v-if="topStats.bestSessionByTime">
           <h4 class="title is-4 has-text-white">Best Session Time</h4>
           <h4 class="subtitle is-4">
             <router-link class="has-text-success button" :to="'/sessions/details/' + topStats.bestSessionByTime.id">{{secondsToHms(topStats.bestSessionByTime.difference)}}</router-link>
@@ -449,7 +454,8 @@ export default {
     data() {
         return {
             averages: null,
-            topStats: null
+            topStats: null,
+            playstyle: null
         }
     },
     computed: {
@@ -555,6 +561,27 @@ export default {
                 console.error('Could not load average values', err)
             })
         },
+        fetchPlaystyle() {
+            this.playstyle = null
+            this.$http.get(`https://jackz.me/l4d2/scripts/analyze.php?steamid=${this.user.steamid}&concise=1`)
+            .then(res => {
+                if(res.data.result)
+                  return this.playstyle = `${res.data.result.name} (${Math.round(res.data.result.value * 10000) / 10000})`
+                switch(res.data.code) {
+                  case "NO_DATA":
+                    this.playstyle = "Not enough data"
+                    break
+                  case "NO_SESSION_DATA":
+                    this.playstyle = "No sessions have been played"
+                    break
+                  default:
+                    this.playstyle = res.data.code
+                }
+            })
+            .catch(err => {
+                console.error('Could not get playstyle: ', err)
+            })
+        },
         fetchTopStats() {
             return this.$http.get(`/api/user/${this.user.steamid}/top`)
             .then(res => {
@@ -592,6 +619,7 @@ export default {
         if(this.topStats == null) {
           this.fetchTopStats();
         }
+        this.fetchPlaystyle()
     },
     destroyed() {
         document.removeEventListener('scroll')

@@ -1,6 +1,6 @@
 <template>
-<div>
-    <section class="hero is-dark">
+<div class="has-text-white" style="background-color: #4c516d">
+    <section class="hero is-dark" >
         <div class="hero-body">
             <div class="container ">
                 <div class="columns">
@@ -31,7 +31,7 @@
                 <div :class="[{'bg-mvp': mvp === session.steamid}, 'box', 'has-text-centered']" style="position: relative">
                     <router-link :to="'/user/' + session.steamid"><img class="is-inline-block is-pulled-left image is-128x128" :src="'/img/portraits/' + getCharacterName(session.characterType) + '.png'" /></router-link>
                     <h6 class="title is-6">
-                        <router-link :to="'/user/' + session.steamid">
+                        <router-link :to="'/user/' + session.steamid" class="has-text-info">
                             {{session.last_alias.substring(0,20)}}
                         </router-link>
                     </h6>
@@ -41,10 +41,11 @@
                     <ul class="has-text-right">
                         <li><span class="has-text-info">{{session.ZombieKills}}</span> commons killed</li>
                         <li><span class="has-text-info">{{session.SpecialInfectedKills}}</span>  specials killed</li>
-                        <li><span class="has-text-info">
-                            <span :class="{'has-text-weight-bold': isMostFF(session)}">{{session.SurvivorDamage}}</span>
-                             friendly fire HP dealt
+                        <li>
+                            <span :class="['has-text-info',{'has-text-weight-bold': isMostFF(session)}]">
+                              {{session.SurvivorDamage}}
                             </span>
+                            friendly fire damage
                         </li>
                         <li v-if="totals.honks > 0"><span class="has-text-info">{{session.honks}}</span>  clown honks</li>
                     </ul>
@@ -64,31 +65,31 @@
                     <div class="level-item has-text-centered">
                         <div>
                         <p class="heading">Zombies Killed</p>
-                        <p class="title">{{totals.ZombieKills}}</p>
+                        <p class="title has-text-white">{{totals.ZombieKills}}</p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
                         <div>
                         <p class="heading">Specials Killed</p>
-                        <p class="title">{{totals.SpecialInfectedKills}}</p>
+                        <p class="title has-text-white">{{totals.SpecialInfectedKills}}</p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
                         <div>
                         <p class="heading">Damage Taken</p>
-                        <p class="title">{{totals.DamageTaken}}</p>
+                        <p class="title has-text-white">{{totals.DamageTaken}}</p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
                         <div>
                         <p class="heading">Melee Kills</p>
-                        <p class="title">{{totals.MeleeKills}}</p>
+                        <p class="title has-text-white">{{totals.MeleeKills}}</p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
                         <div>
                         <p class="heading">Friendly Fire Damage Dealt</p>
-                        <p class="title">{{totals.SurvivorDamage}}</p>
+                        <p class="title has-text-white">{{totals.SurvivorDamage}}</p>
                         </div>
                     </div>
                 </nav>
@@ -235,24 +236,24 @@ export default {
       mostFF() {
         let ffCount = 0, id = -1;
         this.sessions.forEach(({SurvivorDamage, steamid}) => {
-            if(SurvivorDamage > ffCount || steamid == -1 ) {
-                id = steamid
-                ffCount = SurvivorDamage
-            }
+          if(SurvivorDamage > ffCount || steamid == -1 ) {
+            id = steamid
+            ffCount = SurvivorDamage
+          }
         })
         return id;
       }
     },
     methods: {
         isMVP(session) {
-            return this.mvp === session.steamid
+          return this.mvp === session.steamid
         },
         isHonkMaster(session) {
-            if(this.mvp === session.steamid) return false;
-            return this.honkMaster === session.steamid
+          if(this.mvp === session.steamid) return false;
+          return this.honkMaster === session.steamid
         },
         isMostFF(session) {
-            return this.mostFF === session.steamid
+          return this.mostFF === session.steamid
         },
         fetchDetails() {
             if(!this.$route.params.id) return;
@@ -375,7 +376,7 @@ export default {
     margin: 0.5rem 0;
 }
 .bg-mvp {
-  background-color: rgba(0, 255, 52, 0.11) !important;
+  background-color: rgb(132, 218, 230) !important;
 }
 .ribbon-honk::before,
 .ribbon-honk::after {
@@ -384,5 +385,6 @@ export default {
 .ribbon-honk span {
   background-color: #a025d1;
 }
+
 @import url('../../css/ribbon.css')
 </style>

@@ -52,7 +52,13 @@
                     <div class="level-item has-text-centered">
                         <div>
                         <p class="heading">Damage Taken</p>
-                        <p class="title">{{session.DamageTaken}}</p>
+                        <p class="title">{{session.DamageTaken | formatNumber}} HP</p>
+                        </div>
+                    </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Damage Dealt</p>
+                        <p class="title">{{session.DamageDealt | formatNumber}} HP</p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
@@ -67,14 +73,18 @@
                         <p class="title">{{session.SurvivorDamage}}</p>
                         </div>
                     </div>
+                    <div class="level-item has-text-centered">
+                        <div>
+                        <p class="heading">Friendly Fires</p>
+                        <p class="title">{{session.SurvivorFFCount}}</p>
+                        </div>
+                    </div>
                 </nav>
                 <div class="tile is-ancestor">
                     <div class="tile is-vertical">
                         <div class="tile">
                             <div class="tile is-parent is-vertical">
                                 <article class="tile is-child notification is-info">
-                                    <p class="title is-4">Throwables</p>
-                                    <p>&nbsp;</p>
                                     <nav class="level">
                                         <div class="level-item has-text-centered">
                                             <div>
@@ -102,11 +112,13 @@
                                 </article>
                             </div>
                             <div class="tile is-parent is-vertical">
+
                                 <article class="tile is-child notification is-warning">
-                                    <p class="title is-4">Usages</p>
+                                    <p class="title is-5">Usages</p>
                                     <p>&nbsp;</p>
                                     <BarChart :chart-data="usages" />
                                 </article>
+
                                 <article class="tile is-child notification has-text-white" style="background-color: #d6405e">
                                     <nav class="level">
                                         <div class="level-item has-text-centered">
@@ -197,6 +209,71 @@
                 <em><router-link :to="campaignURL"> {{session.campaignID}}</router-link></em>
             </div>
         </div>
+        <nav class="level">
+          <div class="level-item has-text-centered">
+              <div>
+              <p class="heading">Times Boomed</p>
+              <p class="title">{{session.TimesBoomed}}</p>
+              </div>
+          </div>
+          <div class="level-item has-text-centered">
+              <div>
+              <p class="heading">Teammates Boomed</p>
+              <p class="title">{{session.BoomedTeammates}}</p>
+              </div>
+          </div>
+          <div class="level-item has-text-centered">
+              <div>
+              <p class="heading">Car Alarms Activated</p>
+              <p class="title">{{session.CarAlarmsActivated}}</p>
+              </div>
+          </div>
+          <div class="level-item has-text-centered">
+              <div>
+              <p class="heading">Times Saved Pinned</p>
+              <p class="title">{{session.ClearedPinned}}</p>
+              </div>
+          </div>
+          <div class="level-item has-text-centered">
+              <div>
+              <p class="heading">Rocks Hitby</p>
+              <p class="title">{{session.RocksHitBy}}</p>
+              </div>
+          </div>
+          <div class="level-item has-text-centered">
+              <div>
+              <p class="heading">Rocks Dodged</p>
+              <p class="title">{{session.RocksDodged}}</p>
+              </div>
+          </div>
+      </nav>
+      <nav class="level">
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Damage to Tank</p>
+            <p class="title">{{session.DamageToTank | formatNumber}} HP</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Damage to Witch</p>
+            <p class="title">{{session.DamageToWitch | formatNumber}} HP</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+          <div>
+            <p class="heading">Witches Crowned</p>
+            <p class="title">{{session.WitchesCrowned}}</p>
+          </div>
+        </div>
+        <div class="level-item has-text-centered">
+            <div>
+            <p class="heading">Clowns Honked</p>
+            <p class="title">{{session.honks}}</p>
+            </div>
+        </div>
+      </nav>
+      <br>
     </div>
 </div>
 </template>
@@ -350,6 +427,7 @@ export default {
             .then(r => {
                 this.session = r.data.session;
                 this.users = r.data.users
+                document.title = `Session #${this.session.id} - ${this.session.last_alias} - L4D2 Stats Plugin`
             })
             .catch(err => {
                 console.error('Fetch err', err)
@@ -373,7 +451,10 @@ export default {
             var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
             var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
             var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
-            return hDisplay + mDisplay + sDisplay;
+            if(sDisplay == "")
+              return hDisplay + mDisplay
+            else
+              return hDisplay + mDisplay + ", " + sDisplay
         }
     }
 }

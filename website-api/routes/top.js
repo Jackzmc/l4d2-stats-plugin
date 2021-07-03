@@ -3,7 +3,7 @@ const routeCache = require('route-cache');
 module.exports = (pool) => {
     router.get('/users/:page?',async(req,res) => {
         try {
-            const MAX_RESULTS = req.query.max_results ? parseInt(req.query.max_results) || 14 : 14;
+            const MAX_RESULTS = req.query.max_results ? parseInt(req.query.max_results) || 15 : 15;
     
             const selectedPage = req.params.page || 0;
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(req.params.page) - 1);

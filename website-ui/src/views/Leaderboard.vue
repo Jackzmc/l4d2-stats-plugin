@@ -25,7 +25,7 @@
             paginated
             backend-pagination
             :current-page="top_page"
-            :per-page=top_today.length
+            per-page=15
             :total="players_total"
 
             @page-change="onTopPageChange"

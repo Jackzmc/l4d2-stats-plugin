@@ -14,12 +14,14 @@ const DIFFICULTIES = ["easy","normal","advanced","expert"]
 
 async function main() {
     const mysql = require('mysql2/promise');
-    const pool = mysql.createPool({
+    const details = {
         host:     process.env.MYSQL_HOST   || 'localhost', 
         database: process.env.MYSQL_DB     || 'test',
         user:     process.env.MYSQL_USER   || 'root', 
         password: process.env.MYSQL_PASSWORD
-    });
+    }
+    const pool = mysql.createPool(details);
+    console.log('Connecting to', details.host, 'database', details.database)
 
     app.use('/api/user/',       require('./routes/user')(pool))
     app.use('/api/sessions',    require('./routes/sessions')(pool))

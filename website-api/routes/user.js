@@ -15,11 +15,7 @@ const SurvivorMap = {
     7: 'louis'
 }
 
-const WeaponNames = {
-    "shotgun_spas": "Spas Shotgun",
-    "ak47": "Ak-47",
-    "sniper_military": "Sniper Military",
-}
+const { weapons: WeaponNames } = require('../../website-ui/src/assets/item_names.json')
 
 const Maps = {
     "c1m": "Dead Center",
@@ -133,12 +129,12 @@ module.exports = (pool) => {
     router.get('/:user/top', routeCache.cacheSeconds(60), async(req,res) => {
         try {
             const userInfo = await getUserStats(req.params.user)
-            const [top_session] = await pool.execute("SELECT *, map, date_end - date_start as difference FROM stats_games WHERE date_end > 0 AND date_start > 0 AND steamid = ? AND difference > 3j00 ORDER BY difference ASC LIMIT 1", [req.params.user])
+            const [top_session] = await pool.execute("SELECT *, map, date_end - date_start as difference FROM stats_games WHERE date_end > 0 AND date_start > 0 AND steamid = ? ORDER BY difference ASC LIMIT 10", [req.params.user])
             res.json({
                 topMap: userInfo.top.map,
                 topCharacter: userInfo.top.character,
-                topWeapon: userInfo.top.weapon,
-                bestSessionByTime: top_session.length > 0 ? top_session[0] : null,
+                topWeapon: userInfo.top.weapon.name,
+                bestSessionByTime: top_session.length > 0 ? top_session.find(session => session.difference > 300) : null,
                 mapsPlayed: {
                     custom: userInfo.maps.custom,
                     official: userInfo.maps.official,
@@ -187,34 +183,40 @@ module.exports = (pool) => {
     router.get('/:user/image', routeCache.cacheSeconds(600), async(req, res) => {
         if(!req.params.user) return res.status(404).json(null)
         try {
-            const { top, name, maps } = await getUserStats(req.params.user)
+            const { top, name, maps, stats } = await getUserStats(req.params.user)
 
             const canvas = Canvas.createCanvas(588, 194)
             const ctx = canvas.getContext('2d')
 
             const playStyle = await getPlayStyle(req.params.user)
 
+            if(req.query.gradient) {
+                const bannerBase = await Canvas.loadImage(`assets/banner-base.png`)
+                ctx.drawImage(bannerBase, 0, 0, canvas.width, canvas.height)
+            }
+
             const survivorImg = await Canvas.loadImage(`assets/fullbody/${top.characterName.toLowerCase()}.png`)
             ctx.drawImage(survivorImg, 0, 0, 100, 194)
 
             ctx.font = 'bold 20pt Sans'
-            ctx.fillStyle = '#000'
+            ctx.fillStyle = '#cc105f'
             ctx.fillText(name, 120, 40)
 
             ctx.font = '16pt Sans'
-            ctx.fillStyle = '#1e1f1e'
-            ctx.fillText(playStyle.name, 130, 60)
+            ctx.fillStyle = '#5c5e5e'
+            ctx.fillText(playStyle.name, 120, 60)
 
-            ctx.font = '12pt Centaur'
+            ctx.font = '14pt Arial'
             ctx.fillStyle = '#1e1f1e'
             ctx.fillText(`Top Weapon: ${top.weapon.name || top.weapon.id}`, 120, 90)
             ctx.fillText(`Top Map: ${top.map.name || top.map.id}`, 120, 110)
             ctx.fillText(`${maps.total.toLocaleString()} Games Played (${Math.round(maps.official/maps.total*100)}% official)`, 120, 130)
-
+            ctx.fillText(`${stats.witchesCrowned.toLocaleString()} witches crowned`, 120, 150)
+            ctx.fillText(`${stats.clownsHonked.toLocaleString()} clowns honked`, 120, 170)
 
             ctx.font = '8pt Sans-Serif'
             ctx.fillStyle = '#737578'
-            ctx.fillText('stats.jackz.me', canvas.width - 70, canvas.height - 10)
+            ctx.fillText('stats.jackz.me', canvas.width - 74, canvas.height - 8)
 
             res.set('Content-Type', 'image/png')
             res.send(canvas.toBuffer())
@@ -226,12 +228,12 @@ module.exports = (pool) => {
     async function getUserStats(user) {
         let [row] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [user]);
         const topCharacter = row.length > 0 ? SurvivorMap[row[0].k] : null;
-        [row] = await pool.execute("SELECT last_alias from stats_users WHERE steamid = ?", [user]);
-        const { last_alias } = row.length > 0 ? row[0] : {};
+        [row] = await pool.execute("SELECT last_alias, witches_crowned, clowns_honked from stats_users WHERE steamid = ?", [user]);
+        const stats = row.length > 0 ? row[0] : {};
         [row] = await pool.execute("SELECT map as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? GROUP BY `map` ORDER BY count desc", [user]);
-        const topMap = row.length > 0 ? row[0].k : null;
+        const topMap = row.length > 0 ? row[0] : null;
         [row] = await pool.execute("SELECT top_weapon as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND top_weapon IS NOT NULL AND top_weapon != '' GROUP BY `top_weapon` ORDER BY count DESC LIMIT 1 ", [user]);
-        const topWeapon = row.length > 0 ? row[0]?.k : null;
+        const topWeapon = row.length > 0 ? (row[0]?.k).replace('weapon_','') : null;
         [row] = await pool.execute('SELECT (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` NOT RLIKE "^c[0-9]+m") as custom,  (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` RLIKE "^c[0-9]+m") as official FROM `stats_games` LIMIT 1', [user, user]);
         const maps = {
             official: row[0].official,
@@ -242,16 +244,21 @@ module.exports = (pool) => {
             top: {
                 characterName: topCharacter,
                 map: {
-                    id: topMap,
-                    name: Maps[topMap.slice(0,3)]
+                    id: topMap.k,
+                    count: topMap.count,
+                    name: Maps[topMap.k.slice(0,3)]
                 },
                 weapon: {
                     id: topWeapon,
                     name: WeaponNames[topWeapon]
                 }
             },
+            stats: {
+                witchesCrowned: stats.witches_crowned,
+                clownsHonked: stats.clowns_honked
+            },
             maps,
-            name: last_alias
+            name: stats.last_alias
         }
     }
 

@@ -244,13 +244,13 @@ module.exports = (pool) => {
             top: {
                 characterName: topCharacter,
                 map: {
-                    id: topMap.k,
-                    count: topMap.count,
-                    name: Maps[topMap.k.slice(0,3)]
+                    id: topMap?.k,
+                    count: topMap?.count,
+                    name: topMap ? Maps[topMap.k.slice(0,3)] : null
                 },
                 weapon: {
                     id: topWeapon,
-                    name: WeaponNames[topWeapon]
+                    name: topWeapon ? WeaponNames[topWeapon] : null
                 }
             },
             stats: {

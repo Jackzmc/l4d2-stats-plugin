@@ -6,16 +6,9 @@
 
         @page-change="page => $emit('page-change', page)"
     >
-          <b-table-column width="20" v-slot="props">
-              <b-tooltip label="Click to access their profile" position="is-right">
-                  <router-link :to="getUserLink(props.row)" icon-right="angle-right">
-                      <b-icon icon="angle-right" />
-                  </router-link>
-              </b-tooltip>
-          </b-table-column>
           <b-table-column field="last_alias" label="Player Name" v-slot="props" >
               <b-tooltip label="Click to access their profile" position="is-right">
-                  <router-link :to="getUserLink(props.row)">
+                  <router-link :to="getUserLink(props.row)" class="vcell">
                       <p><strong>{{ props.row.last_alias }}</strong></p>
                   </router-link>
               </b-tooltip>
@@ -84,3 +77,10 @@ export default {
   }
 }
 </script>
+
+
+<style scoped>
+.valign {
+  vertical-align: middle;
+}
+</style>

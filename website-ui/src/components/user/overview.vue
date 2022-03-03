@@ -2,6 +2,7 @@
 <div class="columns">
     <div class="column">
         <h2 class='title is-2'>Stats Overview</h2>
+        <img :src="imageBannerUrl" />
         <linkanchor id="playerstats" text="Player Information" />
         <table class="table is-fullwidth is-bordered">
             <tbody>
@@ -459,6 +460,9 @@ export default {
         }
     },
     computed: {
+        imageBannerUrl() {
+          return this.user.steamid ? `/api/user/${this.user.steamid}/image` : ''
+        },
         disabled() {
             return this.error || this.not_found
         },
@@ -476,7 +480,7 @@ export default {
             return NoMapImage
         },
         mostPlayedMapTitle() {
-          return getMapName(this.topStats?.topMap.k)
+          return getMapName(this.topStats?.topMap.id)
         },
         hoursPlayed() {
           return this.averages?.minutes_played / 60

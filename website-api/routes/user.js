@@ -221,7 +221,7 @@ module.exports = (pool) => {
 
             ctx.font = '8pt Sans-Serif'
             ctx.fillStyle = '#737578'
-            ctx.fillText('stats.jackz.me', canvas.width - 76, canvas.height - 8)
+            ctx.fillText('stats.jackz.me', canvas.width - 78, canvas.height - 8)
 
             res.set('Content-Type', 'image/png')
             res.send(canvas.toBuffer())

@@ -1,7 +1,14 @@
 {
   "weapons": {
+    "shotgun_spas": "Spas Shotgun",
+    "ak47": "Ak-47",
     "sniper_military": "Military Sniper",
-    "rifle_ak47": "AK47",
-    ""
+    "rifle": "Rifle",
+    "rifle_m60": "M60",
+    "grenade_launcher": "Grenade Launcher",
+    "rifle_sniper": "Hunting Rifle",
+    "smg": "Uzi",
+    "smg_silenced": "Uzi (Silenced)",
+    "smg_mp5": "Mp5"
   }
 }

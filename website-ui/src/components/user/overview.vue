@@ -2,7 +2,7 @@
 <div class="columns">
     <div class="column">
         <h2 class='title is-2'>Stats Overview</h2>
-        <img :src="imageBannerUrl" />
+        <img :src="imageBannerUrl" onerror="this.style.display='none'" />
         <linkanchor id="playerstats" text="Player Information" />
         <table class="table is-fullwidth is-bordered">
             <tbody>

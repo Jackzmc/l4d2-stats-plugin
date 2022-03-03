@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const routeCache = require('route-cache');
+const fetch = require('node-fetch')
 
 const Canvas = require('canvas')
 
@@ -12,6 +13,29 @@ const SurvivorMap = {
     5: 'zoey',
     6: 'francis',
     7: 'louis'
+}
+
+const WeaponNames = {
+    "shotgun_spas": "Spas Shotgun",
+    "ak47": "Ak-47",
+    "sniper_military": "Sniper Military",
+}
+
+const Maps = {
+    "c1m": "Dead Center",
+    "c2m": "Dark Carnival",
+    "c3m": "Swamp Fever",
+    "c4m": "Hard Rain",
+    "c5m": "The Parish",
+    "c6m": "The Passing",
+    "c7m": "The Sacrifice",
+    "c8m": "No Mercy",
+    "c9m": "Crash Course",
+    "c10": "Death Toll",
+    "c11": "Dead Air",
+    "c12": "Blood Harvest",
+    "c13": "Cold Stream",
+    "c14": "Last Stand"
 }
 
 module.exports = (pool) => {
@@ -108,22 +132,18 @@ module.exports = (pool) => {
     //TODO: points system
     router.get('/:user/top', routeCache.cacheSeconds(60), async(req,res) => {
         try {
-            const [top_map] = await pool.execute("SELECT map as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? GROUP BY `map` ORDER BY count desc", [req.params.user])
-            const [top_character] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [req.params.user]) 
-            const [top_weapon] = await pool.execute("SELECT top_weapon as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND top_weapon IS NOT NULL AND top_weapon != '' GROUP BY `top_weapon` ORDER BY count DESC LIMIT 1 ", [req.params.user])
-            const [top_session] = await pool.execute("SELECT *, map, date_end - date_start as difference FROM stats_games WHERE date_end > 0 AND date_start > 0 AND steamid = ? ORDER BY difference ASC LIMIT 1", [req.params.user])
-            const [map_ratio] = await pool.execute('SELECT (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` NOT RLIKE "^c[0-9]+m") as custom,  (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` RLIKE "^c[0-9]+m") as official FROM `stats_games` LIMIT 1', [req.params.user, req.params.user])
-            const totalMapsCount = map_ratio[0].custom + map_ratio[0].official
+            const userInfo = await getUserStats(req.params.user)
+            const [top_session] = await pool.execute("SELECT *, map, date_end - date_start as difference FROM stats_games WHERE date_end > 0 AND date_start > 0 AND steamid = ? AND difference > 3j00 ORDER BY difference ASC LIMIT 1", [req.params.user])
             res.json({
-                topMap: top_map.length > 0 ? top_map[0] : null, //SELECT map, COUNT(*) as c FROM `stats_games` WHERE steamid = 'STEAM_1:0:49243767' GROUP BY `map` ORDER BY c desc
-                topCharacter: top_character.length > 0 ? top_character[0] : null,
-                topWeapon: top_weapon.length > 0 ? top_weapon[0].k : null,
+                topMap: userInfo.top.map,
+                topCharacter: userInfo.top.character,
+                topWeapon: userInfo.top.weapon,
                 bestSessionByTime: top_session.length > 0 ? top_session[0] : null,
                 mapsPlayed: {
-                    custom: map_ratio[0].custom,
-                    official: map_ratio[0].official,
-                    total: totalMapsCount,
-                    percentageOfficial: Math.round(map_ratio[0].official / totalMapsCount * 100)
+                    custom: userInfo.maps.custom,
+                    official: userInfo.maps.official,
+                    total: userInfo.maps.total,
+                    percentageOfficial: Math.round(userInfo.maps.official / userInfo.maps.total * 100)
                 }
             })
         }catch(err) {
@@ -167,33 +187,83 @@ module.exports = (pool) => {
     router.get('/:user/image', routeCache.cacheSeconds(600), async(req, res) => {
         if(!req.params.user) return res.status(404).json(null)
         try {
-            let [row] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [req.params.user]) 
-            const topCharacter = row.length > 0 ? SurvivorMap[row[0].k] : null
-            if(!topCharacter) {
-                return res.status(500).json({error:"Could not find a valid survivor"})
-            }
-            [[row]] = await pool.execute("SELECT last_alias from stats_users WHERE steamid = ?", [req.params.user])
+            const { top, name, maps } = await getUserStats(req.params.user)
 
-            const canvas = Canvas.createCanvas(388, 194)
+            const canvas = Canvas.createCanvas(588, 194)
             const ctx = canvas.getContext('2d')
 
-            const survivorImg = await Canvas.loadImage(`assets/fullbody/${topCharacter.toLowerCase()}.png`)
+            const playStyle = await getPlayStyle(req.params.user)
+
+            const survivorImg = await Canvas.loadImage(`assets/fullbody/${top.characterName.toLowerCase()}.png`)
             ctx.drawImage(survivorImg, 0, 0, 100, 194)
 
             ctx.font = 'bold 20pt Sans'
             ctx.fillStyle = '#000'
-            ctx.fillText(row.last_alias, 120, 40)
+            ctx.fillText(name, 120, 40)
+
+            ctx.font = '16pt Sans'
+            ctx.fillStyle = '#1e1f1e'
+            ctx.fillText(playStyle.name, 130, 60)
 
             ctx.font = '12pt Centaur'
             ctx.fillStyle = '#1e1f1e'
-            ctx.fillText('Top Weapon: AK-47', 120, 70)
+            ctx.fillText(`Top Weapon: ${top.weapon.name || top.weapon.id}`, 120, 90)
+            ctx.fillText(`Top Map: ${top.map.name || top.map.id}`, 120, 110)
+            ctx.fillText(`${maps.total.toLocaleString()} Games Played (${Math.round(maps.official/maps.total*100)}% official)`, 120, 130)
+
+
+            ctx.font = '8pt Sans-Serif'
+            ctx.fillStyle = '#737578'
+            ctx.fillText('stats.jackz.me', canvas.width - 70, canvas.height - 10)
 
             res.set('Content-Type', 'image/png')
             res.send(canvas.toBuffer())
         } catch(err) {
-            console.error('[/api/user/:user/averages]',err.message);
+            console.error('[/api/user/:user/image]',err.stack);
             res.status(500).json({error:"Internal Server Error"})
         }
     })
+    async function getUserStats(user) {
+        let [row] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [user]);
+        const topCharacter = row.length > 0 ? SurvivorMap[row[0].k] : null;
+        [row] = await pool.execute("SELECT last_alias from stats_users WHERE steamid = ?", [user]);
+        const { last_alias } = row.length > 0 ? row[0] : {};
+        [row] = await pool.execute("SELECT map as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? GROUP BY `map` ORDER BY count desc", [user]);
+        const topMap = row.length > 0 ? row[0].k : null;
+        [row] = await pool.execute("SELECT top_weapon as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND top_weapon IS NOT NULL AND top_weapon != '' GROUP BY `top_weapon` ORDER BY count DESC LIMIT 1 ", [user]);
+        const topWeapon = row.length > 0 ? row[0]?.k : null;
+        [row] = await pool.execute('SELECT (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` NOT RLIKE "^c[0-9]+m") as custom,  (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` RLIKE "^c[0-9]+m") as official FROM `stats_games` LIMIT 1', [user, user]);
+        const maps = {
+            official: row[0].official,
+            custom: row[0].custom,
+            total: row[0].custom + row[0].official,
+        }
+        return {
+            top: {
+                characterName: topCharacter,
+                map: {
+                    id: topMap,
+                    name: Maps[topMap.slice(0,3)]
+                },
+                weapon: {
+                    id: topWeapon,
+                    name: WeaponNames[topWeapon]
+                }
+            },
+            maps,
+            name: last_alias
+        }
+    }
+
+    async function getPlayStyle(user) {
+        const res = await fetch(`https://jackz.me/l4d2/scripts/analyze.php?steamid=${user}&concise=1`)
+        if(res.ok) {
+            const { result } = await res.json()
+            return result
+        } else {
+            return null
+        }
+    }
+
     return router;
 }

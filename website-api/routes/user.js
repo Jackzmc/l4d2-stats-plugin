@@ -1,6 +1,19 @@
 const router = require('express').Router();
 const routeCache = require('route-cache');
 
+const Canvas = require('canvas')
+
+const SurvivorMap = {
+    0: 'nick',
+    1: 'rochelle',
+    2: 'ellis',
+    3: 'coach',
+    4: 'bill',
+    5: 'zoey',
+    6: 'francis',
+    7: 'louis'
+}
+
 module.exports = (pool) => {
     router.get('/random', routeCache.cacheSeconds(86400), async(req,res) => {
         try {
@@ -146,7 +159,38 @@ module.exports = (pool) => {
                 globalTotalSessions: totalSessions[0].total_sessions,
                 ...stats[0]
             });
-        }catch(err) {
+        } catch(err) {
+            console.error('[/api/user/:user/averages]',err.message);
+            res.status(500).json({error:"Internal Server Error"})
+        }
+    })
+    router.get('/:user/image', routeCache.cacheSeconds(600), async(req, res) => {
+        if(!req.params.user) return res.status(404).json(null)
+        try {
+            let [row] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [req.params.user]) 
+            const topCharacter = row.length > 0 ? SurvivorMap[row[0].k] : null
+            if(!topCharacter) {
+                return res.status(500).json({error:"Could not find a valid survivor"})
+            }
+            [[row]] = await pool.execute("SELECT last_alias from stats_users WHERE steamid = ?", [req.params.user])
+
+            const canvas = Canvas.createCanvas(388, 194)
+            const ctx = canvas.getContext('2d')
+
+            const survivorImg = await Canvas.loadImage(`assets/fullbody/${topCharacter.toLowerCase()}.png`)
+            ctx.drawImage(survivorImg, 0, 0, 100, 194)
+
+            ctx.font = 'bold 20pt Sans'
+            ctx.fillStyle = '#000'
+            ctx.fillText(row.last_alias, 120, 40)
+
+            ctx.font = '12pt Centaur'
+            ctx.fillStyle = '#1e1f1e'
+            ctx.fillText('Top Weapon: AK-47', 120, 70)
+
+            res.set('Content-Type', 'image/png')
+            res.send(canvas.toBuffer())
+        } catch(err) {
             console.error('[/api/user/:user/averages]',err.message);
             res.status(500).json({error:"Internal Server Error"})
         }

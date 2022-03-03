@@ -15,7 +15,7 @@ const SurvivorMap = {
     7: 'louis'
 }
 
-const { weapons: WeaponNames } = require('../../website-ui/src/assets/item_names.json')
+const { weapons: WeaponNames } = require('../assets/item_names.json')
 
 const Maps = {
     "c1m": "Dead Center",

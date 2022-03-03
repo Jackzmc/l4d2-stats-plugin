@@ -185,6 +185,10 @@ module.exports = (pool) => {
         try {
             const { top, name, maps, stats } = await getUserStats(req.params.user)
 
+            if(!top.characterName || !name) {
+                return res.status(404).json({ error: 'User not found, or missing stats' })
+            }
+
             const canvas = Canvas.createCanvas(588, 194)
             const ctx = canvas.getContext('2d')
 
@@ -194,6 +198,7 @@ module.exports = (pool) => {
                 const bannerBase = await Canvas.loadImage(`assets/banner-base.png`)
                 ctx.drawImage(bannerBase, 0, 0, canvas.width, canvas.height)
             }
+
 
             const survivorImg = await Canvas.loadImage(`assets/fullbody/${top.characterName.toLowerCase()}.png`)
             ctx.drawImage(survivorImg, 0, 0, 100, 194)

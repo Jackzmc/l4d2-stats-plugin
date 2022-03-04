@@ -4,6 +4,10 @@ const fetch = require('node-fetch')
 
 const Canvas = require('canvas')
 
+Canvas.registerFont('./assets/fonts/OpenSans-Light.ttf', { family: 'OpenSans', weight: 'Light' })
+Canvas.registerFont('./assets/fonts/micross.ttf', { family: 'MS-Sans-Serif' })
+Canvas.registerFont('./assets/fonts/Roboto-Bold.ttf', { family: 'Roboto', weight: 'Bold'})
+
 const SurvivorMap = {
     0: 'nick',
     1: 'rochelle',
@@ -193,17 +197,15 @@ module.exports = (pool) => {
             const ctx = canvas.getContext('2d')
 
             const playStyle = await getPlayStyle(req.params.user)
-
-            if(req.query.gradient) {
+            if(req.query.gradient !== undefined) {
                 const bannerBase = await Canvas.loadImage(`assets/banner-base.png`)
                 ctx.drawImage(bannerBase, 0, 0, canvas.width, canvas.height)
             }
 
-
             const survivorImg = await Canvas.loadImage(`assets/fullbody/${top.characterName.toLowerCase()}.png`)
             ctx.drawImage(survivorImg, 0, 0, 100, 194)
 
-            ctx.font = 'bold 20pt Sans'
+            ctx.font = 'bold 20pt "Roboto", Sans'
             ctx.fillStyle = '#cc105f'
             ctx.fillText(name, 120, 40)
 
@@ -211,25 +213,31 @@ module.exports = (pool) => {
             ctx.fillStyle = '#5c5e5e'
             ctx.fillText(playStyle.name, 120, 60)
 
-            ctx.font = '14pt Arial'
-            ctx.fillStyle = '#1e1f1e'
-            ctx.fillText(`Top Weapon: ${top.weapon.name || top.weapon.id}`, 120, 90)
-            ctx.fillText(`Top Map: ${top.map.name || top.map.id}`, 120, 110)
-            ctx.fillText(`${maps.total.toLocaleString()} Games Played (${Math.round(maps.official/maps.total*100)}% official)`, 120, 130)
-            ctx.fillText(`${stats.witchesCrowned.toLocaleString()} witches crowned`, 120, 150)
-            ctx.fillText(`${stats.clownsHonked.toLocaleString()} clowns honked`, 120, 170)
+            setLine(ctx, 'Top Weapon: ', top.weapon.name || top.weapon.id, 120, 90)
+            setLine(ctx, 'Top Map: ', top.map.name || top.map.id, 120, 111)
+            ctx.fillText(`${maps.total.toLocaleString()} Games Played (${Math.round(maps.official/maps.total*100)}% official)`, 120, 132)
+            ctx.fillText(`${stats.witchesCrowned.toLocaleString()} witches crowned`, 120, 153)
+            ctx.fillText(`${stats.clownsHonked.toLocaleString()} clowns honked`, 120, 174)
 
-            ctx.font = '8pt Sans-Serif'
+            ctx.font = 'light 8pt "arial"'
             ctx.fillStyle = '#737578'
-            ctx.fillText('stats.jackz.me', canvas.width - 78, canvas.height - 8)
+            ctx.fillText('stats.jackz.me', canvas.width - 72, canvas.height - 8)
 
             res.set('Content-Type', 'image/png')
-            res.send(canvas.toBuffer())
+            canvas.createPNGStream().pipe(res)
         } catch(err) {
             console.error('[/api/user/:user/image]',err.stack);
             res.status(500).json({error:"Internal Server Error"})
         }
     })
+    function setLine(ctx, header, value, x, y) {
+        ctx.font = 'bold 14pt Arial'
+        ctx.fillStyle = '#1e1f1e'
+        const twS = ctx.measureText(header)
+        ctx.fillText(header, x, y, twS.width)
+        ctx.font = '16pt Arial'
+        ctx.fillText(value, x + twS.width, y)
+    }
     async function getUserStats(user) {
         let [row] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [user]);
         const topCharacter = row.length > 0 ? SurvivorMap[row[0].k] : null;

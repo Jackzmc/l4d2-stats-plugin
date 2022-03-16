@@ -59,14 +59,14 @@
             <b-carousel :interval="60000" :pause-info="false" :arrow="false" v-if="!stats.loading&&stats.data != null">
               <b-carousel-item v-for="stat in $options.STATS" :key="stat">
                   <section :class="`hero is-medium is-a`">
-                      <div class="hero-body has-text-centered">
+                      <div class="hero-body has-text-centered px-0">
                           <h6 class="title is-6">{{$options.STAT_DISPLAY_NAMES[stat]}}</h6>
                           <ol style="text-align: left !important">
                             <li v-for="player in stats.data[stat]" :key="player.steamid">
                               <router-link :to="'/user/' + player.steamid" class="has-text-info has-text-weight-bold">
                                 {{player.last_alias}}
                               </router-link>
-                              <span> - {{player.value | formatNumber}} {{$options.STAT_VALUE_NAMES[stat]}}</span>
+                              <span>: {{player.value | formatNumber}} {{$options.STAT_VALUE_NAMES[stat]}}</span>
                             </li>
                           </ol>
                       </div>

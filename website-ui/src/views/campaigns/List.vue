@@ -70,24 +70,21 @@
     </div>
     <hr>
     <div class="container">
-        <h5 class="title is-5">Filter Campaigns</h5>
+        <h5 class="title is-5">Search Played Campaigns</h5>
         <span class="has-text-left">
         <b-field grouped>
             <b-field label="Tag Selection">
                 <b-select v-model="filtered.filters.tag" placeholder="Select a tag">
                     <option value="prod">All</option>
                     <!-- <option value="dev" v-if="process.env.NODE_ENV !== 'production'">Dev</option> -->
-                    <option value="lgs">Improved</option>
+                    <option value="lgs">Improved (Private)</option>
                     <option value="public">Public</option>
-                    <option value="server-r">Vanilla Reserved</option>
+                    <option value="server-r">Vanilla (Reserved)</option>
                     <optgroup label="Regions">
                         <option value="tx">Texas</option>
                     </optgroup>
                     <optgroup label="Server">
-                        <option value="server-1">Server TX-P1</option>
-                        <option value="server-2">Server TX-P2</option>
-                        <option value="server-3">Server TX-P3</option>
-                        <option value="server-4">Server TX-P4</option>
+                        <option v-for="i of 7" :key="i" :value="'server-' + i">Server TX-P{{i}}</option>
                     </optgroup>
                 </b-select>
             </b-field>
@@ -103,6 +100,7 @@
                     <option value="all">Any</option>
                     <option value="coop">Coop</option>
                     <option value="versus">Versus</option>
+                    <option value="survival">Survival</option>
                     <option value="TankRun">Tank Run</option>
                     <option value="RocketDude">RocketDude</option>
                     <option value="Realism">Realism</option>

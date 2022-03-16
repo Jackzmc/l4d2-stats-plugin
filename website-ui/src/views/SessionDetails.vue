@@ -70,7 +70,7 @@
                     <div class="level-item has-text-centered">
                         <div>
                         <p class="heading">Friendly Fire Damage Dealt</p>
-                        <p class="title">{{session.SurvivorDamage}}</p>
+                        <p class="title">{{session.SurvivorDamage}} HP</p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
@@ -153,7 +153,9 @@
                         <div v-for="userRecord in users" :key="userRecord.steamid">
                             <div>
                                 <div class="has-text-left is-inline-block">
+                                  <b-tooltip label="Click to view their profile" position="is-left">
                                     <router-link  :to="'/user/' + userRecord.steamid"><b>{{userRecord.last_alias}}</b></router-link>
+                                  </b-tooltip>
                                 </div>
                                 <div class="is-pulled-right is-inline">
                                     <router-link v-if="session.steamid != userRecord.steamid" :to="'/sessions/details/' + userRecord.id">(view stats)</router-link>
@@ -190,7 +192,7 @@
                           <p>{{session.ping}} ms</p>
                         </span>
                         <strong>Most Used Weapon</strong>
-                        <p>{{session.top_weapon}}</p>
+                        <p>{{topWeaponName}}</p>
                         <span v-if="session.minutes_idle > 0">
                           <strong>Minutes Idle</strong>
                           <p>{{session.minutes_idle}} minute{{session.minutes_idle > 1 ? 's' : ''}} ({{idlePercentage}}%)</p>
@@ -279,6 +281,8 @@
 </template>
 
 <script>
+import GameInfo from '@/assets/gameinfo.json'
+
 import { getMapName } from '../js/map'
 import {PieChart, BarChart, getChartData } from '../js/graphs.js'
 export default {
@@ -379,6 +383,9 @@ export default {
         campaignURL() {
             return this.session && this.session.campaignID ?
                 `/campaigns/${this.session.campaignID.substring(0,8)}` : '#'
+        },
+        topWeaponName() {
+          return this.session.top_weapon ? GameInfo.weapons[this.session.top_weapon] : this.session.top_weapon
         }
     },
     methods: {
@@ -446,15 +453,11 @@ export default {
             d = Number(d);
             var h = Math.floor(d / 3600);
             var m = Math.floor(d % 3600 / 60);
-            var s = Math.floor(d % 3600 % 60);
 
             var hDisplay = h > 0 ? h + (h == 1 ? " hour, " : " hours, ") : "";
-            var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes, ") : "";
-            var sDisplay = s > 0 ? s + (s == 1 ? " second" : " seconds") : "";
-            if(sDisplay == "")
-              return hDisplay + mDisplay
-            else
-              return hDisplay + mDisplay + ", " + sDisplay
+            var mDisplay = m > 0 ? m + (m == 1 ? " minute, " : " minutes ") : "";
+
+            return hDisplay + mDisplay
         }
     }
 }

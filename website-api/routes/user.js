@@ -205,7 +205,7 @@ module.exports = (pool) => {
             const survivorImg = await Canvas.loadImage(`assets/fullbody/${top.characterName.toLowerCase()}.png`)
             ctx.drawImage(survivorImg, 0, 0, 120, 194)
 
-            ctx.font = 'bold 20pt "Roboto", Joanna, Helvetica Now, Helvetica, Arial, Tahoma, Segoe UI, Segoe UI Historic, Segoe UI Symbol, Segoe UI Emoji, Cambria Math, Abyssinica SIL, DaunPehn, David, DokChampa, Ebrima, Estrangelo Edessa, Ethiopia Jiret, Gadugi, GF Zemen Unicode, Gulim, Han Nom A, Javanese Text, Lao UI, Leelawadee UI, Kartika, Khmer UI, Malgun Gothic, Mangal, Meiryo, Microsoft New Tai Lue'
+            ctx.font = 'bold 20pt "Roboto", Symbola, Joanna, Helvetica Now, Helvetica, Arial, Tahoma, Segoe UI, Segoe UI Historic, Segoe UI Symbol, Segoe UI Emoji, Cambria Math, Abyssinica SIL, DaunPehn, David, DokChampa, Ebrima, Estrangelo Edessa, Ethiopia Jiret, Gadugi, GF Zemen Unicode, Gulim, Han Nom A, Javanese Text, Lao UI, Leelawadee UI, Kartika, Khmer UI, Malgun Gothic, Mangal, Meiryo, Microsoft New Tai Lue'
             ctx.fillStyle = '#cc105f'
             ctx.fillText(name, 120, 40)
 

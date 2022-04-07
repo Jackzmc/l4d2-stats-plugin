@@ -6,8 +6,7 @@ app.listen(WEB_PORT,() => {
     console.info('[Server] Listening on :' + WEB_PORT)
 })
 
-const DIFFICULTIES = ["easy","normal","advanced","expert"]
-
+const whitelist = process.env.CORS_WHITELIST ? process.env.CORS_WHITELIST.split(",") : []
 
 //TODO: record random player of the day
 //TODO: Possibly split some information to a cache total
@@ -22,6 +21,13 @@ async function main() {
     }
     const pool = mysql.createPool(details);
     console.log('Connecting to', details.host, 'database', details.database)
+
+    app.use((req, res, next) => {
+        if(!req.headers.origin || whitelist.includes(req.headers.origin)) {
+            res.header("Access-Control-Allow-Origin", '*');
+        }
+        next()
+    })
 
     app.use('/api/user/',       require('./routes/user')(pool))
     app.use('/api/sessions',    require('./routes/sessions')(pool))

@@ -31,7 +31,21 @@ module.exports = (pool) => {
                 WHERE survivor_incaps > 0 ORDER BY \`stats_users\`.\`survivor_incaps\` desc, \`stats_users\`.\`points\` desc limit 10`, []) 
             const [clownHonks] = await pool.execute(`SELECT steamid,last_alias,points,clowns_honked as value FROM \`stats_users\`  
             WHERE clowns_honked > 0 ORDER BY \`stats_users\`.\`clowns_honked\` desc, \`stats_users\`.\`points\` desc limit 10 `, [])
-            const [timesMVP] = await pool.execute(`SELECT g.steamid, u.last_alias, COUNT(*) as value from stats_games g JOIN stats_users u ON u.steamid = g.steamid where g.flags & 2 = 2 GROUP BY g.steamid ORDER BY value DESC LIMIT 10`, []) 
+            const [timesMVP] = await pool.execute(`
+                SELECT
+                    stats_games.steamid,
+                    su.last_alias as last_alias,
+                    SUM(honks) as value,
+                FROM stats_games
+                INNER JOIN stats_users as su
+                    ON su.steamid = stats_games.steamid
+                WHERE stats_games.honks > 0 AND stats_games.date_end < 1649344160
+                GROUP BY stats_games.steamid
+                ORDER by stats_games.honks DESC
+                LIMIT 10
+                `, []
+            ) 
+
             res.json({
                 deaths,
                 ffDamage,

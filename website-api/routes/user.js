@@ -51,7 +51,12 @@ module.exports = (pool) => {
         const user = req.params.user.replace(/\+-/,' ')
 
         try {
-            const [rows] = await pool.query("SELECT * FROM `stats_users` WHERE STRCMP(`last_alias`,?) = 0 OR `steamid` = ?", [user, req.params.user])
+            let bits = req.params.user.split(":")
+            bits = bits[bits.length - 1]
+            const [rows] = await pool.query(
+                "SELECT * FROM `stats_users` WHERE STRCMP(`last_alias`,?) = 0 OR `steamid` LIKE CONCAT('STEAM_%:%:', ?)", 
+                [user, bits]
+            )
             if(rows.length > 0) {
                 res.json({
                     user:rows[0],

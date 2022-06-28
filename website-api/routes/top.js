@@ -35,7 +35,7 @@ module.exports = (pool) => {
                 SELECT
                     stats_games.steamid,
                     su.last_alias as last_alias,
-                    SUM(honks) as value,
+                    SUM(honks) as value
                 FROM stats_games
                 INNER JOIN stats_users as su
                     ON su.steamid = stats_games.steamid

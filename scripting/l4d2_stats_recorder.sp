@@ -9,6 +9,7 @@
 #include <geoip>
 #include <sdkhooks>
 #include <left4dhooks>
+#include <SteamWorks>
 
 #undef REQUIRE_PLUGIN
 #include <l4d2_skill_detect>
@@ -618,15 +619,32 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 	GetClientIP(client, ip, sizeof(ip));
 	GeoipCountry(ip, country_name, sizeof(country_name));
 
+	char query[255]; 
 	if(SQL_GetRowCount(queryHandle) == 0) {
 		//user does not exist in db, create now
 
-		char query[255]; 
 		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", players[client].steamid, safe_alias, country_name);
 		SQL_TQuery(g_db, DBCT_Generic, query);
+		int playTimeSeconds;
+		SteamWorks_RequestStats(client, 550);
+
+		if(SteamWorks_GetStatCell(client, "Stat.TotalPlayTime.Total", playTimeSeconds)) {
+			float hours = playTimeSeconds / 3600.0;
+			if(hours >= 1.0) {
+				Format(query, sizeof(query), "%N is joining for the first time (%d hours of playtime)", client, RoundFloat(hours));
+			} else {
+				Format(query, sizeof(query), "%N is joining for the first time (<1 hour of playtime)", client);
+			}
+		} else {
+			Format(query, sizeof(query), "%N is joining for the first time", client);
+		}
 		for(int i = 1; i <= MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && GetUserAdmin(i) != INVALID_ADMIN_ID) {
-				PrintToChat(i, "%N is joining for the first time", client);
+				if(playTimeSeconds != -1) {
+					PrintToChat(i, query);
+				} else {
+					PrintToChat(i, query);
+				}
 			}
 		}
 		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, players[client].steamid);
@@ -641,7 +659,6 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 		if(players[client].points == 0) {
 			PrintToServer("[l4d2_stats_recorder] Warning: Existing player %N (%d) has no points", client, client);
 		}
-		char query[255];
 		int connections_amount = lateLoaded ? 0 : 1;
 
 		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, players[client].steamid);

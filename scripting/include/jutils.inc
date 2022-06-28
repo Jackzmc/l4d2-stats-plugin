@@ -26,11 +26,7 @@ stock void GetHorizontalPositionFromClient(int client, float units, float finalP
 	float pos[3], ang[3];
 	GetClientEyeAngles(client, ang);
 	GetClientAbsOrigin(client, pos);
-
-	float theta = DegToRad(ang[1]);
-	pos[0] += -150 * Cosine(theta); 
-	pos[1] += -150 * Sine(theta); 
-	finalPosition = pos;
+	GetHorizontalPositionFromOrigin(pos, ang, units, finalPosition);
 }
 //Credits to Timocop for the stock :D
 /**

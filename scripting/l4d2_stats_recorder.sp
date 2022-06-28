@@ -22,10 +22,14 @@ public Plugin myinfo =
 	version = PLUGIN_VERSION, 
 	url = ""
 };
-static ConVar hServerTags, hZDifficulty;
+static ConVar hServerTags, hZDifficulty, hClownMode, hPopulationClowns, hMinShove, hMaxShove, hClownModeChangeChance;
+static Handle hHonkCounterTimer;
 static Database g_db;
 static char gamemode[32], serverTags[255], uuid[64];
 static bool lateLoaded; //Has finale started?
+
+int g_iLastBoomUser;
+float g_iLastBoomTime;
 
 enum struct Game {
 	int difficulty;
@@ -67,6 +71,7 @@ enum struct Player {
 	int molotovKills;
 	int minigunKills;
 	int clownsHonked;
+
 	//Used for table: stats_games;
 	int m_checkpointZombieKills;
 	int m_checkpointSurvivorDamage;
@@ -144,6 +149,14 @@ public void OnPluginStart() {
 		}
 	}
 
+	hClownModeChangeChance = CreateConVar("l4d2_clown_mutate_chance", "0.3", "Percent chance of population changing", FCVAR_NONE, true, 0.0, true, 1.0);
+	hClownMode = CreateConVar("l4d2_honk_mode", "0", "Shows a live clown honk count and increased shove amount.\n0 = OFF, 1 = ON, 2 = Randomly change population", FCVAR_NONE, true, 0.0, true, 2.0);
+	hMinShove = FindConVar("z_gun_swing_coop_min_penalty");
+	hMaxShove = FindConVar("z_gun_swing_coop_max_penalty");
+	hPopulationClowns = FindConVar("l4d2_population_clowns");
+
+	hClownMode.AddChangeHook(CVC_ClownModeChanged);
+
 	hServerTags = CreateConVar("l4d2_statsrecorder_tags", "", "A comma-seperated list of tags that will be used to identity this server.");
 	hServerTags.GetString(serverTags, sizeof(serverTags));
 	hServerTags.AddChangeHook(CVC_TagsChanged);
@@ -181,6 +194,8 @@ public void OnPluginStart() {
 	HookEvent("game_start", Event_GameStart);
 	HookEvent("game_init", Event_GameStart);
 	HookEvent("round_end", Event_RoundEnd);
+
+	HookEvent("boomer_exploded", Event_BoomerExploded);
 	HookEvent("versus_round_start", Event_VersusRoundStart);
 	HookEvent("map_transition", Event_MapTransition);
 	AddNormalSoundHook(view_as<NormalSHook>(SoundHook));
@@ -233,6 +248,45 @@ public void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[
 }
 public void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
 	strcopy(serverTags, sizeof(serverTags), newValue);
+}
+public void CVC_ClownModeChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
+	if(convar.IntValue > 0) {
+		hMinShove.IntValue = 20;
+		hMaxShove.IntValue = 40;
+		hPopulationClowns.FloatValue = 0.4;
+		hHonkCounterTimer = CreateTimer(30.0, Timer_HonkCounter, _, TIMER_REPEAT);
+	} else {
+		hMinShove.IntValue = 5;
+		hMaxShove.IntValue = 15;
+		hPopulationClowns.FloatValue = 0.0;
+		if(hHonkCounterTimer != null) {
+			delete hHonkCounterTimer;
+		}
+	}
+}
+public Action Timer_HonkCounter(Handle h) { 
+	int honks, honker = -1;
+	for(int j = 1; j <= MaxClients; j++) {
+		if(players[j].clownsHonked > 0 && (players[j].clownsHonked > honks || honker == -1) && !IsFakeClient(j)) {
+			honker = j;
+			honks = players[j].clownsHonked;
+		}
+	}
+	if(honker > 0) {
+		for(int i = 1; i <= MaxClients; i++) {
+			if(players[i].clownsHonked > 0 && IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && GetClientTeam(i) == 2) {
+				PrintHintText(i, "Top Honker: %N (%d honks)\nYou: %d honks", honker, honks, players[i].clownsHonked);
+			}
+		}
+	}
+	if(hClownMode.IntValue == 2 && GetURandomFloat() < hClownModeChangeChance.FloatValue) {
+		if(GetRandomFloat() > 0.6)
+			hPopulationClowns.FloatValue = 0.0;
+		else 
+			hPopulationClowns.FloatValue = GetRandomFloat();
+		PrintToConsoleAll("Honk Mode: New population %.0f%%", hPopulationClowns.FloatValue * 100);
+	}
+	return Plugin_Continue; 
 }
 /////////////////////////////////
 // PLAYER AUTH
@@ -337,7 +391,7 @@ void RecordCampaign(int client) {
 		GetClientModel(client, model, sizeof(model));
 
 		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`round_switched`,`top_weapon`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,%b,'%s')",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`top_weapon`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,'%s')",
 			players[client].steamid,
 			mapname,
 			gamemode,
@@ -371,7 +425,6 @@ void RecordCampaign(int client) {
 			serverTags,
 			GetSurvivorType(model),
 			players[client].clownsHonked,
-			game.isVersusSwitched,
 			players[client].mostUsedWeapon.name
 		);
 		SQL_LockDatabase(g_db);
@@ -423,8 +476,6 @@ void UpdateWeaponStats(int client) {
 				players[client].activeWeapon.damage = 0.0;
 			}
 		}
-		PrintToServer(">>> Player %N mostUsedWeapon is %s [%d]", client, players[client].mostUsedWeapon.name, players[client].mostUsedWeapon.usage);
-		PrintToServer(">>> Player %N activeWeapon is %s [%d]", client, players[client].activeWeapon.name, players[client].activeWeapon.usage);
 	}
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
@@ -573,6 +624,11 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 		char query[255]; 
 		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", players[client].steamid, safe_alias, country_name);
 		SQL_TQuery(g_db, DBCT_Generic, query);
+		for(int i = 1; i <= MaxClients; i++) {
+			if(IsClientConnected(i) && IsClientInGame(i) && GetUserAdmin(i) != INVALID_ADMIN_ID) {
+				PrintToChat(i, "%N is joining for the first time", client);
+			}
+		}
 		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, players[client].steamid);
 	}else{
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
@@ -641,6 +697,24 @@ public Action Command_DebugStats(int client, int args) {
 ////////////////////////////
 // EVENTS 
 ////////////////////////////
+public void Event_BoomerExploded(Event event, const char[] name, bool dontBroadcast) {
+	int attacker = GetClientOfUserId(event.GetInt("attacker"));
+	if(attacker && !IsFakeClient(attacker) && GetClientTeam(attacker) == 2) {
+		g_iLastBoomTime = GetGameTime();
+		g_iLastBoomUser = attacker;
+	}
+}
+
+public Action L4D_OnVomitedUpon(int victim, int &attacker, bool &boomerExplosion) {
+	if(boomerExplosion && GetGameTime() - g_iLastBoomTime < 23.0) {
+		if(victim == g_iLastBoomUser)
+			IncrementStat(g_iLastBoomUser, "boomer_mellos_self");
+		else
+			IncrementStat(g_iLastBoomUser, "boomer_mellos");
+	}
+	return Plugin_Continue;
+}
+
 public Action SoundHook(int[] clients, int& numClients, char[] sample, int& entity, int& channel, float& volume, int& level, int& pitch, int& flags, char[] soundEntry, int& seed) {
 	if(numClients > 0 && StrContains(sample, "clown") > -1) {
 		float zPos[3], survivorPos[3];
@@ -897,10 +971,8 @@ public Action Event_GameStart(Event event, const char[] name, bool dontBroadcast
 	game.weaponUsages.Clear();
 	PrintToServer("[l4d2_stats_recorder] Started recording statistics for new session");
 	for(int i = 1; i <= MaxClients; i++) {
-		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-			ResetSessionStats(i, true);
-			FlushQueuedStats(i, false);
-		}
+		ResetSessionStats(i, true);
+		ResetInternal(i, true);
 	}
 }
 public void OnMapStart() {
@@ -1001,7 +1073,9 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 	for(int i = 1; i <= MaxClients; i++) {
 		players[i].clownsHonked = 0;
 	}
+	game.clownHonks = 0;
 }
+
 
 ////////////////////////////
 // FORWARD EVENTS

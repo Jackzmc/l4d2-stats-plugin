@@ -21,7 +21,7 @@ public Plugin myinfo =
 	author = "jackzmc", 
 	description = "", 
 	version = PLUGIN_VERSION, 
-	url = ""
+	url = "https://github.com/Jackzmc/sourcemod-plugins"
 };
 static ConVar hServerTags, hZDifficulty, hClownMode, hPopulationClowns, hMinShove, hMaxShove, hClownModeChangeChance;
 static Handle hHonkCounterTimer;
@@ -120,6 +120,7 @@ static Game game;
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	CreateNative("Stats_GetPoints", Native_GetPoints);
 	if(late) lateLoaded = true;
+	return APLRes_Success;
 }
 //TODO: player_use (Check laser sights usage)
 //TODO: Versus as infected stats
@@ -199,7 +200,7 @@ public void OnPluginStart() {
 	HookEvent("boomer_exploded", Event_BoomerExploded);
 	HookEvent("versus_round_start", Event_VersusRoundStart);
 	HookEvent("map_transition", Event_MapTransition);
-	AddNormalSoundHook(view_as<NormalSHook>(SoundHook));
+	AddNormalSoundHook(SoundHook);
 	#if defined DEBUG
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 	#endif
@@ -230,6 +231,7 @@ public Action Timer_FlushStats(Handle timer) {
 			}
 		}
 	}
+	return Plugin_Continue;
 }
 //TODO: Timer to check active against main and quicker timer that holds active weapon ent index
 public Action Timer_UpdateWeaponStats(Handle timer) {
@@ -373,10 +375,6 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 			SQL_TQuery(g_db, DBCT_Generic, query, _, lowPriority ? DBPrio_Low : DBPrio_Normal);
 		}
 	}
-}
-
-void RecordCampaignWeapons() {
-	//TODO: Stub
 }
 
 void RecordCampaign(int client) {
@@ -732,7 +730,7 @@ public Action L4D_OnVomitedUpon(int victim, int &attacker, bool &boomerExplosion
 	return Plugin_Continue;
 }
 
-public Action SoundHook(int[] clients, int& numClients, char[] sample, int& entity, int& channel, float& volume, int& level, int& pitch, int& flags, char[] soundEntry, int& seed) {
+public Action SoundHook(int clients[MAXPLAYERS], int& numClients, char sample[PLATFORM_MAX_PATH], int& entity, int& channel, float& volume, int& level, int& pitch, int& flags, char soundEntry[PLATFORM_MAX_PATH], int& seed) {
 	if(numClients > 0 && StrContains(sample, "clown") > -1) {
 		float zPos[3], survivorPos[3];
 		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", zPos);
@@ -748,7 +746,7 @@ public Action SoundHook(int[] clients, int& numClients, char[] sample, int& enti
 	}
 	return Plugin_Continue;
 }
-public Action Event_WeaponReload(Event event, const char[] name, bool dontBroadcast) {
+public void Event_WeaponReload(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
 		UpdateWeaponStats(client);
@@ -982,7 +980,7 @@ void EntityCreateCallback(int entity) {
 }
 bool isTransition = false;
 ////MAP EVENTS
-public Action Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
+public void Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
 	game.startTime = GetTime();
 	game.clownHonks = 0;
 	game.weaponUsages.Clear();
@@ -999,8 +997,8 @@ public void OnMapStart() {
 		game.difficulty = GetDifficultyInt();
 	}
 }
-public Action Event_VersusRoundStart(Event event, const char[] name, bool dontBroadcast) {
-	if(game.IsVersusMode) {
+public void Event_VersusRoundStart(Event event, const char[] name, bool dontBroadcast) {
+	if(game.IsVersusMode()) {
 		game.isVersusSwitched = !game.isVersusSwitched; 
 	}
 }
@@ -1041,7 +1039,7 @@ public void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast
 	
 	SQL_TQuery(g_db, DBCT_GetUUIDForCampaign, "SELECT UUID() AS UUID", _, DBPrio_High);
 }
-public Action Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast) {
+public void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast) {
 	//Get UUID on finale_start
 	if(L4D_IsMissionFinalMap()) {
 		game.difficulty = GetDifficultyInt();

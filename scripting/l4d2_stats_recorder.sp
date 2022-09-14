@@ -61,6 +61,9 @@ enum struct Player {
 	int damageInfectedRec;
 	int damageInfectedGiven;
 	int damageSurvivorFF;
+	int damageSurvivorFFCount;
+	int damageFFTaken;
+	int damageFFTakenCount;
 	int doorOpens;
 	int witchKills;
 	int startedPlaying;
@@ -390,7 +393,7 @@ void RecordCampaign(int client) {
 		GetClientModel(client, model, sizeof(model));
 
 		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`top_weapon`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,'%s')",
+		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`top_weapon`, `SurvivorFFCount`, `SurvivorFFTakenCount`, `SurvivorFFDamage`, `SurvivorFFTakenDamage`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,'%s')",
 			players[client].steamid,
 			mapname,
 			gamemode,
@@ -424,7 +427,11 @@ void RecordCampaign(int client) {
 			serverTags,
 			GetSurvivorType(model),
 			players[client].clownsHonked,
-			players[client].mostUsedWeapon.name
+			players[client].mostUsedWeapon.name,
+			players[client].damageSurvivorFFCount, //SurvivorFFCount
+			players[client].damageFFTakenCount, //SurvivorFFTakenCount
+			players[client].damageSurvivorFF, //SurvivorFFDamage
+			players[client].damageFFTaken //SurvivorFFTakenDamage
 		);
 		SQL_LockDatabase(g_db);
 		bool result = SQL_FastQuery(g_db, query);
@@ -489,7 +496,7 @@ void FlushQueuedStats(int client, bool disconnect) {
 	//Prevent points from being reset by not recording until user has gotten a point. 
 	if(players[client].points > 0) {
 		char query[1023];
-		Format(query, sizeof(query), "UPDATE stats_users SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d, clowns_honked=clowns_honked+%d WHERE steamid='%s'",
+		Format(query, sizeof(query), "UPDATE stats_users SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,survivor_ff_rec=survivor_ff_rec+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d, clowns_honked=clowns_honked+%d WHERE steamid='%s'",
 			//VARIABLE													//COLUMN NAME
 
 			players[client].damageSurvivorGiven, 						//survivor_damage_give
@@ -497,6 +504,7 @@ void FlushQueuedStats(int client, bool disconnect) {
 			players[client].damageInfectedGiven,  						//infected_damage_give
 			players[client].damageInfectedRec,   						//infected_damage_rec
 			players[client].damageSurvivorFF,    						//survivor_ff
+			players[client].damageFFTaken,								//survivor_ff_rec
 			GetEntProp(client, Prop_Send, "m_checkpointZombieKills"), 	//common_kills
 			GetEntProp(client, Prop_Send, "m_checkpointHeadshots"),   	//common_headshots
 			GetEntProp(client, Prop_Send, "m_checkpointMeleeKills"),  	//melee_kills
@@ -561,10 +569,14 @@ void ResetSessionStats(int client, bool resetAll) {
 	players[client].sSpitterKills = 0;
 	players[client].sChargerKills = 0;
 	players[client].clownsHonked  = 0;
+
+	players[client].damageSurvivorFF 		= 0;
+	players[client].damageFFTaken 			= 0;
+	players[client].damageSurvivorFFCount   = 0;
+	players[client].damageFFTakenCount 		= 0;
 }
 //Called via FlushQueuedStats which is called on disconnects / map transitions / game_start or round_end
 void ResetInternal(int client, bool disconnect) {
-	players[client].damageSurvivorFF 		= 0;
 	players[client].damageSurvivorGiven 	= 0;
 	players[client].doorOpens 				= 0;
 	players[client].witchKills 				= 0;
@@ -808,6 +820,9 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 		if(attacker_team == 2 && victim_team == 2) {
 			players[attacker].points--;
 			players[attacker].damageSurvivorFF += dmg;
+			players[attacker].damageSurvivorFFCount ++;
+			players[victim].damageFFTaken += dmg;
+			players[victim].damageFFTakenCount++;
 		}
 	}
 }

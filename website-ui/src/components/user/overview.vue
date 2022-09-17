@@ -158,6 +158,10 @@
                     <td class="tvalue">{{user.survivor_ff | formatNumber}}</td>
                 </tr>
                 <tr>
+                    <td>Friendly Fire Received</td>
+                    <td class="tvalue">{{user.survivor_ff_recv | formatNumber}}</td>
+                </tr>
+                <tr>
                     <td>With Melee</td>
                     <td class="tvalue">{{user.melee_kills | formatNumber}}</td>
                 </tr>

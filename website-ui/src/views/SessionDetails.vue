@@ -51,26 +51,14 @@
                     </div>
                     <div class="level-item has-text-centered">
                         <div>
-                        <p class="heading">Damage Taken</p>
-                        <p class="title">{{session.DamageTaken | formatNumber}} HP</p>
-                        </div>
-                    </div>
-                    <div class="level-item has-text-centered">
-                        <div>
-                        <p class="heading">Damage Dealt</p>
-                        <p class="title">{{session.DamageDealt | formatNumber}} HP</p>
-                        </div>
-                    </div>
-                    <div class="level-item has-text-centered">
-                        <div>
                         <p class="heading">Melee Kills</p>
                         <p class="title">{{session.MeleeKills}}</p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
                         <div>
-                        <p class="heading">Friendly Fire Damage Dealt</p>
-                        <p class="title">{{session.SurvivorDamage}} HP</p>
+                        <p class="heading">Damage Dealt</p>
+                        <p class="title">{{session.SurvivorDamage | formatNumber}} HP</p>
                         </div>
                     </div>
                     <div class="level-item has-text-centered">
@@ -79,6 +67,26 @@
                         <p class="title">{{session.SurvivorFFCount}}</p>
                         </div>
                     </div>
+                    <div class="level-item has-text-centered" v-if="session.SurvivorFFDamage">
+                        <div>
+                        <p class="heading">Friendly Damage</p>
+                        <p class="title">{{session.SurvivorFFDamage}} HP</p>
+                        </div>
+                    </div>
+                    <template v-if="session.SurvivorFFTakenCount">
+                      <div class="level-item has-text-centered">
+                          <div>
+                          <p class="heading">Times Friendly Fired</p>
+                          <p class="title">{{session.SurvivorFFTakenCount || 0}}</p>
+                          </div>
+                      </div>
+                      <div class="level-item has-text-centered">
+                          <div>
+                          <p class="heading">Friendly Damage Taken</p>
+                          <p class="title">{{session.SurvivorFFTakenDamage}} HP</p>
+                          </div>
+                      </div>
+                    </template>
                 </nav>
                 <div class="tile is-ancestor">
                     <div class="tile is-vertical">
@@ -121,6 +129,12 @@
 
                                 <article class="tile is-child notification has-text-white" style="background-color: #d6405e">
                                     <nav class="level">
+                                      <div class="level-item has-text-centered">
+                                            <div>
+                                            <p class="heading">Damage Taken</p>
+                                            <p class="title">{{session.DamageTaken}} HP</p>
+                                            </div>
+                                        </div>
                                         <div class="level-item has-text-centered">
                                             <div>
                                             <p class="heading">Incaps</p>
@@ -385,7 +399,10 @@ export default {
                 `/campaigns/${this.session.campaignID.substring(0,8)}` : '#'
         },
         topWeaponName() {
-          return this.session.top_weapon ? GameInfo.weapons[this.session.top_weapon] : this.session.top_weapon
+          if(!this.session.top_weapon) return null
+          let weapon = GameInfo.weapons[this.session.top_weapon.slice(7)]
+          if(weapon) return `${weapon} (${this.session.top_weapon})`
+          return this.session.top_weapon
         }
     },
     methods: {

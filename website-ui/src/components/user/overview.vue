@@ -8,39 +8,54 @@
             <tbody>
             <tr>
                 <th>SteamID</th>
-                <td>
-                <p>
+                <td colspan="3"><p>
                     {{user.steamid}}&nbsp;
                     <span class="is-pulled-right buttons">
                     <b-button tag="a" size="is-small" type="is-info" :href="'https://steamdb.info/calculator/' + communityID">SteamDB</b-button>
                     <b-button tag="a" size="is-small" type="is-info" :href="'https://steamcommunity.com/profiles/' + communityID">Community Profile</b-button>
                     </span>
-                </p>
-                </td>
+                </p></td>
             </tr>
             <tr>
-                <th>Creation Date</th>
-                <td v-html="formatDateAndRel(user.created_date*1000)"></td>
+                <th>First Played</th>
+                <td colspan="3" v-html="formatDateAndRel(user.created_date*1000)"></td>
             </tr>
             <tr>
                 <th>Last Played</th>
-                <td v-html="formatDateAndRel(user.last_join_date*1000)"></td>
+                <td colspan="3" v-html="formatDateAndRel(user.last_join_date*1000)"></td>
             </tr>
             <tr>
                 <th>Last Location</th>
-                <td>{{user.country}}</td>
+                <td colspan="3" >{{user.country}}</td>
             </tr>
             <tr>
                 <th>Connections</th>
                 <td style="color: blue">{{user.connections | formatNumber}}</td>
-            </tr>
-            <tr>
                 <th>Total Time Played</th>
                 <td style="color: blue">{{ humanReadable(user.minutes_played)}}</td>
             </tr>
             <tr>
-                <td><b>Play Style</b> <em class="is-pulled-right is-inline">(in alpha)</em></td>
-                <td v-if="playstyle">{{ playstyle }}</td>
+                <th><b>Play Style</b> <em class="is-pulled-right is-inline">(in alpha)</em></th>
+                <td v-if="playstyle.error">
+                    <b-tooltip type="is-danger" class="has-text-danger" :label="playstyle.error">Failed to fetch</b-tooltip>
+                </td>
+                <td v-else-if="playstyle.data">{{ playstyle }}</td>
+                <td v-else>Loading...</td>
+                <th><b>
+                    <b-tooltip label="The calculated rating based off admin notes on the player">
+                        Rating
+                    </b-tooltip>
+                </b></th>
+                <td v-if="playrating.error">
+                    <b-tooltip type="is-danger" class="has-text-danger" :label="playrating.error">Failed to fetch</b-tooltip>
+                </td>
+                <td v-else-if="playrating.data && playrating.data.key">
+                    {{ playrating.data.key }} 
+                    <b-tooltip v-if="playrating.data.value != null" label="The rating value of this player. Positive = better">({{playrating.data.value}})</b-tooltip>
+                </td>
+                <td v-else-if="playrating.data">
+                    <em>No rating</em>
+                </td>
                 <td v-else>Loading...</td>
             </tr>
             </tbody>
@@ -460,7 +475,8 @@ export default {
         return {
             averages: null,
             topStats: null,
-            playstyle: null
+            playstyle: { data: null, error: null },
+            playrating: { data: null, error: null }
         }
     },
     computed: {
@@ -570,24 +586,44 @@ export default {
             })
         },
         fetchPlaystyle() {
-            this.playstyle = null
+            this.playstyle.data = null
+            this.playstyle.error = null
             this.$http.get(`https://jackz.me/l4d2/scripts/analyze.php?steamid=${this.user.steamid}&concise=1`)
             .then(res => {
                 if(res.data.result)
-                  return this.playstyle = `${res.data.result.name} (${Math.round(res.data.result.value * 10000) / 10000})`
+                  return this.playstyle.data = `${res.data.result.name} (${Math.round(res.data.result.value * 10000) / 10000})`
                 switch(res.data.code) {
                   case "NO_DATA":
-                    this.playstyle = "Not enough data"
+                    this.playstyle.data = "Not enough data"
                     break
                   case "NO_SESSION_DATA":
-                    this.playstyle = "No sessions have been played"
+                    this.playstyle.data = "No sessions have been played"
                     break
                   default:
-                    this.playstyle = res.data.code
+                    this.playstyle.data = res.data.code
                 }
             })
             .catch(err => {
                 console.error('Could not get playstyle: ', err)
+                this.playstyle.error = err.message
+            })
+        },
+        fetchPlayrating() {
+            this.playrating.data = null
+            this.playrating.error = null
+            const url = process.env.NODE_ENV === "production"
+                ? "https://admin.jackz.me/api/analyze/"
+                : "http://localhost:8081/api/analyze/"
+            this.$http.get(`${url}${this.user.steamid}`)
+            .then(res => {
+                this.playrating.data = res.data.rating
+            })
+            .catch(err => {
+                console.error('Could not get playrating: ', err)
+                if(err.request.status)
+                    this.playrating.data = { key: null }
+                else
+                    this.playrating.error = err.message
             })
         },
         fetchTopStats() {
@@ -627,7 +663,11 @@ export default {
         if(this.topStats == null) {
           this.fetchTopStats();
         }
-        this.fetchPlaystyle()
+        Promise.all([
+            this.fetchPlaystyle(),
+            this.fetchPlayrating()
+        ])
+        
     },
     destroyed() {
         document.removeEventListener('scroll')

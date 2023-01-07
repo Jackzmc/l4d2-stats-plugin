@@ -16,7 +16,7 @@ async function main() {
     const details = {
         socketPath: process.env.MYSQL_SOCKET_PATH,
         host:     process.env.MYSQL_HOST   || 'localhost', 
-        database: process.env.MYSQL_DB     || 'test',
+        database: process.env.MYSQL_DB     || 'left4dead2',
         user:     process.env.MYSQL_USER   || 'root', 
         password: process.env.MYSQL_PASSWORD
     }

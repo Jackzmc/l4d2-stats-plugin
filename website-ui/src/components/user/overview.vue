@@ -51,7 +51,13 @@
                 </td>
                 <td v-else-if="playrating.data && playrating.data.key">
                     {{ playrating.data.key }} 
-                    <b-tooltip v-if="playrating.data.value != null" label="The rating value of this player. Positive = better">({{playrating.data.value}})</b-tooltip>
+                    <b-tooltip v-if="playrating.data.value != null">
+                        ({{playrating.data.value}})
+                        <template v-slot:content>
+                            The rating value of this player.<br />
+                            <span class="has-text-success">Positive = better</span>
+                        </template>
+                    </b-tooltip>
                 </td>
                 <td v-else-if="playrating.data">
                     <em>No rating</em>

@@ -42,8 +42,6 @@ enum struct Game {
 	char gamemode[32];
 	char uuid[64];
 
-	StringMap weaponUsages; //<char[] weapon name, int usage>
-
 	bool IsVersusMode() {
 		return StrEqual(this.gamemode, "versus") || StrEqual(this.gamemode, "scavenge");
 	}
@@ -111,13 +109,13 @@ enum struct Player {
 	// WeaponStatistics activeWeapon;
 
 	void ResetFull() {
-		this.weaponStats = new StringMap);
+		this.weaponStats = new StringMap();
 		this.steamid[0] = '\0';
 		this.points = 0;
 		// this.mostUsedWeapon.usage = 0;
 		// this.mostUsedWeapon.damage = 0.0;
 		// this.mostUsedWeapon.name[0] = '\0';
-		this.activeWeapon = this.mostUsedWeapon;
+		// this.activeWeapon = this.mostUsedWeapon;
 
 	}
 	//add:  	m_checkpointDamageToTank
@@ -179,6 +177,7 @@ public void OnPluginStart() {
 	hZDifficulty = FindConVar("z_difficulty");
 
 	//Hook all events to track statistics
+	HookEvent("player_disconnect", Event_PlayerFullDisconnect);
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("player_hurt", Event_PlayerHurt);
 	HookEvent("weapon_reload", Event_WeaponReload);
@@ -215,8 +214,6 @@ public void OnPluginStart() {
 	#endif
 
 	AutoExecConfig(true, "l4d2_stats_recorder");
-
-	game.weaponUsages = new StringMap();
 }
 
 //When plugin is being unloaded: flush all user's statistics.
@@ -226,7 +223,6 @@ public void OnPluginEnd() {
 			FlushQueuedStats(i, false);
 		}
 	}
-	delete game.weaponUsages;
 }
 //////////////////////////////////
 // TIMER
@@ -330,6 +326,10 @@ public void OnClientDisconnect(int client) {
 
 		//ResetSessionStats(client); //Can't reset session stats cause transitions!
 	}
+}
+
+void Event_PlayerFullDisconnect(Event event, const char[] name, bool dontBroadcast) {
+	delete players[client].weaponStats;
 }
 
 ///////////////////////////////////
@@ -465,7 +465,7 @@ void UpdateWeaponStats(int client, const char[] name) {
 		int time = GetTime();
 
 		float minutesUsed = 0;
-		if(!weaponStats.GetValue(name, minutesUsed));
+		weaponStats.GetValue(name, minutesUsed);
 		minutesUsed += (time - lastWeaponPickupTime) / 60;
 		stats.SetValue(name, minutesUsed);
 		strcopy(lastWeaponName, sizeof(lastWeaponName), name);
@@ -614,6 +614,7 @@ void ResetSessionStats(int client, bool resetAll) {
 	players[client].damageFFTaken 			= 0;
 	players[client].damageSurvivorFFCount   = 0;
 	players[client].damageFFTakenCount 		= 0;
+	delete players[client].weaponStats;
 }
 //Called via FlushQueuedStats which is called on disconnects / map transitions / game_start or round_end
 void ResetInternal(int client, bool disconnect) {
@@ -628,7 +629,6 @@ void ResetInternal(int client, bool disconnect) {
 	if(!disconnect) {
 		players[client].startedPlaying = GetTime();
 	}
-	delete players[client].weaponStats;
 }
 void IncrementSessionStat(int client) {
 	players[client].m_checkpointZombieKills += 			GetEntProp(client, Prop_Send, "m_checkpointZombieKills");
@@ -756,7 +756,7 @@ public Action Command_DebugStats(int client, int args) {
 		// ReplyToCommand(client, "mostUsedWeapon is %s [%d]", players[client].mostUsedWeapon.name, players[client].mostUsedWeapon.usage);
 		ReplyToCommand(client, "activeWeapon is %s [%d]", players[client].activeWeapon.name, players[client].activeWeapon.usage);
 		ReplyToCommand(client, "points = %d", players[client].points);
-		ReplyToCommand(client, "Total weapons cache %d", game.weaponUsages.Size);
+		// ReplyToCommand(client, "Total weapons cache %d", game.weaponUsages.Size);
 	}
 	return Plugin_Handled;
 }
@@ -1046,7 +1046,6 @@ bool isTransition = false;
 public void Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
 	game.startTime = GetTime();
 	game.clownHonks = 0;
-	game.weaponUsages.Clear();
 	PrintToServer("[l4d2_stats_recorder] Started recording statistics for new session");
 	for(int i = 1; i <= MaxClients; i++) {
 		ResetSessionStats(i, true);

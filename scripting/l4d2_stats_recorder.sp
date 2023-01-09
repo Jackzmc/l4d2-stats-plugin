@@ -180,7 +180,7 @@ public void OnPluginStart() {
 	HookEvent("player_disconnect", Event_PlayerFullDisconnect);
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("player_hurt", Event_PlayerHurt);
-	HookEvent("weapon_reload", Event_WeaponReload);
+	// HookEvent("weapon_reload", Event_WeaponReload);
 	HookEvent("player_incapacitated", Event_PlayerIncap);
 	HookEvent("pills_used", Event_ItemUsed);
 	HookEvent("defibrillator_used", Event_ItemUsed);

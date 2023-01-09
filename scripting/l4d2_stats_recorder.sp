@@ -562,11 +562,13 @@ void FlushQueuedStats(int client, bool disconnect) {
 			players[client].clownsHonked,								//clowns_honked
 			players[client].steamid[0]
 		);
+		
 		//If disconnected, can't put on another thread for some reason: Push it out fast
 		if(disconnect) {
 			SQL_LockDatabase(g_db);
 			SQL_FastQuery(g_db, query);
 			SQL_UnlockDatabase(g_db);
+			SubmitWeaponStats();
 			ResetInternal(client, true);
 		}else{
 			SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, client);
@@ -574,6 +576,29 @@ void FlushQueuedStats(int client, bool disconnect) {
 		//And clear them.
 	}
 }
+
+void SubmitWeaponStats(int client) {
+	if(players[client].weaponStats != null) {
+		char query[1023];
+		// TODO: Insert new weapon name, else update existing
+		StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
+		for(int i = 0; i < snapshot.Length; i++) {
+			snapshot.GetKey(i, query, sizeof(query));
+			float minutes = 0.0;
+			if(players[client].weaponStats.GetValue(query, minutes)) {
+				Format(query, sizeof(query), "INSERT UPDATE INTO stats_weapons_usage SET weapon='%s', minutesUsed=minutesUsed+%d, totalDamage=totalDamage+%d WHERE steamid = '%s'",
+					query,
+					minutes,
+					0.0,
+					players[client].steamid
+				);
+				SQL_TQuery(g_db, DBCT_Generic, query, _, DBPrio_Low);
+			}
+		}
+		
+	}
+}
+
 //Record a special kill to local variable
 void IncrementSpecialKill(int client, int special) {
 	switch(special) {
@@ -676,19 +701,8 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 
 		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", players[client].steamid, safe_alias, country_name);
 		SQL_TQuery(g_db, DBCT_Generic, query);
-		int playTimeSeconds;
-		SteamWorks_RequestStats(client, 550);
 
-		if(SteamWorks_GetStatCell(client, "Stat.TotalPlayTime.Total", playTimeSeconds)) {
-			float hours = playTimeSeconds / 3600.0;
-			if(hours >= 1.0) {
-				Format(query, sizeof(query), "%N is joining for the first time (%d hours of playtime)", client, RoundFloat(hours));
-			} else {
-				Format(query, sizeof(query), "%N is joining for the first time (<1 hour of playtime)", client);
-			}
-		} else {
-			Format(query, sizeof(query), "%N is joining for the first time", client);
-		}
+		Format(query, sizeof(query), "%N is joining for the first time", client);
 		for(int i = 1; i <= MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && GetUserAdmin(i) != INVALID_ADMIN_ID) {
 				if(playTimeSeconds != -1) {
@@ -707,6 +721,7 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 				players[client].points = SQL_FetchInt(queryHandle, field_num);
 			}
 		}
+
 		if(players[client].points == 0) {
 			PrintToServer("[l4d2_stats_recorder] Warning: Existing player %N (%d) has no points", client, client);
 		}
@@ -863,7 +878,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 		if(attacker_team == 2 && victim_team == 2) {
 			players[attacker].points--;
 			players[attacker].damageSurvivorFF += dmg;
-			players[attacker].damageSurvivorFFCount ++;
+			players[attacker].damageSurvivorFFCount++;
 			players[victim].damageFFTaken += dmg;
 			players[victim].damageFFTakenCount++;
 		}
@@ -1096,7 +1111,7 @@ public void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast
 	game.finaleStartTime = GetTime();
 	game.difficulty = GetDifficultyInt();
 	//Use the same UUID for versus
-	//FIXME: This was causing UUID to not fire another new one for back-to-back-cop
+	//FIXME: This was causing UUID to not fire another new one for back-to-back-coop
 	//if(game.IsVersusMode && game.isVersusSwitched) return;
 	
 	SQL_TQuery(g_db, DBCT_GetUUIDForCampaign, "SELECT UUID() AS UUID", _, DBPrio_High);

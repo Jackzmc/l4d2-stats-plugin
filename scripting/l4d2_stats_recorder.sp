@@ -49,11 +49,15 @@ enum struct Game {
 	}
 }
 
-enum struct WeaponStatistics {
-	int usage;
-	float damage;
-	char name[64];
-}
+// enum struct WeaponStatistics {
+// 	int usage;
+// 	float damage;
+// 	char name[64];
+// }
+
+int lastWeaponPickupTime;
+char lastWeaponName[64];
+
 
 enum struct Player {
 	char steamid[32];
@@ -102,15 +106,17 @@ enum struct Player {
 
 	//TODO: Hook player_reload
 
-	WeaponStatistics mostUsedWeapon;
-	WeaponStatistics activeWeapon;
+	StringMap weaponStats;
+	// WeaponStatistics mostUsedWeapon;
+	// WeaponStatistics activeWeapon;
 
 	void ResetFull() {
+		this.weaponStats = new StringMap);
 		this.steamid[0] = '\0';
 		this.points = 0;
-		this.mostUsedWeapon.usage = 0;
-		this.mostUsedWeapon.damage = 0.0;
-		this.mostUsedWeapon.name[0] = '\0';
+		// this.mostUsedWeapon.usage = 0;
+		// this.mostUsedWeapon.damage = 0.0;
+		// this.mostUsedWeapon.name[0] = '\0';
 		this.activeWeapon = this.mostUsedWeapon;
 
 	}
@@ -238,9 +244,11 @@ public Action Timer_FlushStats(Handle timer) {
 }
 //TODO: Timer to check active against main and quicker timer that holds active weapon ent index
 public Action Timer_UpdateWeaponStats(Handle timer) {
+	static char name[64];
 	for(int i=1; i<=MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-			UpdateWeaponStats(i);
+			GetEntityClassname(activeWeaponEnt, name, sizeof(name));
+			UpdateWeaponStats(i, name[7]);
 		}
 	}
 	return Plugin_Continue;
@@ -392,6 +400,10 @@ void RecordCampaign(int client) {
 		char model[64];
 		GetClientModel(client, model, sizeof(model));
 
+		char topWeapon[64];
+		int minutes = ComputeTopWeapon(client, topWeapon, sizeof(topWeapon));
+
+
 		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
 		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`top_weapon`, `SurvivorFFCount`, `SurvivorFFTakenCount`, `SurvivorFFDamage`, `SurvivorFFTakenDamage`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,'%s',%d,%d,%d,%d)",
 			players[client].steamid,
@@ -427,7 +439,7 @@ void RecordCampaign(int client) {
 			serverTags,
 			GetSurvivorType(model),
 			players[client].clownsHonked,
-			players[client].mostUsedWeapon.name,
+			topWeapon,
 			players[client].damageSurvivorFFCount, //SurvivorFFCount
 			players[client].damageFFTakenCount, //SurvivorFFTakenCount
 			players[client].damageSurvivorFF, //SurvivorFFDamage
@@ -446,43 +458,71 @@ void RecordCampaign(int client) {
 		#endif
 	}
 }
-void UpdateWeaponStats(int client) {
+void UpdateWeaponStats(int client, const char[] name) {
 	int activeWeaponEnt = GetPlayerWeaponSlot(client, 0);
 	if(activeWeaponEnt > 0) {
-		char name[64];
-		GetEntityClassname(activeWeaponEnt, name, sizeof(name));
 
-		//Update the global weapon usage list:
-		int prevWeaponCount;
-		if(game.weaponUsages.GetValue(name, prevWeaponCount)) {
-			game.weaponUsages.SetValue(name, prevWeaponCount + 1);
-		}else{
-			game.weaponUsages.SetValue(name, 1);
-		}
+		int time = GetTime();
+
+		float minutesUsed = 0;
+		if(!weaponStats.GetValue(name, minutesUsed));
+		minutesUsed += (time - lastWeaponPickupTime) / 60;
+		stats.SetValue(name, minutesUsed);
+		strcopy(lastWeaponName, sizeof(lastWeaponName), name);
+		lastWeaponPickupTime = time;
+
+
+		// //Update the global weapon usage list:
+		// int prevWeaponCount;
+		// if(game.weaponUsages.GetValue(name, prevWeaponCount)) {
+		// 	game.weaponUsages.SetValue(name, prevWeaponCount + 1);
+		// }else{
+		// 	game.weaponUsages.SetValue(name, 1);
+		// }
 	
-		if(StrEqual(name, players[client].activeWeapon.name)) {
-			//Up the current active weapon's count 
-			players[client].activeWeapon.usage++;
+		// if(StrEqual(name, players[client].activeWeapon.name)) {
+		// 	//Up the current active weapon's count 
+		// 	players[client].activeWeapon.usage++;
 
-			//Finally, if active usage is greater than active usage
-			if(players[client].activeWeapon.usage > players[client].mostUsedWeapon.usage) {
-				players[client].mostUsedWeapon = players[client].activeWeapon;
-			}
-		}else{
-			//If active != stored active, reset
-			strcopy(players[client].activeWeapon.name, 64, name);
+		// 	//Finally, if active usage is greater than active usage
+		// 	if(players[client].activeWeapon.usage > players[client].mostUsedWeapon.usage) {
+		// 		players[client].mostUsedWeapon = players[client].activeWeapon;
+		// 	}
+		// }else{
+		// 	//If active != stored active, reset
+		// 	strcopy(players[client].activeWeapon.name, 64, name);
 			
-			//Reset the activeWeapon:
-			if(StrEqual(name, players[client].mostUsedWeapon.name)) {
-				//if active is same as mostUsed, set base to mostUsed
-				players[client].activeWeapon = players[client].mostUsedWeapon;
-			}else{
-				//if different weapon, reset to 0
-				players[client].activeWeapon.usage = 0;
-				players[client].activeWeapon.damage = 0.0;
-			}
+		// 	//Reset the activeWeapon:
+		// 	if(StrEqual(name, players[client].mostUsedWeapon.name)) {
+		// 		//if active is same as mostUsed, set base to mostUsed
+		// 		players[client].activeWeapon = players[client].mostUsedWeapon;
+		// 	}else{
+		// 		//if different weapon, reset to 0
+		// 		players[client].activeWeapon.usage = 0;
+		// 		players[client].activeWeapon.damage = 0.0;
+		// 	}
+		// }
+	}
+}
+// Computes the top weapon of player. < 0 if none
+int ComputeTopWeapon(int client, char[] output, int maxlen) {
+	StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
+	int index = -1
+	float minutes, highestMinutes;
+	char buffer[64];
+	for(int i = 0; i < snapshot.Length; i++) {
+		snapshot.GetKey(i, buffer, sizeof(buffer));
+		players[client].weaponStats.GetValue(buffer, minutes);
+		if(minutes > highestMinutes || index == -1) {
+			index = i;
+			highestMinutes = minutes;
 		}
 	}
+	if(index >= 0) {
+		strcopy(output, maxlen, buffer);
+		return RoundFloat(highestMinutes);
+	}
+	return -1;
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
 void FlushQueuedStats(int client, bool disconnect) {
@@ -588,6 +628,7 @@ void ResetInternal(int client, bool disconnect) {
 	if(!disconnect) {
 		players[client].startedPlaying = GetTime();
 	}
+	delete players[client].weaponStats;
 }
 void IncrementSessionStat(int client) {
 	players[client].m_checkpointZombieKills += 			GetEntProp(client, Prop_Send, "m_checkpointZombieKills");
@@ -712,7 +753,7 @@ public Action Command_DebugStats(int client, int args) {
 		ReplyToCommand(client, "This command must be used as a player.");
 	}else {
 		ReplyToCommand(client, "Statistics for %s", players[client].steamid);
-		ReplyToCommand(client, "mostUsedWeapon is %s [%d]", players[client].mostUsedWeapon.name, players[client].mostUsedWeapon.usage);
+		// ReplyToCommand(client, "mostUsedWeapon is %s [%d]", players[client].mostUsedWeapon.name, players[client].mostUsedWeapon.usage);
 		ReplyToCommand(client, "activeWeapon is %s [%d]", players[client].activeWeapon.name, players[client].activeWeapon.usage);
 		ReplyToCommand(client, "points = %d", players[client].points);
 		ReplyToCommand(client, "Total weapons cache %d", game.weaponUsages.Size);
@@ -761,7 +802,9 @@ public Action SoundHook(int clients[MAXPLAYERS], int& numClients, char sample[PL
 public void Event_WeaponReload(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
-		UpdateWeaponStats(client);
+		static char name[64];
+		GetEntityClassname(activeWeaponEnt, name, sizeof(name));
+		// UpdateWeaponStats(client, name[7]);
 	}
 }
 //Records the amount of HP done to infected (zombies)
@@ -901,6 +944,11 @@ public void Event_ItemPickup(Event event, const char[] name, bool dontBroadcast)
 	if(!IsFakeClient(client)) {
 		event.GetString("item", item, sizeof(item));
 		ReplaceString(item, sizeof(item), "weapon_", "", true);
+
+		if(!StrEqual(lastWeaponName, item)) {
+			UpdateWeaponStats(i, item);
+		}
+
 		Format(statname, sizeof(statname), "pickups_%s", item);
 		IncrementStat(client, statname, 1);
 	}

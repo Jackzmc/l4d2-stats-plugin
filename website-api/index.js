@@ -30,7 +30,7 @@ async function main() {
         next()
     })
 
-    app.use('/api/user/',       require('./routes/user')(pool))
+    app.use('/api/user',       require('./routes/user')(pool))
     app.use('/api/sessions',    require('./routes/sessions')(pool))
     app.use('/api/campaigns',   require('./routes/campaigns')(pool))
     app.use('/api/top',         require('./routes/top')(pool))

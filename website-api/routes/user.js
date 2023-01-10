@@ -38,6 +38,10 @@ const Maps = {
     "c14": "Last Stand"
 }
 
+const DIFFICULTIES = [
+    "Easy", "Normal", "Advanced", "Expert"
+]
+
 module.exports = (pool) => {
     router.get('/random', routeCache.cacheSeconds(86400), async(req,res) => {
         try {
@@ -94,7 +98,7 @@ module.exports = (pool) => {
                         wins: 0
                     }
                     maps[row.map].wins++;
-                    const diff = DIFFICULTIES[row.difficulty];
+                    const diff = DIFFICULTIES[row.difficulty].toLowerCase();
                     maps[row.map].difficulty[diff]++;
                     difficulty[diff]++;
                 })
@@ -116,7 +120,7 @@ module.exports = (pool) => {
                 res.json({maps: [], totals: { wins: 0, gamemodes: [], difficulty: []}})
             }
         }catch(err) {
-            console.error('/api/user/:user/totals/:gamemode',err.message)
+            console.error('/api/user/:user/totals/:gamemode',req.params.gamemode, err.message)
             res.status(500).json({error:'Internal Server Error'})
         }
     })
@@ -170,7 +174,7 @@ module.exports = (pool) => {
                 total: total[0].count
             })
         }catch(err) {
-            console.error('/api/user/:user/totals/:gamemode',err.message)
+            console.error('/api/user/:user/sessions/:page',err.message)
             res.status(500).json({error:'Internal Server Error'})
         }
     })

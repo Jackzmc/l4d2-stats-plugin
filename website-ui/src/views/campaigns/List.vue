@@ -77,9 +77,9 @@
                 <b-select v-model="filtered.filters.tag" placeholder="Select a tag">
                     <option value="prod">All</option>
                     <!-- <option value="dev" v-if="process.env.NODE_ENV !== 'production'">Dev</option> -->
-                    <option value="lgs">Improved (Private)</option>
-                    <option value="public">Public</option>
+                    <option value="lgs">Main (Private)</option>
                     <option value="server-r">Vanilla (Reserved)</option>
+                    <option value="public">Public</option>
                     <optgroup label="Regions">
                         <option value="tx">Texas</option>
                     </optgroup>
@@ -280,9 +280,9 @@ export default {
         getTagType(tag) {
             switch(tag.toLowerCase()) {
                 case "dev": return 'is-danger'
-                case "prod": return "is-success"
+                case "main": return "is-success"
                 case "old": return "is-warning"
-                case "improved": return "is-dark"
+                case "reserved": return "is-dark"
                 default: return ''
             }
         },

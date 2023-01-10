@@ -409,9 +409,9 @@ export default {
         getTagType(tag) {
             switch(tag.toLowerCase()) {
                 case "dev": return 'is-danger'
-                case "prod": return "is-success"
+                case "main": return "is-success"
                 case "old": return "is-warning"
-                case "improved": return "is-dark"
+                case "reserved": return "is-dark"
                 default: return ''
             }
         },

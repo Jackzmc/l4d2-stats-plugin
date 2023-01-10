@@ -411,7 +411,7 @@ export default {
                 case "dev": return 'is-danger'
                 case "main": return "is-success"
                 case "old": return "is-warning"
-                case "reserved": return "is-dark"
+                case "vanilla+": return "is-dark"
                 default: return ''
             }
         },

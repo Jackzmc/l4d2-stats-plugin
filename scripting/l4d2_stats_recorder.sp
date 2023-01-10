@@ -55,6 +55,7 @@ enum struct Game {
 
 int lastWeaponPickupTime;
 char lastWeaponName[64];
+float lastWeaponDamage;
 
 
 enum struct Player {
@@ -243,7 +244,7 @@ public Action Timer_UpdateWeaponStats(Handle timer) {
 	static char name[64];
 	for(int i=1; i<=MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-			GetEntityClassname(activeWeaponEnt, name, sizeof(name));
+			// GetEntityClassname(activeWeaponEnt, name, sizeof(name));
 			UpdateWeaponStats(i, name[7]);
 		}
 	}
@@ -329,7 +330,10 @@ public void OnClientDisconnect(int client) {
 }
 
 void Event_PlayerFullDisconnect(Event event, const char[] name, bool dontBroadcast) {
-	delete players[client].weaponStats;
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	if(client > 0) {
+		delete players[client].weaponStats;
+	}
 }
 
 ///////////////////////////////////
@@ -465,9 +469,10 @@ void UpdateWeaponStats(int client, const char[] name) {
 		int time = GetTime();
 
 		float minutesUsed = 0;
-		weaponStats.GetValue(name, minutesUsed);
+		// TODO: Also track wpn damage
+		players[client].weaponStats.GetValue(name, minutesUsed);
 		minutesUsed += (time - lastWeaponPickupTime) / 60;
-		stats.SetValue(name, minutesUsed);
+		players[client].weaponStats.SetValue(name, minutesUsed);
 		strcopy(lastWeaponName, sizeof(lastWeaponName), name);
 		lastWeaponPickupTime = time;
 
@@ -507,7 +512,7 @@ void UpdateWeaponStats(int client, const char[] name) {
 // Computes the top weapon of player. < 0 if none
 int ComputeTopWeapon(int client, char[] output, int maxlen) {
 	StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
-	int index = -1
+	int index = -1;
 	float minutes, highestMinutes;
 	char buffer[64];
 	for(int i = 0; i < snapshot.Length; i++) {
@@ -518,6 +523,7 @@ int ComputeTopWeapon(int client, char[] output, int maxlen) {
 			highestMinutes = minutes;
 		}
 	}
+	delete snapshot;
 	if(index >= 0) {
 		strcopy(output, maxlen, buffer);
 		return RoundFloat(highestMinutes);
@@ -568,7 +574,7 @@ void FlushQueuedStats(int client, bool disconnect) {
 			SQL_LockDatabase(g_db);
 			SQL_FastQuery(g_db, query);
 			SQL_UnlockDatabase(g_db);
-			SubmitWeaponStats();
+			SubmitWeaponStats(client);
 			ResetInternal(client, true);
 		}else{
 			SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, client);
@@ -584,20 +590,20 @@ void SubmitWeaponStats(int client) {
 		StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
 		for(int i = 0; i < snapshot.Length; i++) {
 			snapshot.GetKey(i, query, sizeof(query));
-			float minutes = 0.0;
+			float minutes = 0.0, damage = 0.0;
 			if(players[client].weaponStats.GetValue(query, minutes)) {
-				Format(query, sizeof(query), "INSERT UPDATE INTO stats_weapons_usage SET weapon='%s', minutesUsed=minutesUsed+%d, totalDamage=totalDamage+%d WHERE steamid = '%s'",
+				Format(query, sizeof(query), "INSERT INTO stats_weapons_usage (steamid,weapon,minutesUsed, totalDamage) VALUES ('%s','%s',%f,%f) ON DUPLICATE KEY UPDATE minutesUsed=minutesUsed+%f, totalDamage=totalDamage+%f",
+					players[client].steamid,
 					query,
 					minutes,
-					0.0,
-					players[client].steamid
+					damage
 				);
 				SQL_TQuery(g_db, DBCT_Generic, query, _, DBPrio_Low);
 			}
 		}
-		
+		delete snapshot;
 	}
-}
+} 
 
 //Record a special kill to local variable
 void IncrementSpecialKill(int client, int special) {
@@ -705,11 +711,7 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 		Format(query, sizeof(query), "%N is joining for the first time", client);
 		for(int i = 1; i <= MaxClients; i++) {
 			if(IsClientConnected(i) && IsClientInGame(i) && GetUserAdmin(i) != INVALID_ADMIN_ID) {
-				if(playTimeSeconds != -1) {
-					PrintToChat(i, query);
-				} else {
-					PrintToChat(i, query);
-				}
+				PrintToChat(i, query);
 			}
 		}
 		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, players[client].steamid);
@@ -817,8 +819,8 @@ public Action SoundHook(int clients[MAXPLAYERS], int& numClients, char sample[PL
 public void Event_WeaponReload(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
-		static char name[64];
-		GetEntityClassname(activeWeaponEnt, name, sizeof(name));
+		// static char name[64];
+		// GetEntityClassname(activeWeaponEnt, name, sizeof(name));
 		// UpdateWeaponStats(client, name[7]);
 	}
 }
@@ -828,7 +830,7 @@ public void Event_InfectedHurt(Event event, const char[] name, bool dontBroadcas
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		int dmg = event.GetInt("amount");
 		players[attacker].damageSurvivorGiven += dmg;
-		players[attacker].activeWeapon.damage += dmg;
+		lastWeaponDamage += dmg;
 	}
 }
 public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadcast) {
@@ -865,7 +867,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 
 		if(attacker_team == 2) {
 			players[attacker].damageSurvivorGiven += dmg;
-			players[attacker].activeWeapon.damage += dmg;
+			lastWeaponDamage += dmg;
 
 			if(victim_team == 3 && StrEqual(wpn_name, "inferno", true)) {
 				players[attacker].molotovDamage += dmg;
@@ -873,7 +875,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 			}
 		}else if(attacker_team == 3) {
 			players[attacker].damageInfectedGiven += dmg;
-			players[attacker].activeWeapon.damage += dmg;
+			lastWeaponDamage += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
 			players[attacker].points--;
@@ -961,7 +963,7 @@ public void Event_ItemPickup(Event event, const char[] name, bool dontBroadcast)
 		ReplaceString(item, sizeof(item), "weapon_", "", true);
 
 		if(!StrEqual(lastWeaponName, item)) {
-			UpdateWeaponStats(i, item);
+			UpdateWeaponStats(client, item);
 		}
 
 		Format(statname, sizeof(statname), "pickups_%s", item);

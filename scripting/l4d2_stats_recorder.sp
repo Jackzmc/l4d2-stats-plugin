@@ -586,7 +586,6 @@ void FlushQueuedStats(int client, bool disconnect) {
 void SubmitWeaponStats(int client) {
 	if(players[client].weaponStats != null) {
 		char query[1023];
-		// TODO: Insert new weapon name, else update existing
 		StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
 		for(int i = 0; i < snapshot.Length; i++) {
 			snapshot.GetKey(i, query, sizeof(query));

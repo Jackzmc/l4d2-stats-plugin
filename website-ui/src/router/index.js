@@ -95,6 +95,12 @@ const routes = [
         component: () => import('@/components/user/overview')
       },
       {
+        // when /user/:id/profile is matched
+        path: 'weapons',
+        meta: { keep_title: true },
+        component: () => import('@/components/user/weapons')
+      },
+      {
         // UserPosts will be rendered inside User's <router-view>
         // when /user /:id/posts is matched
         path: 'campaign',
@@ -119,7 +125,7 @@ const routes = [
       },
       {
         path: '*',
-        component: () => import(/* webpackChunkName: "error_404" */ '@/views/404.vue') 
+        component: () => import(/* webpackChunkName: "error_404" */ '@/views/404.vue')
       }
     ]
   },
@@ -127,7 +133,7 @@ const routes = [
     path: '*',
     meta: { title_part: 'Page Not Found' },
     name: 'PageNotFound',
-    component: () => import(/* webpackChunkName: "error_404" */ '@/views/404.vue') 
+    component: () => import(/* webpackChunkName: "error_404" */ '@/views/404.vue')
   }
 ]
 
@@ -136,11 +142,11 @@ const router = new VueRouter({
   base: process.env.BASE_URL,
   routes,
   scrollBehavior: (to) => {
-    if (to.hash) {      
-      return {       
-        selector: to.hash      
+    if (to.hash) {
+      return {
+        selector: to.hash
       }
-    }  
+    }
   },
   linkActiveClass: 'is-active'
 })

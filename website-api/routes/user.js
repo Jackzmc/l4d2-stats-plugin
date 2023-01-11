@@ -76,6 +76,22 @@ module.exports = (pool) => {
             res.status(500).json({error:"Internal Server Error"})
         }
     })
+    router.get('/:user/weapons', async(req,res) => {
+        const user = req.params.user.replace(/\+-/,' ')
+
+        try {
+            const [rows] = await pool.query(
+                "SELECT weapon, minutesUsed, totalDamage FROM `stats_weapons_usage` WHERE `steamid` = ?", 
+                [user]
+            )
+            return res.json({
+                weapons: rows
+            })
+        }catch(err) {
+            console.error('[/api/user/:user/weapons]' ,err.message);
+            res.status(500).json({error:"Internal Server Error"})
+        }
+    })
     router.get('/:user/totals/:gamemode',async(req,res) => {
         try {
             const [rows] = await pool.query("SELECT `map`, `difficulty` FROM `stats_games` WHERE `steamid` = ? AND `gamemode` = ?", [req.params.user, req.params.gamemode])

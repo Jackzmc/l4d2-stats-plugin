@@ -22,6 +22,7 @@
         <div class="container">
           <ul>
             <router-link class="tabLink" tag="li" :to="getLink('overview')"><a>Overview</a></router-link>
+            <router-link class="tabLink" tag="li" :to="getLink('weapons')"> <a>Weapons</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('sessions')"><a>Sessions</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('campaign')"><a>Campaign</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('versus')">  <a>Versus</a></router-link>
@@ -101,7 +102,7 @@ export default {
     },
     getShareLink() {
       if(this.user && this.user.last_alias) {
-        
+
         const stripped_part = this.user.last_alias.replace(/\s/,'+').replace(/[^0-9a-z+]/gi,'');
         const safe_alias = encodeURIComponent(stripped_part)
 

@@ -475,6 +475,11 @@ import linkanchor from '@/components/linkanchor'
 import { getMapName } from '@/js/map'
 
 export default {
+    metaInfo() {
+      return {
+        title: "Overview"
+      }
+    },
     getMapName,
     props: ['user'],
     data() {
@@ -659,7 +664,6 @@ export default {
         },
     },
     mounted() {
-        document.title = `Overview - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
         document.addEventListener("scroll", () => {
             if (document.documentElement.scrollTop > 1000 && this.averages === null) {
                 this.averages = false;

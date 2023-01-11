@@ -71,6 +71,11 @@
 import { formatDuration } from 'date-fns'
 import { getMapName } from '../../js/map'
 export default {
+  metaInfo() {
+      return {
+        title: "Versus"
+      }
+    },
     props: ['user'],
     data() {
         return {
@@ -89,7 +94,6 @@ export default {
     },
     mounted() {
         this.fetchTotals()
-        document.title = `Versus - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
     },
     methods: {
         fetchTotals() {

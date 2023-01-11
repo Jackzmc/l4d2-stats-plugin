@@ -36,6 +36,11 @@
 import { formatDistance } from 'date-fns'
 import GameInfo from '@/assets/gameinfo.json'
 export default {
+  metaInfo() {
+      return {
+        title: "Weapon Statistics"
+      }
+    },
     props: ['user'],
     data() {
         return {

@@ -80,6 +80,11 @@
 <script>
 import { getMapName } from '../../js/map'
 export default {
+  metaInfo() {
+      return {
+        title: "Campaigns"
+      }
+    },
     props: ['user'],
     data() {
         return {
@@ -90,7 +95,6 @@ export default {
     },
     mounted() {
         this.fetchTotals()
-        document.title = `Campaign - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
     },
     methods: {
         formatMap(str) {

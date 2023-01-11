@@ -62,6 +62,11 @@
 <script>
 import { getMapName } from '../../js/map'
 export default {
+  metaInfo() {
+      return {
+        title: "Sessions"
+      }
+    },
     props: ['user'],
     data() {
         return {
@@ -76,7 +81,6 @@ export default {
         if(isNaN(routerPage) || routerPage <= 0) routerPage = 1;
         this.current_page = routerPage;
         this.fetchSessions()
-        document.title = `Sessions - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
     },
     methods: {
         getMapName,

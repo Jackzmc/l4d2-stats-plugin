@@ -81,7 +81,7 @@ module.exports = (pool) => {
 
         try {
             const [rows] = await pool.query(
-                "SELECT weapon, minutesUsed, totalDamage FROM `stats_weapons_usage` WHERE `steamid` = ?", 
+                "SELECT weapon, minutesUsed, totalDamage, headshots, kills FROM `stats_weapons_usage` WHERE `steamid` = ?", 
                 [user]
             )
             return res.json({

@@ -47,16 +47,10 @@ enum struct Game {
 	}
 }
 
-// enum struct WeaponStatistics {
-// 	int usage;
-// 	float damage;
-// 	char name[64];
-// }
-
-int lastWeaponPickupTime;
-char lastWeaponName[64];
-float lastWeaponDamage;
-
+enum struct WeaponStatistics {
+	float minutesUsed;
+	float totalDamage;
+}
 
 enum struct Player {
 	char steamid[32];
@@ -106,10 +100,16 @@ enum struct Player {
 	//TODO: Hook player_reload
 
 	StringMap weaponStats;
+	float lastWeaponPickupTime;
+	char lastWeaponName[64];
+	float lastWeaponDamage;
 	// WeaponStatistics mostUsedWeapon;
 	// WeaponStatistics activeWeapon;
 
 	void ResetFull() {
+		this.lastWeaponPickupTime = float(GetTime());
+		this.lastWeaponName[0] = '\0';
+		this.lastWeaponDamage = 0.0;
 		this.weaponStats = new StringMap();
 		this.steamid[0] = '\0';
 		this.points = 0;
@@ -117,7 +117,6 @@ enum struct Player {
 		// this.mostUsedWeapon.damage = 0.0;
 		// this.mostUsedWeapon.name[0] = '\0';
 		// this.activeWeapon = this.mostUsedWeapon;
-
 	}
 	//add:  	m_checkpointDamageToTank
 	//add:  	m_checkpointDamageToWitch
@@ -241,11 +240,10 @@ public Action Timer_FlushStats(Handle timer) {
 }
 //TODO: Timer to check active against main and quicker timer that holds active weapon ent index
 public Action Timer_UpdateWeaponStats(Handle timer) {
-	static char name[64];
 	for(int i=1; i<=MaxClients; i++) {
 		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
 			// GetEntityClassname(activeWeaponEnt, name, sizeof(name));
-			UpdateWeaponStats(i, name[7]);
+			UpdateWeaponStats(i);
 		}
 	}
 	return Plugin_Continue;
@@ -307,6 +305,11 @@ public void OnClientAuthorized(int client, const char[] auth) {
 		char steamid[32];
 		strcopy(steamid, sizeof(steamid), auth);
 		SetupUserInDB(client, steamid);
+	}
+}
+public void OnClientPutInServer(int client) {
+	if(!IsFakeClient(client)) {
+		SDKHook(client, SDKHook_WeaponSwitchPost, OnWeaponSwitch);
 	}
 }
 public void OnClientDisconnect(int client) {
@@ -405,7 +408,7 @@ void RecordCampaign(int client) {
 		GetClientModel(client, model, sizeof(model));
 
 		char topWeapon[64];
-		int minutes = ComputeTopWeapon(client, topWeapon, sizeof(topWeapon));
+		ComputeTopWeapon(client, topWeapon, sizeof(topWeapon));
 
 
 		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
@@ -462,72 +465,51 @@ void RecordCampaign(int client) {
 		#endif
 	}
 }
-void UpdateWeaponStats(int client, const char[] name) {
+void UpdateWeaponStats(int client) {
 	int activeWeaponEnt = GetPlayerWeaponSlot(client, 0);
 	if(activeWeaponEnt > 0) {
+		char name[64];
+		GetEntityClassname(activeWeaponEnt, name, sizeof(name));
 
-		int time = GetTime();
+		if(!StrEqual(players[client].lastWeaponName, name)) {
+			float time = float(GetTime());
+			PrintToServer("%N: updating stats for %s -> %s", client, players[client].lastWeaponName, name);
 
-		float minutesUsed = 0;
-		// TODO: Also track wpn damage
-		players[client].weaponStats.GetValue(name, minutesUsed);
-		minutesUsed += (time - lastWeaponPickupTime) / 60;
-		players[client].weaponStats.SetValue(name, minutesUsed);
-		strcopy(lastWeaponName, sizeof(lastWeaponName), name);
-		lastWeaponPickupTime = time;
-
-
-		// //Update the global weapon usage list:
-		// int prevWeaponCount;
-		// if(game.weaponUsages.GetValue(name, prevWeaponCount)) {
-		// 	game.weaponUsages.SetValue(name, prevWeaponCount + 1);
-		// }else{
-		// 	game.weaponUsages.SetValue(name, 1);
-		// }
-	
-		// if(StrEqual(name, players[client].activeWeapon.name)) {
-		// 	//Up the current active weapon's count 
-		// 	players[client].activeWeapon.usage++;
-
-		// 	//Finally, if active usage is greater than active usage
-		// 	if(players[client].activeWeapon.usage > players[client].mostUsedWeapon.usage) {
-		// 		players[client].mostUsedWeapon = players[client].activeWeapon;
-		// 	}
-		// }else{
-		// 	//If active != stored active, reset
-		// 	strcopy(players[client].activeWeapon.name, 64, name);
-			
-		// 	//Reset the activeWeapon:
-		// 	if(StrEqual(name, players[client].mostUsedWeapon.name)) {
-		// 		//if active is same as mostUsed, set base to mostUsed
-		// 		players[client].activeWeapon = players[client].mostUsedWeapon;
-		// 	}else{
-		// 		//if different weapon, reset to 0
-		// 		players[client].activeWeapon.usage = 0;
-		// 		players[client].activeWeapon.damage = 0.0;
-		// 	}
-		// }
+			// TODO: Also track wpn damage
+			WeaponStatistics stats;
+			players[client].weaponStats.GetArray(name, stats, sizeof(stats));
+			stats.minutesUsed += (time - players[client].lastWeaponPickupTime) / 60.0;
+			players[client].weaponStats.SetArray(name, stats, sizeof(stats));
+			strcopy(players[client].lastWeaponName, 64, name);
+			players[client].lastWeaponPickupTime = time;
+		}
 	}
 }
 // Computes the top weapon of player. < 0 if none
 int ComputeTopWeapon(int client, char[] output, int maxlen) {
+	if(players[client].weaponStats == null) return -2;
 	StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
 	int index = -1;
 	float minutes, highestMinutes;
 	char buffer[64];
+	// Loop all stored weapon stats and find largest:
 	for(int i = 0; i < snapshot.Length; i++) {
 		snapshot.GetKey(i, buffer, sizeof(buffer));
 		players[client].weaponStats.GetValue(buffer, minutes);
+		PrintToServer("%N: %f | highest %f", client, minutes, highestMinutes);
 		if(minutes > highestMinutes || index == -1) {
 			index = i;
 			highestMinutes = minutes;
 		}
 	}
-	delete snapshot;
 	if(index >= 0) {
-		strcopy(output, maxlen, buffer);
+		snapshot.GetKey(index, output, maxlen);
+		delete snapshot;
+		PrintToServer("[l4d2_stats_recorder] Debug: Top Weapon for %N is: %s", client, output);
 		return RoundFloat(highestMinutes);
 	}
+	delete snapshot;
+	PrintToServer("[l4d2_stats_recorder] Debug: Top Weapon for %N - not found", client);
 	return -1;
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
@@ -574,28 +556,31 @@ void FlushQueuedStats(int client, bool disconnect) {
 			SQL_LockDatabase(g_db);
 			SQL_FastQuery(g_db, query);
 			SQL_UnlockDatabase(g_db);
-			SubmitWeaponStats(client);
 			ResetInternal(client, true);
 		}else{
 			SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, client);
+			SubmitWeaponStats(client);
 		}
-		//And clear them.
 	}
 }
 
 void SubmitWeaponStats(int client) {
 	if(players[client].weaponStats != null) {
+		UpdateWeaponStats(client);
 		char query[1023];
 		StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
+		PrintToServer("[l4d2_stats_recorder] Submitting %d weapon stats for %N", snapshot.Length, client);
 		for(int i = 0; i < snapshot.Length; i++) {
 			snapshot.GetKey(i, query, sizeof(query));
-			float minutes = 0.0, damage = 0.0;
-			if(players[client].weaponStats.GetValue(query, minutes)) {
-				Format(query, sizeof(query), "INSERT INTO stats_weapons_usage (steamid,weapon,minutesUsed, totalDamage) VALUES ('%s','%s',%f,%f) ON DUPLICATE KEY UPDATE minutesUsed=minutesUsed+%f, totalDamage=totalDamage+%f",
+			WeaponStatistics stats;
+			if(players[client].weaponStats.GetArray(query, stats, sizeof(stats))) {
+				Format(query, sizeof(query), "INSERT INTO stats_weapons_usage (steamid,weapon,minutesUsed,totalDamage) VALUES ('%s','%s',%f,%f) ON DUPLICATE KEY UPDATE minutesUsed=minutesUsed+%f, totalDamage=totalDamage+%f",
 					players[client].steamid,
 					query,
-					minutes,
-					damage
+					stats.minutesUsed,
+					stats.totalDamage,
+					stats.minutesUsed,
+					stats.totalDamage
 				);
 				SQL_TQuery(g_db, DBCT_Generic, query, _, DBPrio_Low);
 			}
@@ -644,7 +629,6 @@ void ResetSessionStats(int client, bool resetAll) {
 	players[client].damageFFTaken 			= 0;
 	players[client].damageSurvivorFFCount   = 0;
 	players[client].damageFFTakenCount 		= 0;
-	delete players[client].weaponStats;
 }
 //Called via FlushQueuedStats which is called on disconnects / map transitions / game_start or round_end
 void ResetInternal(int client, bool disconnect) {
@@ -659,6 +643,8 @@ void ResetInternal(int client, bool disconnect) {
 	if(!disconnect) {
 		players[client].startedPlaying = GetTime();
 	}
+	if(players[client].weaponStats != null)
+		players[client].weaponStats.Clear();
 }
 void IncrementSessionStat(int client) {
 	players[client].m_checkpointZombieKills += 			GetEntProp(client, Prop_Send, "m_checkpointZombieKills");
@@ -781,6 +767,9 @@ public Action Command_DebugStats(int client, int args) {
 ////////////////////////////
 // EVENTS 
 ////////////////////////////
+void OnWeaponSwitch(int client, int weapon) {
+	UpdateWeaponStats(client);
+}
 public void Event_BoomerExploded(Event event, const char[] name, bool dontBroadcast) {
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
 	if(attacker && !IsFakeClient(attacker) && GetClientTeam(attacker) == 2) {
@@ -829,7 +818,7 @@ public void Event_InfectedHurt(Event event, const char[] name, bool dontBroadcas
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		int dmg = event.GetInt("amount");
 		players[attacker].damageSurvivorGiven += dmg;
-		lastWeaponDamage += dmg;
+		players[attacker].lastWeaponDamage += dmg;
 	}
 }
 public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadcast) {
@@ -866,7 +855,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 
 		if(attacker_team == 2) {
 			players[attacker].damageSurvivorGiven += dmg;
-			lastWeaponDamage += dmg;
+			players[attacker].lastWeaponDamage += dmg;
 
 			if(victim_team == 3 && StrEqual(wpn_name, "inferno", true)) {
 				players[attacker].molotovDamage += dmg;
@@ -874,7 +863,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 			}
 		}else if(attacker_team == 3) {
 			players[attacker].damageInfectedGiven += dmg;
-			lastWeaponDamage += dmg;
+			players[attacker].lastWeaponDamage += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
 			players[attacker].points--;
@@ -961,9 +950,7 @@ public void Event_ItemPickup(Event event, const char[] name, bool dontBroadcast)
 		event.GetString("item", item, sizeof(item));
 		ReplaceString(item, sizeof(item), "weapon_", "", true);
 
-		if(!StrEqual(lastWeaponName, item)) {
-			UpdateWeaponStats(client, item);
-		}
+		UpdateWeaponStats(client);
 
 		Format(statname, sizeof(statname), "pickups_%s", item);
 		IncrementStat(client, statname, 1);

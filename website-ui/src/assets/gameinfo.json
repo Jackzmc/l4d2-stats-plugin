@@ -1,5 +1,6 @@
 {
   "weapons": {
+    "pistol": "Pistol",
     "pistol_magnum": "Magnum Pistol",
     "autoshotgun": "Automatic Shotgun",
     "shotgun_chrome": "Chrome Shotgun",
@@ -17,7 +18,7 @@
     "sniper_military": "Military Sniper",
     "sniper_awp": "AWP",
     "sniper_scout": "Scout Sniper",
-    "weapon_grenade_launcher": "Grenade Launcher",
+    "grenade_launcher": "Grenade Launcher",
     "vomitjar": "Boomer Bile",
     "chainsaw": "Chainsaw",
     "frying_pan": "Frying Pan",
@@ -30,6 +31,10 @@
     "first_aid_kit": "First Aid Kit",
     "defibrilator": "Defibrillator",
     "adrenaline": "Adrenaline",
-    "pain_pills": "Pain Pills"
+    "pain_pills": "Pain Pills",
+    "baseball_bat": "Baseball Bat",
+    "didgeridoo": "Baseball Bat",
+    "cricket_bat": "Cricket Bat",
+    "fireaxe": "Fire Axe"
   }
 }

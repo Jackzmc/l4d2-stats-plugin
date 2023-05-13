@@ -8,7 +8,7 @@
         <th style="width:40%" class="has-text-white">Weapon</th>
         <th class="has-text-white">Time Used</th>
         <th class="has-text-white">Usage</th>
-        <!-- <th class="has-text-white">Total Damage</th> -->
+        <th class="has-text-white">Total Damage</th>
         <th class="has-text-white">Kills</th>
         <th class="has-text-white">Headshots</th>
       </tr>
@@ -26,7 +26,7 @@
           <td>
             {{calculatePercent(weapon.minutesUsed)}}
           </td>
-          <!-- <td>{{weapon.totalDamage}} HP</td> -->
+          <td>{{formatNumber(weapon.totalDamage)}} HP</td>
           <td>{{formatNumber(weapon.kills)}}</td>
           <td>{{formatNumber(weapon.headshots)}}</td>
         </tr>
@@ -39,7 +39,7 @@
         <th style="width:40%" class="has-text-white">Weapon</th>
         <th class="has-text-white">Time Used</th>
         <th class="has-text-white">Usage</th>
-        <!-- <th class="has-text-white">Total Damage</th> -->
+        <th class="has-text-white">Total Damage</th>
         <th class="has-text-white">Kills</th>
         <th class="has-text-white">Headshots</th>
       </tr>
@@ -57,7 +57,7 @@
           <td>
             {{calculatePercent(weapon.minutesUsed)}}
           </td>
-          <!-- <td>{{weapon.totalDamage}} HP</td> -->
+          <td>{{formatNumber(weapon.totalDamage)}} HP</td>
           <td>{{formatNumber(weapon.kills)}}</td>
           <td>{{formatNumber(weapon.headshots)}}</td>
         </tr>

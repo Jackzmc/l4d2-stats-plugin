@@ -95,7 +95,11 @@ const routes = [
         component: () => import('@/components/user/overview')
       },
       {
-        // when /user/:id/profile is matched
+        path: 'points',
+        meta: { keep_title: true },
+        component: () => import('@/components/user/points')
+      },
+      {
         path: 'weapons',
         meta: { keep_title: true },
         component: () => import('@/components/user/weapons')

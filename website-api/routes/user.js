@@ -176,6 +176,25 @@ module.exports = (pool) => {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
+ 
+    router.get('/:user/points/:page', async (req,res) => {
+        try {
+            let perPage = parseInt(req.query.perPage) || 50;
+            if(perPage > 100) perPage = 100;
+            const selectedPage = req.query.page || 0
+            const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
+            const offset = pageNumber * perPage;
+            const [rows] = await pool.query("SELECT timestamp, type, amount FROM stats_points WHERE steamid = ? ORDER BY id DESC LIMIT ?,?", [req.params.user, offset, perPage])
+            const [total] = await pool.execute("SELECT COUNT(*) as count FROM stats_points WHERE steamid = ?", [req.params.user])
+            res.json({
+                history: rows,
+                total: total[0].count
+            })
+        }catch(err) {
+            console.error('/api/user/:user/sessions/:page',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
     router.get('/:user/sessions/:page', async (req, res) => {
         try {
             let perPage = parseInt(req.query.perPage) || 10;

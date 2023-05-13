@@ -22,10 +22,12 @@
         <div class="container">
           <ul>
             <router-link class="tabLink" tag="li" :to="getLink('overview')"><a>Overview</a></router-link>
+            <router-link class="tabLink" tag="li" :to="getLink('points')">  <a>Points</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('weapons')"> <a>Weapons</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('sessions')"><a>Sessions</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('campaign')"><a>Campaign</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('versus')">  <a>Versus</a></router-link>
+
             <!--
             <router-link tag="li" to="survival"><a>Survival</a></router-link>
             <router-link tag="li" to="scavenge"><a>Scavenge</a></router-link> -->

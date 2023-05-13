@@ -15,8 +15,9 @@
             <b-table-column field="type" label="Action" v-slot="props">
                 {{ getPointType(props.row.type) }}
             </b-table-column>
-            <b-table-column field="amount" label="Points" centered cell-class="number-cell" v-slot="props">
-                {{ props.row.amount > 0 ? '+' + props.row.amount : props.row.amount}}
+            <b-table-column field="amount" label="Points" centered v-slot="props">
+                <span class="has-text-success" v-if="props.row.amount > 0">+{{ props.row.amount }}</span>
+                <span class="has-text-danger" v-else>{{ props.row.amount }}</span>
             </b-table-column>
             <b-table-column field="timestamp" label="Timestamp" centered v-slot="props">
                 {{ formatDate(props.row.timestamp) }}

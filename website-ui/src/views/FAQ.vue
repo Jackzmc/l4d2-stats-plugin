@@ -35,19 +35,19 @@
                         <ul>
                             <li><span class="has-text-success">+1</span> per common killed (any damage type)</li>
                             <li><span class="has-text-success">+2</span> per common headshot</li>
-                            <li><span class="has-text-success">+50</span> per infected kill</li>
-                            <li><span class="has-text-success">+200</span> per tank kill</li>
-                            <li><span class="has-text-success">+50</span> per tank kill solo (in addition to tank kill)</li>
+                            <li><span class="has-text-success">+6</span> per special kill</li>
+                            <li><span class="has-text-success">+100</span> per tank kill</li>
+                            <li><span class="has-text-success">+20</span> per tank kill solo (in addition to tank kill)</li>
                             <li><span class="has-text-success">+50</span> per tank kill melee (in addition to tank kill))</li>
-                            <li><span class="has-text-success">+100</span> per witch kill</li>
+                            <li><span class="has-text-success">+50</span> per witch kill</li>
                             <li><span class="has-text-success">+10</span> per heal teammate</li>
-                            <li><span class="has-text-success">+3</span> per revive teammate</li>
-                            <li><span class="has-text-success">+9</span> per teammate defibbed</li>
-                            <li><span class="has-text-success">+3</span> per ammo pack deploy</li>
-                            <li><span class="has-text-success">+300</span> per finale win</li>
+                            <li><span class="has-text-success">+5</span> per revive teammate</li>
+                            <li><span class="has-text-success">+7</span> per teammate defibbed</li>
+                            <li><span class="has-text-success">+2</span> per ammo pack deploy</li>
+                            <li><span class="has-text-success">+200</span> per finale win</li>
                             <br>
-                            <li><span class="has-text-danger">-20</span> for teammate kill</li>
-                            <li><span class="has-text-danger">-1</span> per teammate dmg</li>
+                            <li><span class="has-text-danger">-100</span> for teammate kill</li>
+                            <li><span class="has-text-danger">-10</span> per teammate dmg</li>
                         </ul>
                     </div>
                 </div>

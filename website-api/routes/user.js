@@ -181,7 +181,7 @@ module.exports = (pool) => {
         try {
             let perPage = parseInt(req.query.perPage) || 50;
             if(perPage > 100) perPage = 100;
-            const selectedPage = req.query.page || 0
+            const selectedPage = req.params.page || 0
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
             const offset = pageNumber * perPage;
             const [rows] = await pool.query("SELECT timestamp, type, amount FROM stats_points WHERE steamid = ? ORDER BY id DESC LIMIT ?,?", [req.params.user, offset, perPage])
@@ -199,7 +199,7 @@ module.exports = (pool) => {
         try {
             let perPage = parseInt(req.query.perPage) || 10;
             if(perPage > 100) perPage = 100;
-            const selectedPage = req.query.page || 0
+            const selectedPage = req.params.page || 0
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
             const offset = pageNumber * perPage;
             const [rows] = await pool.query("SELECT * FROM stats_games WHERE steamid = ? ORDER BY id DESC LIMIT ?,?", [req.params.user, offset, perPage])

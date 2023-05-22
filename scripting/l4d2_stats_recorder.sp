@@ -1,7 +1,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-//#define DEBUG 0
+// #define DEBUG 1
 #define PLUGIN_VERSION "1.1"
 
 #include <sourcemod>
@@ -41,15 +41,58 @@ enum struct Game {
 	bool finished;
 	char gamemode[32];
 	char uuid[64];
+	char name[64];
+	bool isCustomMap;
 
 	bool IsVersusMode() {
 		return StrEqual(this.gamemode, "versus") || StrEqual(this.gamemode, "scavenge");
 	}
+
+	void GetMap() {
+		GetCurrentMap(this.name, sizeof(this.name));
+		this.isCustomMap = this.name[0] != 'c' || !IsCharNumeric(this.name[1]) || this.name[2] != 'm';
+	}
 }
+
+#define NUMBER_OF_WEAPONS 36
+StringMap WeaponIds;
+StringMapSnapshot WeaponIdsSnapshot;
 
 enum struct WeaponStatistics {
 	float minutesUsed;
-	float totalDamage;
+	int totalDamage;
+	int headshots;
+	int kills;
+
+	void Reset() {
+		this.totalDamage = 0;
+		this.minutesUsed = 0.0;
+		this.kills = 0;
+		this.headshots = 0;
+	}
+
+	bool HasChanged() {
+		return this.totalDamage > 0.0 || this.minutesUsed > 0.0 || this.kills > 0.0;
+	}
+}
+
+WeaponStatistics WeaponStats[MAXPLAYERS+1][NUMBER_OF_WEAPONS]; // Index -> WeaponIds[index] for name
+
+enum PointRecordType {
+	PType_Generic = 0,
+	PType_FinishCampaign,
+	PType_CommonKill,
+	PType_SpecialKill,
+	PType_TankKill,
+	PType_WitchKill,
+	PType_TankKill_Solo,
+	PType_TankKill_Melee,
+	PType_Headshot,
+	PType_FriendlyFire,
+	PType_HealOther,
+	PType_ReviveOther,
+	PType_ResurrectOther,
+	PType_DeployAmmo
 }
 
 enum struct Player {
@@ -102,21 +145,39 @@ enum struct Player {
 	StringMap weaponStats;
 	float lastWeaponPickupTime;
 	char lastWeaponName[64];
-	float lastWeaponDamage;
-	// WeaponStatistics mostUsedWeapon;
-	// WeaponStatistics activeWeapon;
+	int lastWeaponDamage;
+
+	ArrayList pointsQueue;
+
+	void Init() {
+		this.weaponStats = new StringMap();
+		this.pointsQueue = new ArrayList(3); // [ type, amount, time ]
+	}
 
 	void ResetFull() {
 		this.lastWeaponPickupTime = float(GetTime());
 		this.lastWeaponName[0] = '\0';
-		this.lastWeaponDamage = 0.0;
-		this.weaponStats = new StringMap();
+		this.lastWeaponDamage = 0;
 		this.steamid[0] = '\0';
 		this.points = 0;
+		if(this.weaponStats != null)
+			this.weaponStats.Clear();
+		if(this.pointsQueue != null)
+			this.pointsQueue.Clear();
 		// this.mostUsedWeapon.usage = 0;
 		// this.mostUsedWeapon.damage = 0.0;
 		// this.mostUsedWeapon.name[0] = '\0';
 		// this.activeWeapon = this.mostUsedWeapon;
+	}
+
+	void RecordPoint(PointRecordType type, int amount = 1) {
+		this.points += amount;
+		// Common kills are too spammy 
+		if(type != PType_CommonKill) {
+			int index = this.pointsQueue.Push(type);
+			this.pointsQueue.Set(index, amount, 1);
+			this.pointsQueue.Set(index, GetTime(), 2);
+		}
 	}
 	//add:  	m_checkpointDamageToTank
 	//add:  	m_checkpointDamageToWitch
@@ -145,6 +206,8 @@ public void OnPluginStart() {
 	if(!ConnectDB()) {
 		SetFailState("Failed to connect to database.");
 	}
+
+	LoadWeaponDatabase();
 
 	if(lateLoaded) {
 		//If plugin late loaded, grab all real user's steamids again, then recreate user
@@ -201,7 +264,6 @@ public void OnPluginStart() {
 	HookEvent("finale_win", Event_FinaleWin);
 	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
 	//Used to transition checkpoint statistics for stats_games
-	HookEvent("game_start", Event_GameStart);
 	HookEvent("game_init", Event_GameStart);
 	HookEvent("round_end", Event_RoundEnd);
 
@@ -214,6 +276,58 @@ public void OnPluginStart() {
 	#endif
 
 	AutoExecConfig(true, "l4d2_stats_recorder");
+
+	for(int i = 1; i <= MaxClients; i++) {
+		players[i].Init();
+	}
+}
+
+void LoadWeaponDatabase() {
+	WeaponIds = new StringMap();
+	int i = 0;
+	WeaponIds.SetValue("weapon_pistol", i++);
+	WeaponIds.SetValue("weapon_smg", i++);
+	WeaponIds.SetValue("weapon_pistol", i++);
+	WeaponIds.SetValue("weapon_smg", i++);
+	WeaponIds.SetValue("weapon_pumpshotgun", i++);
+	WeaponIds.SetValue("weapon_autoshotgun", i++);
+	WeaponIds.SetValue("weapon_rifle", i++);
+	WeaponIds.SetValue("weapon_hunting_rifle", i++);
+	WeaponIds.SetValue("weapon_smg_silenced", i++);
+	WeaponIds.SetValue("weapon_shotgun_chrome", i++);
+	WeaponIds.SetValue("weapon_rifle_desert", i++);
+	WeaponIds.SetValue("weapon_sniper_military", i++);
+	WeaponIds.SetValue("weapon_shotgun_spas", i++);
+	WeaponIds.SetValue("weapon_chainsaw", i++);
+	WeaponIds.SetValue("weapon_grenade_launcher", i++);
+	WeaponIds.SetValue("weapon_rifle_ak47", i++);
+	WeaponIds.SetValue("weapon_pistol_magnum", i++);
+	WeaponIds.SetValue("weapon_smg_mp5", i++);
+	WeaponIds.SetValue("weapon_rifle_sg552", i++);
+	WeaponIds.SetValue("weapon_sniper_awp",	 i++);
+	WeaponIds.SetValue("weapon_sniper_scout", i++);
+	WeaponIds.SetValue("weapon_rifle_m60", i++);
+
+	WeaponIds.SetValue("knife", i++);
+	WeaponIds.SetValue("baseball_bat", i++);
+	WeaponIds.SetValue("chainsaw", i++);
+	WeaponIds.SetValue("cricket_bat", i++);
+	WeaponIds.SetValue("crowbar", i++);
+	WeaponIds.SetValue("didgeridoo", i++);
+	WeaponIds.SetValue("electric_guitar", i++);
+	WeaponIds.SetValue("fireaxe", i++);
+	WeaponIds.SetValue("frying_pan", i++);
+	WeaponIds.SetValue("golfclub", i++);
+	WeaponIds.SetValue("katana", i++);
+	WeaponIds.SetValue("machete", i++);
+	WeaponIds.SetValue("riotshield", i++);
+	WeaponIds.SetValue("tonfa", i++);
+
+	WeaponIdsSnapshot = WeaponIds.Snapshot();
+
+	if(i != NUMBER_OF_WEAPONS) {
+		PrintToServer("[l4d2_stats_recorder] Warning: NUMBER_OF_WEAPONS define does not equal WeaponIds length!!!");
+	}
 }
 
 //When plugin is being unloaded: flush all user's statistics.
@@ -238,16 +352,6 @@ public Action Timer_FlushStats(Handle timer) {
 	}
 	return Plugin_Continue;
 }
-//TODO: Timer to check active against main and quicker timer that holds active weapon ent index
-public Action Timer_UpdateWeaponStats(Handle timer) {
-	for(int i=1; i<=MaxClients; i++) {
-		if(IsClientConnected(i) && IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i)) {
-			// GetEntityClassname(activeWeaponEnt, name, sizeof(name));
-			UpdateWeaponStats(i);
-		}
-	}
-	return Plugin_Continue;
-}
 /////////////////////////////////
 // CONVAR CHANGES
 /////////////////////////////////
@@ -259,7 +363,7 @@ public void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] n
 	strcopy(serverTags, sizeof(serverTags), newValue);
 }
 public void CVC_ClownModeChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
-	if(convar.IntValue > 0) {
+	if(hClownMode.IntValue > 0) {
 		hMinShove.IntValue = 20;
 		hMaxShove.IntValue = 40;
 		hPopulationClowns.FloatValue = 0.4;
@@ -321,12 +425,11 @@ public void OnClientDisconnect(int client) {
 			IncrementSessionStat(client);
 			RecordCampaign(client);
 			IncrementStat(client, "finales_won", 1);
-			players[client].points += 400;
+			players[client].RecordPoint(PType_FinishCampaign, 200);
 		}
 
 		FlushQueuedStats(client, true);
-		players[client].steamid[0] = '\0';
-		players[client].points = 0;
+		players[client].ResetFull();
 
 		//ResetSessionStats(client); //Can't reset session stats cause transitions!
 	}
@@ -335,7 +438,7 @@ public void OnClientDisconnect(int client) {
 void Event_PlayerFullDisconnect(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0) {
-		delete players[client].weaponStats;
+		players[client].ResetFull();
 	}
 }
 
@@ -344,20 +447,20 @@ void Event_PlayerFullDisconnect(Event event, const char[] name, bool dontBroadca
 //////////////////////////////////
 
 bool ConnectDB() {
-    char error[255];
-    g_db = SQL_Connect("stats", true, error, sizeof(error));
-    if (g_db == null) {
+	char error[255];
+	g_db = SQL_Connect("stats", true, error, sizeof(error));
+	if (g_db == null) {
 		LogError("Database error %s", error);
 		delete g_db;
 		return false;
-    } else {
+	} else {
 		PrintToServer("Connected to database stats");
 		SQL_LockDatabase(g_db);
 		SQL_FastQuery(g_db, "SET NAMES \"UTF8mb4\"");  
 		SQL_UnlockDatabase(g_db);
 		g_db.SetCharset("utf8mb4");
 		return true;
-    }
+	}
 }
 //Setups a user, this tries to fetch user by steamid
 void SetupUserInDB(int client, const char steamid[32]) {
@@ -397,8 +500,7 @@ void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriori
 
 void RecordCampaign(int client) {
 	if (client > 0 && IsClientConnected(client) && IsClientInGame(client)) {
-		char query[1023], mapname[127];
-		GetCurrentMap(mapname, sizeof(mapname));
+		char query[1023];
 
 		if(players[client].m_checkpointZombieKills == 0) {
 			PrintToServer("Warn: Client %N for %s | 0 zombie kills", client, uuid);
@@ -414,7 +516,7 @@ void RecordCampaign(int client) {
 		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
 		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`top_weapon`, `SurvivorFFCount`, `SurvivorFFTakenCount`, `SurvivorFFDamage`, `SurvivorFFTakenDamage`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,'%s',%d,%d,%d,%d)",
 			players[client].steamid,
-			mapname,
+			game.name,
 			gamemode,
 			uuid,
 			finaleTimeTotal,
@@ -465,52 +567,96 @@ void RecordCampaign(int client) {
 		#endif
 	}
 }
-void UpdateWeaponStats(int client) {
+
+int GetWeaponStatIndex(int client, char[] name, int maxlen) {
 	int activeWeaponEnt = GetPlayerWeaponSlot(client, 0);
 	if(activeWeaponEnt > 0) {
-		char name[64];
-		GetEntityClassname(activeWeaponEnt, name, sizeof(name));
+		GetEntityClassname(activeWeaponEnt, name, maxlen);
 
-		if(!StrEqual(players[client].lastWeaponName, name)) {
+		if(StrEqual(name, "weapon_melee")) {
+			GetEntPropString(activeWeaponEnt, Prop_Data, "m_strMapSetScriptName", name, maxlen);
+		}
+
+		int i = 0;
+		if(WeaponIds.GetValue(name, i)) {
+			return i;
+		}
+		return -1;
+	}
+	return -2;
+}
+int GetWeaponStatIndexByName(const char[] name) {
+	int i = 0;
+	if(WeaponIds.GetValue(name, i)) {
+		return i;
+	}
+	return -1;
+}
+
+/// FIXME: Updating wrong stats!!!
+void UpdateWeaponStats(int client, bool force = false) {
+	char name[64];
+	// Get the current weapon index
+	int weaponIndex = GetWeaponStatIndex(client, name, sizeof(name));
+	if(weaponIndex >= 0) {
+		if(force || !StrEqual(players[client].lastWeaponName, name)) {
+			int lastWeaponIndex = GetWeaponStatIndexByName(players[client].lastWeaponName);
 			float time = float(GetTime());
-			PrintToServer("%N: updating stats for %s -> %s", client, players[client].lastWeaponName, name);
+			if(lastWeaponIndex >= 0) {
+				WeaponStats[client][weaponIndex].minutesUsed += (time - players[client].lastWeaponPickupTime) / 60.0;
+				WeaponStats[client][weaponIndex].totalDamage += players[client].lastWeaponDamage;
+			}
+ 			// PrintToServer("%N: updating stats for %s -> %s", client, players[client].lastWeaponName, name);
 
-			// TODO: Also track wpn damage
-			WeaponStatistics stats;
-			players[client].weaponStats.GetArray(name, stats, sizeof(stats));
-			stats.minutesUsed += (time - players[client].lastWeaponPickupTime) / 60.0;
-			players[client].weaponStats.SetArray(name, stats, sizeof(stats));
+			// WeaponStats[client][weaponIndex].minutesUsed += (time - players[client].lastWeaponPickupTime) / 60.0;
+			// WeaponStats[client][weaponIndex].totalDamage += players[client].lastWeaponDamage;
+
+			// WeaponStatistics stats;
+			// players[client].weaponStats.GetArray(name, stats, sizeof(stats));
+			// stats.minutesUsed += (time - players[client].lastWeaponPickupTime) / 60.0;
+			// stats.totalDamage += players[client].lastWeaponDamage;
+			// #if defined DEBUG
+			// PrintServer("%N: Updating %s [minutes: %f] [dmg: %f]", client, name, stats.minutesUsed, stats.totalDamage);			
+			// #endif
+			// players[client].weaponStats.SetArray(name, stats, sizeof(stats));
+
 			strcopy(players[client].lastWeaponName, 64, name);
+			players[client].lastWeaponDamage = 0;
 			players[client].lastWeaponPickupTime = time;
 		}
 	}
 }
 // Computes the top weapon of player. < 0 if none
 int ComputeTopWeapon(int client, char[] output, int maxlen) {
-	if(players[client].weaponStats == null) return -2;
-	StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
+	// if(players[client].weaponStats == null) return -2;
+	// StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
 	int index = -1;
-	float minutes, highestMinutes;
-	char buffer[64];
+	float highestMinutes;
+	// float minutes;
+	// char buffer[64];
 	// Loop all stored weapon stats and find largest:
-	for(int i = 0; i < snapshot.Length; i++) {
-		snapshot.GetKey(i, buffer, sizeof(buffer));
-		players[client].weaponStats.GetValue(buffer, minutes);
-		PrintToServer("%N: %f | highest %f", client, minutes, highestMinutes);
-		if(minutes > highestMinutes || index == -1) {
+	for(int i = 0; i < WeaponIdsSnapshot.Length; i++) {
+		if(WeaponStats[client][i].minutesUsed > highestMinutes) {
+			highestMinutes = WeaponStats[client][i].minutesUsed;
 			index = i;
-			highestMinutes = minutes;
 		}
+
+		// snapshot.GetKey(i, buffer, sizeof(buffer));
+		// players[client].weaponStats.GetValue(buffer, minutes);
+		// PrintToServer("%N: %f | highest %f", client, minutes, highestMinutes);
+		// if(minutes > highestMinutes || index == -1) {
+		// 	index = i;
+		// 	highestMinutes = minutes;
+		// }
 	}
+
+	int out = -1;
 	if(index >= 0) {
-		snapshot.GetKey(index, output, maxlen);
-		delete snapshot;
+		WeaponIdsSnapshot.GetKey(index, output, maxlen);
 		PrintToServer("[l4d2_stats_recorder] Debug: Top Weapon for %N is: %s", client, output);
-		return RoundFloat(highestMinutes);
+		out = RoundFloat(highestMinutes);
 	}
-	delete snapshot;
-	PrintToServer("[l4d2_stats_recorder] Debug: Top Weapon for %N - not found", client);
-	return -1;
+	return out;
 }
 //Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
 void FlushQueuedStats(int client, bool disconnect) {
@@ -558,34 +704,60 @@ void FlushQueuedStats(int client, bool disconnect) {
 			SQL_UnlockDatabase(g_db);
 			ResetInternal(client, true);
 		}else{
-			SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, client);
+			SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, GetClientUserId(client));
+			SubmitPoints(client);
 			SubmitWeaponStats(client);
 		}
 	}
 }
 
+void SubmitPoints(int client) {
+	if(players[client].pointsQueue.Length > 0) {
+		char query[4098];
+		Format(query, sizeof(query), "INSERT INTO stats_points (steamid,type,amount,timestamp) VALUES ");
+		for(int i = 0; i < players[client].pointsQueue.Length; i++) {
+			int type = players[client].pointsQueue.Get(i, 0);
+			int amount = players[client].pointsQueue.Get(i, 1);
+			int timestamp = players[client].pointsQueue.Get(i, 2);
+			Format(query, sizeof(query), "%s('%s',%d,%d,%d)%c",
+				query,
+				players[client].steamid,
+				type,
+				amount,
+				timestamp,
+				i == players[client].pointsQueue.Length - 1 ? ' ' : ',' // No trailing comma on last entry
+			);
+		}
+		SQL_TQuery(g_db, DBCT_Generic, query, _, DBPrio_Low);
+		players[client].pointsQueue.Clear();
+	}
+}
+
 void SubmitWeaponStats(int client) {
-	if(players[client].weaponStats != null) {
-		UpdateWeaponStats(client);
-		char query[1023];
-		StringMapSnapshot snapshot = players[client].weaponStats.Snapshot();
-		PrintToServer("[l4d2_stats_recorder] Submitting %d weapon stats for %N", snapshot.Length, client);
-		for(int i = 0; i < snapshot.Length; i++) {
-			snapshot.GetKey(i, query, sizeof(query));
-			WeaponStatistics stats;
-			if(players[client].weaponStats.GetArray(query, stats, sizeof(stats))) {
-				Format(query, sizeof(query), "INSERT INTO stats_weapons_usage (steamid,weapon,minutesUsed,totalDamage) VALUES ('%s','%s',%f,%f) ON DUPLICATE KEY UPDATE minutesUsed=minutesUsed+%f, totalDamage=totalDamage+%f",
+	if(players[client].weaponStats != null && players[client].weaponStats.Size > 0) {
+		// Force save weapon stats, instead of waiting for player to switch weapon
+		UpdateWeaponStats(client, true);
+		char query[512], weapon[64];
+		
+		for(int i = 0; i < WeaponIdsSnapshot.Length; i++) {
+			if(WeaponStats[client][i].HasChanged()) {
+				WeaponIdsSnapshot.GetKey(i, weapon, sizeof(weapon));
+				Format(query, sizeof(query), "INSERT INTO stats_weapons_usage (steamid,weapon,minutesUsed,totalDamage,kills,headshots) VALUES ('%s','%s',%f,%d,%d,%d) ON DUPLICATE KEY UPDATE minutesUsed=minutesUsed+%f,totalDamage=totalDamage+%d,kills=kills+%d,headshots=headshots+%d",
 					players[client].steamid,
-					query,
-					stats.minutesUsed,
-					stats.totalDamage,
-					stats.minutesUsed,
-					stats.totalDamage
+					weapon,
+					WeaponStats[client][i].minutesUsed,
+					WeaponStats[client][i].totalDamage,
+					WeaponStats[client][i].kills,
+					WeaponStats[client][i].headshots,
+
+					WeaponStats[client][i].minutesUsed,
+					WeaponStats[client][i].totalDamage,
+					WeaponStats[client][i].kills,
+					WeaponStats[client][i].headshots
 				);
 				SQL_TQuery(g_db, DBCT_Generic, query, _, DBPrio_Low);
 			}
 		}
-		delete snapshot;
 	}
 } 
 
@@ -645,6 +817,9 @@ void ResetInternal(int client, bool disconnect) {
 	}
 	if(players[client].weaponStats != null)
 		players[client].weaponStats.Clear();
+	for(int i = 0; i < WeaponIds.Size; i++) {
+		WeaponStats[client][i].Reset();
+	}
 }
 void IncrementSessionStat(int client) {
 	players[client].m_checkpointZombieKills += 			GetEntProp(client, Prop_Send, "m_checkpointZombieKills");
@@ -671,11 +846,12 @@ void IncrementSessionStat(int client) {
 //Handles the CreateDBUser() response. Either updates alias and stores points, or creates new SQL user.
 public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] error, any data) {
 	if(db == INVALID_HANDLE || queryHandle == INVALID_HANDLE) {
-        LogError("DBCT_CheckUserExistance returned error: %s", error);
-        return;
-    }
+		LogError("DBCT_CheckUserExistance returned error: %s", error);
+		return;
+	}
 	//initialize variables
 	int client = GetClientOfUserId(data); 
+	if(client == 0) return;
 	int alias_length = 2*MAX_NAME_LENGTH+1;
 	char alias[MAX_NAME_LENGTH], ip[40], country_name[45];
 	char[] safe_alias = new char[alias_length];
@@ -721,13 +897,13 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 //Generic database response that logs error
 public void DBCT_Generic(Handle db, Handle child, const char[] error, any data)
 {
-    if(db == null || child == null) {
+	if(db == null || child == null) {
 		if(data) {
-        	LogError("DBCT_Generic query `%s` returned error: %s", data, error);
+			LogError("DBCT_Generic query `%s` returned error: %s", data, error);
 		}else {
 			LogError("DBCT_Generic returned error: %s", error);
 		}
-    }
+	}
 }
 public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] error, any data) {
 	if(results != INVALID_HANDLE && SQL_GetRowCount(results) > 0) {
@@ -739,11 +915,13 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 	}
 }
 //After a user's stats were flushed, reset any statistics needed to zero.
-public void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, int client) {
+public void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, int userid) {
 	if(db == INVALID_HANDLE || child == INVALID_HANDLE) {
 		LogError("DBCT_FlushQueuedStats returned error: %s", error);
 	}else{
-		ResetInternal(client, false);
+		int client = GetClientOfUserId(userid);
+		if(client > 0)
+			ResetInternal(client, false);
 	}
 }
 ////////////////////////////
@@ -755,8 +933,7 @@ public Action Command_DebugStats(int client, int args) {
 		ReplyToCommand(client, "This command must be used as a player.");
 	}else {
 		ReplyToCommand(client, "Statistics for %s", players[client].steamid);
-		// ReplyToCommand(client, "mostUsedWeapon is %s [%d]", players[client].mostUsedWeapon.name, players[client].mostUsedWeapon.usage);
-		ReplyToCommand(client, "activeWeapon is %s [%d]", players[client].activeWeapon.name, players[client].activeWeapon.usage);
+		ReplyToCommand(client, "lastDamage = %f", players[client].lastWeaponDamage);
 		ReplyToCommand(client, "points = %d", players[client].points);
 		// ReplyToCommand(client, "Total weapons cache %d", game.weaponUsages.Size);
 	}
@@ -768,6 +945,7 @@ public Action Command_DebugStats(int client, int args) {
 // EVENTS 
 ////////////////////////////
 void OnWeaponSwitch(int client, int weapon) {
+	// Update weapon when switching to a new one
 	UpdateWeaponStats(client);
 }
 public void Event_BoomerExploded(Event event, const char[] name, bool dontBroadcast) {
@@ -818,7 +996,15 @@ public void Event_InfectedHurt(Event event, const char[] name, bool dontBroadcas
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		int dmg = event.GetInt("amount");
 		players[attacker].damageSurvivorGiven += dmg;
-		players[attacker].lastWeaponDamage += dmg;
+		if(GetClientTeam(attacker) == 2)
+			players[attacker].lastWeaponDamage += dmg;
+		// static char buffer[64];
+
+		// int i = GetWeaponStatIndex(attacker, buffer, sizeof(buffer));
+		// PrintToChat(attacker, "%d %s %f", i, buffer, dmg);
+		// if(i >= 0) {
+		// 	WeaponStats[attacker][i].totalDamage += dmg;
+		// }
 	}
 }
 public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadcast) {
@@ -827,17 +1013,26 @@ public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadca
 		bool blast = event.GetBool("blast");
 		bool headshot = event.GetBool("headshot");
 		bool using_minigun = event.GetBool("minigun");
-		char wpn_name[32];
-		GetClientWeapon(attacker, wpn_name, sizeof(wpn_name));
+		static char wpn_name[64];
 
+		int i = GetWeaponStatIndex(attacker, wpn_name, sizeof(wpn_name));
 		if(headshot) {
-			players[attacker].points +=2;
-		}else{
-			players[attacker].points++;
+
+			players[attacker].RecordPoint(PType_Headshot, 2);
+			if(i >= 0) {
+
+				WeaponStats[attacker][i].headshots++;
+			}
 		}
+
+		players[attacker].RecordPoint(PType_CommonKill, 1);
+		if(i >= 0) {
+			WeaponStats[attacker][i].kills++;
+		}
+
 		if(using_minigun) {
 			players[attacker].minigunKills++;
-		}else if(blast) {
+		} else if(blast) {
 			players[attacker].pipeKills++;
 		}
 	}
@@ -850,23 +1045,20 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 	if(dmg <= 0) return;
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		int attacker_team = GetClientTeam(attacker);
-		char wpn_name[32]; 
-		event.GetString("weapon", wpn_name, sizeof(wpn_name));
+		static char wpn_name[64]; 
+		// event.GetString("weapon", wpn_name, sizeof(wpn_name));
 
 		if(attacker_team == 2) {
 			players[attacker].damageSurvivorGiven += dmg;
 			players[attacker].lastWeaponDamage += dmg;
-
 			if(victim_team == 3 && StrEqual(wpn_name, "inferno", true)) {
 				players[attacker].molotovDamage += dmg;
-				players[attacker].points++; //give points (not per dmg tho)
 			}
 		}else if(attacker_team == 3) {
 			players[attacker].damageInfectedGiven += dmg;
-			players[attacker].lastWeaponDamage += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
-			players[attacker].points--;
+			players[attacker].RecordPoint(PType_FriendlyFire, -30);
 			players[attacker].damageSurvivorFF += dmg;
 			players[attacker].damageSurvivorFFCount++;
 			players[victim].damageFFTaken += dmg;
@@ -889,14 +1081,17 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 		if(attacker > 0 && !IsFakeClient(attacker) && GetClientTeam(attacker) == 2) {
 			if(victim_team == 3) {
 				int victim_class = GetEntProp(victim, Prop_Send, "m_zombieClass");
-				char class[8], statname[16], wpn_name[32]; 
-				event.GetString("weapon", wpn_name, sizeof(wpn_name));
+				char class[8], statname[16], wpn_name[64]; 
+				int i = GetWeaponStatIndex(attacker, wpn_name, sizeof(wpn_name));
+				if(i >= 0) {
+					WeaponStats[attacker][i].kills++;
+				}
 
 				if(GetInfectedClassName(victim_class, class, sizeof(class))) {
 					IncrementSpecialKill(attacker, victim_class);
 					Format(statname, sizeof(statname), "kills_%s", class);
 					IncrementStat(attacker, statname, 1);
-					players[attacker].points += 5; //special kill
+					players[attacker].RecordPoint(PType_SpecialKill, 6);
 				}
 				if(StrEqual(wpn_name, "inferno", true) || StrEqual(wpn_name, "entityflame", true)) {
 					players[attacker].molotovKills++;
@@ -904,7 +1099,8 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 				IncrementStat(victim, "infected_deaths", 1);
 			}else if(victim_team == 2) {
 				IncrementStat(attacker, "ff_kills", 1);
-				players[attacker].points -= 30; //30 point lost for killing teammate
+				//30 point lost for killing teammate
+				players[attacker].RecordPoint(PType_FriendlyFire, -500);
 			}
 		}
 	}
@@ -913,7 +1109,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 public void Event_MeleeKill(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
-		players[client].points++;
+		players[client].RecordPoint(PType_CommonKill, 1);
 	}
 }
 public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast) {
@@ -923,14 +1119,14 @@ public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast)
 
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		if(solo) {
-			players[attacker].points += 100;
 			IncrementStat(attacker, "tanks_killed_solo", 1);
+			players[attacker].RecordPoint(PType_TankKill_Solo, 20);
 		}
 		if(melee_only) {
-			players[attacker].points += 150;
+			players[attacker].RecordPoint(PType_TankKill_Melee, 50);
 			IncrementStat(attacker, "tanks_killed_melee", 1);
 		}
-		players[attacker].points += 200;
+		players[attacker].RecordPoint(PType_TankKill, 100);
 		IncrementStat(attacker, "tanks_killed", 1);
 	}
 }
@@ -950,6 +1146,7 @@ public void Event_ItemPickup(Event event, const char[] name, bool dontBroadcast)
 		event.GetString("item", item, sizeof(item));
 		ReplaceString(item, sizeof(item), "weapon_", "", true);
 
+		// Update stats when picking up an item
 		UpdateWeaponStats(client);
 
 		Format(statname, sizeof(statname), "pickups_%s", item);
@@ -971,18 +1168,18 @@ public void Event_ItemUsed(Event event, const char[] name, bool dontBroadcast) {
 			if(subject == client) {
 				IncrementStat(client, "heal_self", 1);
 			}else{
-				players[client].points += 10;
+				players[client].RecordPoint(PType_HealOther, 10);
 				IncrementStat(client, "heal_others", 1);
 			}
 		}else if(StrEqual(name, "revive_success", true)) {
 			int subject = GetClientOfUserId(event.GetInt("subject"));
 			if(subject != client) {
 				IncrementStat(client, "revived_others", 1);
-				players[client].points += 3;
+				players[client].RecordPoint(PType_ReviveOther, 5);
 				IncrementStat(subject, "revived", 1);
 			}
 		}else if(StrEqual(name, "defibrillator_used", true)) {
-			players[client].points += 9;
+			players[client].RecordPoint(PType_ResurrectOther, 7);
 			IncrementStat(client, "defibs_used", 1);
 		}else{
 			IncrementStat(client, name, 1);
@@ -994,7 +1191,7 @@ public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroad
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
 		players[client].upgradePacksDeployed++;
-		players[client].points+=3;
+		players[client].RecordPoint(PType_DeployAmmo, 2);
 	}
 }
 public void Event_CarAlarm(Event event, const char[] name, bool dontBroadcast) {
@@ -1007,7 +1204,7 @@ public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
 		players[client].witchKills++;
-		players[client].points += 100;
+		players[client].RecordPoint(PType_WitchKill, 50);
 	}
 }
 
@@ -1109,6 +1306,7 @@ public void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBr
 	if(L4D_IsMissionFinalMap()) {
 		game.difficulty = GetDifficultyInt();
 		game.finished = true;
+		game.GetMap();
 	}
 }
 
@@ -1128,7 +1326,7 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 				//get real client
 			}
 			if(players[client].steamid[0]) {
-				players[client].points += 400;
+				players[client].RecordPoint(PType_FinishCampaign, 200);
 				IncrementSessionStat(client);
 				RecordCampaign(client);
 				IncrementStat(client, "finales_won", 1);
@@ -1137,18 +1335,44 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 					PrintToChat(client, "%d clowns were honked this session, you honked %d", game.clownHonks, players[client].clownsHonked);
 				}
 			}
+
 		}
 	}	
 	if(game.clownHonks > 0) {
-		int honks, honker = -1;
+		ArrayList winners = new ArrayList();
+		int mostHonks;
 		for(int j = 1; j <= MaxClients; j++) {
-			if(players[j].clownsHonked > 0 && (players[j].clownsHonked > honks || honker == -1) && !IsFakeClient(j)) {
-				honker = j;
-				honks = players[j].clownsHonked;
+			if(players[j].clownsHonked <= 0 || IsClientConnected(j) && IsClientInGame(j) && IsFakeClient(j)) continue;
+			if(players[j].clownsHonked > mostHonks || winners.Length == 0) {
+				mostHonks = players[j].clownsHonked;
+				// Clear the winners list
+				winners.Clear();
+				winners.Push(j);
+			} else if(players[j].clownsHonked == mostHonks) {
+				// They are tied with the current winner, add them to list
+				winners.Push(j);
 			}
 		}
-		if(honker > -1 && honks > 0)
-			PrintToChatAll("%N had the most clown honks with a count of %d", honker, honks);
+
+		if(mostHonks > 0) {
+			if(winners.Length > 1) {
+				char msg[256];
+				Format(msg, sizeof(msg), "%N", winners.Get(0));
+				for(int i = 1; i < winners.Length; i++) {
+					if(i == winners.Length - 1) {
+						// If this is the last winner, use 'and '
+						Format(msg, sizeof(msg), "%s and %N", msg, winners.Get(i));
+					} else {
+						// In between first and last winner, comma
+						Format(msg, sizeof(msg), "%s, %N", msg, winners.Get(i));
+					}
+				}
+				PrintToChatAll("%s tied for the most clown honks with a count of %d", msg, mostHonks);
+			} else {
+				PrintToChatAll("%N had the most clown honks with a count of %d", winners.Get(0), mostHonks);
+			}
+		} 
+		delete winners;
 	}
 	for(int i = 1; i <= MaxClients; i++) {
 		players[i].clownsHonked = 0;

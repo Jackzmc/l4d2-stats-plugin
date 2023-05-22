@@ -72,6 +72,10 @@
           this.fetchPointsHistory()
       },
       methods: {
+        onPageChange(page) {
+          this.current_page = page
+          this.fetchPointsHistory()
+        },
         getPointType(type) {
           return POINT_TYPE_DISPLAY[type] ?? type
         },

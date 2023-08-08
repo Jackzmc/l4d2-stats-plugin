@@ -359,6 +359,20 @@ stock bool GetClientWeaponName(int client, int slot, char[] name, int nameSize) 
 		return false;
 	}
 }
+
+stock bool GetClientWeaponNameSmart(int client, int slot, char[] name, int nameSize) {
+	int wpn = GetClientWeaponEntIndex(client, slot);
+	if(wpn > 0) {
+		GetEntityClassname(wpn, name, nameSize);
+		if(slot == 1 && StrEqual(name, "weapon_melee")) {
+			GetEntPropString(wpn, Prop_Data, "m_strMapSetScriptName", name, nameSize);
+		}
+		return true;
+	}else{
+		return false;
+	}
+}
+
 stock bool DoesClientHaveWeapon(int client, int slot, const char[] name) {
 	char wpn[32];
 	if(GetClientWeaponName(client, slot, wpn, sizeof(wpn))) {

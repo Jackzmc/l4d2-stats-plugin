@@ -1,11 +1,13 @@
 # L4D2 Stats Plugin
 
-A plugin for l4d2 that records statistics for all players on the server and shows it publicly on a website. This is a 3-part project.
+NOTE: This is more of a custom personal project that I decided to have open sourced - limited support and some features will not work as they rely on my custom systems (such as "Play Style" and "Rating" in user overview)
 
-* UI
-* API
+A plugin for l4d2 that records statistics for all players on the server and shows it publicly on a website. This is a 3-part project.
+* Frontend UI
+* Backend API
 * Sourcemod Plugin
-* MySQL Server
+
+Requires a MySQL server for statistic storage.
 
 Demo: https://stats.jackz.me
 
@@ -27,8 +29,8 @@ Example nginx configuration: (implies nodejs server is running on same server on
 server {
     listen 80;
 
-    server_name stats.l4d2.jackz.me;
-    root /var/www/stats.l4d2.jackz.me;
+    server_name stats.jackz.me;
+    root /var/www/stats.jackz.me;
     
     location / {
         try_files $uri/ $uri /index.html;

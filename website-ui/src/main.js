@@ -8,6 +8,7 @@ import 'buefy/dist/buefy.css'
 import Axios from 'axios'
 import { cacheAdapterEnhancer} from 'axios-extensions';
 import vueDebounce from 'vue-debounce'
+import Meta from 'vue-meta'
 
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -19,6 +20,7 @@ library.add(faCog, faSearch, faShare, faSyncAlt, faAngleLeft, faAngleRight, faCa
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 Vue.use(vueDebounce)
 Vue.use(Buefy, { defaultIconPack: 'fas', defaultIconComponent: 'font-awesome-icon' })
+Vue.use(Meta)
 Vue.prototype.$http = Axios.create({
 	baseURL: '/',
 	headers: { 'Cache-Control': 'no-cache' },

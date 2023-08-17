@@ -22,9 +22,12 @@
         <div class="container">
           <ul>
             <router-link class="tabLink" tag="li" :to="getLink('overview')"><a>Overview</a></router-link>
+            <router-link class="tabLink" tag="li" :to="getLink('points')">  <a>Points</a></router-link>
+            <router-link class="tabLink" tag="li" :to="getLink('weapons')"> <a>Weapons</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('sessions')"><a>Sessions</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('campaign')"><a>Campaign</a></router-link>
             <router-link class="tabLink" tag="li" :to="getLink('versus')">  <a>Versus</a></router-link>
+
             <!--
             <router-link tag="li" to="survival"><a>Survival</a></router-link>
             <router-link tag="li" to="scavenge"><a>Scavenge</a></router-link> -->
@@ -60,6 +63,14 @@
 <script>
 import 'vue2-animate/dist/vue2-animate.min.css'
 export default {
+  metaInfo () {
+    // const title = this.user.steamid ? `${this.user.last_alias}'s Profile - L4D2 Stats Plugin` : "L4D2 Stats Plugin"
+    return {
+        titleTemplate: this.user.steamid ? `%s - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin` : "",
+        meta: [
+        ]
+    }
+  },
   data() {
     return {
       user: {},
@@ -101,7 +112,7 @@ export default {
     },
     getShareLink() {
       if(this.user && this.user.last_alias) {
-        
+
         const stripped_part = this.user.last_alias.replace(/\s/,'+').replace(/[^0-9a-z+]/gi,'');
         const safe_alias = encodeURIComponent(stripped_part)
 

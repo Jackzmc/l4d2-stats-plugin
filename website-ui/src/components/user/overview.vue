@@ -35,22 +35,22 @@
                 <td style="color: blue">{{ humanReadable(user.minutes_played)}}</td>
             </tr>
             <tr>
-                <th><b>Play Style</b> <em class="is-pulled-right is-inline">(in alpha)</em></th>
+                <td><b>Play Style</b> <em class="is-pulled-right is-inline">(in alpha)</em></td>
                 <td v-if="playstyle.error">
                     <b-tooltip type="is-danger" class="has-text-danger" :label="playstyle.error">Failed to fetch</b-tooltip>
                 </td>
-                <td v-else-if="playstyle.data">{{ playstyle }}</td>
+                <td v-else-if="playstyle.data">{{ playstyle.data }}</td>
                 <td v-else>Loading...</td>
-                <th><b>
+                <td><b>
                     <b-tooltip label="The calculated rating based off admin notes on the player">
                         Rating
                     </b-tooltip>
-                </b></th>
+                </b></td>
                 <td v-if="playrating.error">
                     <b-tooltip type="is-danger" class="has-text-danger" :label="playrating.error">Failed to fetch</b-tooltip>
                 </td>
                 <td v-else-if="playrating.data && playrating.data.key">
-                    {{ playrating.data.key }} 
+                    {{ playrating.data.key }}
                     <b-tooltip v-if="playrating.data.value != null">
                         ({{playrating.data.value}})
                         <template v-slot:content>
@@ -475,6 +475,11 @@ import linkanchor from '@/components/linkanchor'
 import { getMapName } from '@/js/map'
 
 export default {
+    metaInfo() {
+      return {
+        title: "Overview"
+      }
+    },
     getMapName,
     props: ['user'],
     data() {
@@ -659,7 +664,6 @@ export default {
         },
     },
     mounted() {
-        document.title = `Overview - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
         document.addEventListener("scroll", () => {
             if (document.documentElement.scrollTop > 1000 && this.averages === null) {
                 this.averages = false;
@@ -673,7 +677,7 @@ export default {
             this.fetchPlaystyle(),
             this.fetchPlayrating()
         ])
-        
+
     },
     destroyed() {
         document.removeEventListener('scroll')

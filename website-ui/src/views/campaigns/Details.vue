@@ -215,7 +215,7 @@ export default {
       mapTitle() {
           return this.sessions.length > 0 ? getMapName(this.sessions[0].map) : null;
       },
-      honkMaster() {
+      highestHonkCount() {
         if(this.totals.honks > 0) {
           let honkCount = 0, honkID = -1;
           this.sessions.forEach(({honks, steamid}) => {
@@ -224,7 +224,7 @@ export default {
               honkCount = honks
             }
           })
-          return honkID
+          return honkCount
         }
         return null;
       },
@@ -250,7 +250,7 @@ export default {
         },
         isHonkMaster(session) {
           if(this.mvp === session.steamid) return false;
-          return this.honkMaster === session.steamid
+          return this.highestHonkCount === session.honks
         },
         isMostFF(session) {
           return this.mostFF === session.steamid
@@ -353,9 +353,9 @@ export default {
         getTagType(tag) {
             switch(tag.toLowerCase()) {
                 case "dev": return 'is-danger'
-                case "prod": return "is-success"
+                case "main": return "is-success"
                 case "old": return "is-warning"
-                case "improved": return "is-dark"
+                case "vanilla+": return "is-dark"
                 default: return ''
             }
         },

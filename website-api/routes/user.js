@@ -38,6 +38,10 @@ const Maps = {
     "c14": "Last Stand"
 }
 
+const DIFFICULTIES = [
+    "Easy", "Normal", "Advanced", "Expert"
+]
+
 module.exports = (pool) => {
     router.get('/random', routeCache.cacheSeconds(86400), async(req,res) => {
         try {
@@ -72,6 +76,22 @@ module.exports = (pool) => {
             res.status(500).json({error:"Internal Server Error"})
         }
     })
+    router.get('/:user/weapons', async(req,res) => {
+        const user = req.params.user.replace(/\+-/,' ')
+
+        try {
+            const [rows] = await pool.query(
+                "SELECT weapon, minutesUsed, totalDamage, headshots, kills FROM `stats_weapons_usage` WHERE `steamid` = ?", 
+                [user]
+            )
+            return res.json({
+                weapons: rows
+            })
+        }catch(err) {
+            console.error('[/api/user/:user/weapons]' ,err.message);
+            res.status(500).json({error:"Internal Server Error"})
+        }
+    })
     router.get('/:user/totals/:gamemode',async(req,res) => {
         try {
             const [rows] = await pool.query("SELECT `map`, `difficulty` FROM `stats_games` WHERE `steamid` = ? AND `gamemode` = ?", [req.params.user, req.params.gamemode])
@@ -94,7 +114,7 @@ module.exports = (pool) => {
                         wins: 0
                     }
                     maps[row.map].wins++;
-                    const diff = DIFFICULTIES[row.difficulty];
+                    const diff = DIFFICULTIES[row.difficulty].toLowerCase();
                     maps[row.map].difficulty[diff]++;
                     difficulty[diff]++;
                 })
@@ -116,7 +136,7 @@ module.exports = (pool) => {
                 res.json({maps: [], totals: { wins: 0, gamemodes: [], difficulty: []}})
             }
         }catch(err) {
-            console.error('/api/user/:user/totals/:gamemode',err.message)
+            console.error('/api/user/:user/totals/:gamemode',req.params.gamemode, err.message)
             res.status(500).json({error:'Internal Server Error'})
         }
     })
@@ -156,11 +176,30 @@ module.exports = (pool) => {
             res.status(500).json({error:'Internal Server Error'})
         }
     })
+ 
+    router.get('/:user/points/:page', async (req,res) => {
+        try {
+            let perPage = parseInt(req.query.perPage) || 50;
+            if(perPage > 100) perPage = 100;
+            const selectedPage = req.params.page || 0
+            const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
+            const offset = pageNumber * perPage;
+            const [rows] = await pool.query("SELECT timestamp, type, amount FROM stats_points WHERE steamid = ? ORDER BY id DESC LIMIT ?,?", [req.params.user, offset, perPage])
+            const [total] = await pool.execute("SELECT COUNT(*) as count FROM stats_points WHERE steamid = ?", [req.params.user])
+            res.json({
+                history: rows,
+                total: total[0].count
+            })
+        }catch(err) {
+            console.error('/api/user/:user/sessions/:page',err.message)
+            res.status(500).json({error:'Internal Server Error'})
+        }
+    })
     router.get('/:user/sessions/:page', async (req, res) => {
         try {
             let perPage = parseInt(req.query.perPage) || 10;
             if(perPage > 100) perPage = 100;
-            const selectedPage = req.query.page || 0
+            const selectedPage = req.params.page || 0
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(selectedPage) - 1);
             const offset = pageNumber * perPage;
             const [rows] = await pool.query("SELECT * FROM stats_games WHERE steamid = ? ORDER BY id DESC LIMIT ?,?", [req.params.user, offset, perPage])
@@ -170,7 +209,7 @@ module.exports = (pool) => {
                 total: total[0].count
             })
         }catch(err) {
-            console.error('/api/user/:user/totals/:gamemode',err.message)
+            console.error('/api/user/:user/sessions/:page',err.message)
             res.status(500).json({error:'Internal Server Error'})
         }
     })

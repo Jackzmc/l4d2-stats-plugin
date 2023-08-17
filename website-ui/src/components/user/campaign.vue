@@ -6,37 +6,37 @@
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Games Played</p>
-            <p class="title">{{totals.gamemodes.coop + totals.gamemodes.realism | formatNumber}}</p>
+            <p class="title">{{formatNumber(totals.wins)}}</p>
             </div>
         </div>
-        <div class="level-item has-text-centered">
+        <!-- <div class="level-item has-text-centered">
             <div>
             <p class="heading">Realism Games Played</p>
-            <p class="title">{{totals.gamemodes.realism | formatNumber}}</p>
+            <p class="title">{{formatNumber(totals.gamemodes.realism)}}</p>
             </div>
-        </div>
+        </div> -->
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Easy Games Played</p>
-            <p class="title">{{totals.difficulty.easy | formatNumber}}</p>
+            <p class="title">{{formatNumber(totals.difficulty.easy)}}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Normal Games Played</p>
-            <p class="title">{{totals.difficulty.normal | formatNumber}}</p>
+            <p class="title">{{formatNumber(totals.difficulty.normal)}}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Advanced Games Played</p>
-            <p class="title">{{totals.difficulty.advanced | formatNumber}}</p>
+            <p class="title">{{formatNumber(totals.difficulty.advanced)}}</p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Expert Games Played</p>
-            <p class="title">{{totals.difficulty.expert | formatNumber}}</p>
+            <p class="title">{{formatNumber(totals.difficulty.expert)}}</p>
             </div>
         </div>
     </nav>
@@ -44,26 +44,26 @@
     <b-table :data="maps">
         <b-table-column field="map" label="Map" v-slot="props">
             <router-link :to="'/maps/' + props.row.map">
-                <strong>{{ props.row.map | formatMap }}</strong>
+                <strong>{{ formatMap(props.row.map)}}</strong>
             </router-link>
         </b-table-column>
         <b-table-column field="wins" label="Wins" centered cell-class="number-cell"  v-slot="props">
-            {{ props.row.gamemodes.coop + props.row.gamemodes.realism | formatNumber }}
+            {{ formatNumber(props.row.wins) }}
         </b-table-column>
-        <b-table-column field="realism" label="Times on Realism" centered cell-class="number-cell"  v-slot="props">
+        <!--<b-table-column field="realism" label="Times on Realism" centered cell-class="number-cell"  v-slot="props">
             {{ props.row.gamemodes.realism | formatNumber }}
-        </b-table-column>
+        </b-table-column>-->
         <b-table-column field="difficulty.easy" label="Times on Easy" centered cell-class="number-cell"  v-slot="props">
-            {{ props.row.difficulty.easy | formatNumber }}
+            {{ formatNumber(props.row.difficulty.easy) }}
         </b-table-column>
         <b-table-column field="difficulty.normal" label="Times on Normal" centered cell-class="number-cell"  v-slot="props">
-            {{ props.row.difficulty.normal | formatNumber }}
+            {{ formatNumber(props.row.difficulty.normal) }}
         </b-table-column>
         <b-table-column field="difficulty.advanced" label="Times on Advanced" centered cell-class="number-cell"  v-slot="props">
-            {{ props.row.difficulty.advanced | formatNumber }}
+            {{ formatNumber(props.row.difficulty.advanced) }}
         </b-table-column>
         <b-table-column field="difficulty.expert" label="Times on Expert" centered cell-class="number-cell"  v-slot="props">
-            {{ props.row.difficulty.expert | formatNumber }}
+            {{ formatNumber(props.row.difficulty.expert) }}
         </b-table-column>
 
         <template slot="empty">
@@ -78,9 +78,13 @@
 </template>
 
 <script>
-import { formatDuration } from 'date-fns'
 import { getMapName } from '../../js/map'
 export default {
+  metaInfo() {
+      return {
+        title: "Campaigns"
+      }
+    },
     props: ['user'],
     data() {
         return {
@@ -89,22 +93,19 @@ export default {
             loading: true
         }
     },
-    filters: {
+    mounted() {
+        this.fetchTotals()
+    },
+    methods: {
         formatMap(str) {
             return getMapName(str)
         },
-        formatMS(inp) {
-            return formatDuration({seconds: inp / 1000})
-        }
-    },
-    mounted() {
-        this.fetchTotals()
-        document.title = `Campaign - ${this.user.last_alias}'s Profile - L4D2 Stats Plugin`
-    },
-    methods: {
+        formatNumber(num) {
+          return Number(num).toLocaleString()
+        },
         fetchTotals() {
             this.loading = true;
-            this.$http.get(`/api/user/${this.user.steamid}/totals`,{cache:true})
+            this.$http.get(`/api/user/${this.user.steamid}/totals/coop`,{cache:true})
             .then(r => {
                 this.totals = r.data.totals;
                 this.maps = r.data.maps

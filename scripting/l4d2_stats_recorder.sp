@@ -854,6 +854,7 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 	if(client == 0) return;
 	int alias_length = 2*MAX_NAME_LENGTH+1;
 	char alias[MAX_NAME_LENGTH], ip[40], country_name[45];
+	char previous_alias[MAX_NAME_LENGTH];
 	char[] safe_alias = new char[alias_length];
 
 	//Get a SQL-safe player name, and their counttry and IP
@@ -868,6 +869,7 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 
 		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", players[client].steamid, safe_alias, country_name);
 		SQL_TQuery(g_db, DBCT_Generic, query);
+		AddUserName(players[client].steamid, safe_alias);
 
 		Format(query, sizeof(query), "%N is joining for the first time", client);
 		for(int i = 1; i <= MaxClients; i++) {
@@ -876,28 +878,39 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 			}
 		}
 		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, players[client].steamid);
-	}else{
+	} else {
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
 		while(SQL_FetchRow(queryHandle)) {
 			int field_num;
 			if(SQL_FieldNameToNum(queryHandle, "points", field_num)) {
 				players[client].points = SQL_FetchInt(queryHandle, field_num);
 			}
+			// Check if their name has changed and add the new one to user_names table:
+			if(SQL_FieldNameToNum(queryHandle, "last_alias", field_num)) {
+				SQL_FetchString(queryHandle, field_num, previous_alias, sizeof(previous_alias));
+				if(!StrEqual(previous_alias, alias)) {
+					AddUserName(players[client].steamid, safe_alias);
+				}
+			}
 		}
 
-		if(players[client].points == 0) {
-			PrintToServer("[l4d2_stats_recorder] Warning: Existing player %N (%d) has no points", client, client);
-		}
 		int connections_amount = lateLoaded ? 0 : 1;
 
 		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, players[client].steamid);
 		SQL_TQuery(g_db, DBCT_Generic, query);
 	}
 }
+
+void AddUserName(const char[] steamid, const char[] name) {
+	char query[128];
+	PrintToServer("AddUserName: %s", players[client].steamid[10]);
+	Format(query, sizeof(query), "INSERT INTO `user_names` (steamid, timestamp, name) VALUES ('%s', UNIX_TIMESTAMP(), '%s')", players[client].steamid[10], previous_alias);
+	g_db.Query(DBCT_Generic, query);
+}
+
 //Generic database response that logs error
-public void DBCT_Generic(Handle db, Handle child, const char[] error, any data)
-{
-	if(db == null || child == null) {
+public void DBCT_Generic(Handle db, Handle child, const char[] error, any data) {
+    if(db == null || child == null) {
 		if(data) {
 			LogError("DBCT_Generic query `%s` returned error: %s", data, error);
 		}else {

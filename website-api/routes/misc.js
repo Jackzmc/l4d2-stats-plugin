@@ -18,7 +18,7 @@ module.exports = (pool) => {
             //TODO: add top_gamemode
             if(!req.params.user) return res.status(404).json([])
             const searchQuery = `%${req.params.user}%`;
-            const [rows] = await pool.query("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats_users` WHERE `last_alias` LIKE ?", [ searchQuery ])
+            const [rows] = await pool.query("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats_users` WHERE `last_alias` LIKE ? LIMIT 20", [ searchQuery ])
             res.json(rows);
         }catch(err) {
             console.error('[/api/search/:user]', err.message);

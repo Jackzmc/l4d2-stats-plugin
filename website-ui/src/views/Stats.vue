@@ -110,6 +110,7 @@
 import { getMapImage, getMapName } from '../js/map'
 import SummaryBit from '../components/SummaryBit';
 import ICountUp from 'vue-countup-v2';
+import GameInfo from '../assets/gameinfo.json'
 export default {
     data() {
         return {
@@ -131,13 +132,7 @@ export default {
     computed: {
         mostPlayedDifficulty() {
             if(!this.averages) return null;
-            switch(this.averages.difficulty) {
-                case 0: return 'Easy';
-                case 1: return 'Normal';
-                case 2: return 'Advanced';
-                case 3: return 'Expert';
-                default: return null;
-            }
+            return GameInfo.difficulties[Number(this.averages.difficulty)]
         },
         mostPlayedCampaignImage() {
             return getMapImage(this.averages.top_map)

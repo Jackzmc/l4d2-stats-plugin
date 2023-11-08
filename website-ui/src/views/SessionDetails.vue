@@ -416,22 +416,11 @@ export default {
             }
         },
         getDifficulty(inp) {
-            switch(inp) {
-                case 0: return "Easy"
-                case 1: return "Normal"
-                case 2: return "Advanced"
-                case 3: return "Expert"
-            }
+          return GameInfo.difficulties[Number(inp)]
         },
         getGamemode(inp) {
-            switch(inp) {
-                case "coop": return "Campaign"
-                case "tankrun": return "TankRun"
-                case "rocketdude": return "RocketDude"
-                default: {
-                    return inp[0].toUpperCase() + inp.slice(1)
-                }
-            }
+          // If we don't have a name for gamemode, just capitalize first char
+          return GameInfo.gamemodes[Number(inp)] ?? inp[0].toUpperCase() + inp.slice(1)
         },
         formatDate(inp) {
             if(inp <= 0 || isNaN(inp)) return ""

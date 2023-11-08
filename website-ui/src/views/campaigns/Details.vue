@@ -308,23 +308,13 @@ export default {
         getSpecialKills(session) {
             return session.boomer_kills + session.spitter_kills + session.jockey_kills + session.charger_kills + session.hunter_kills + session.smoker_kills;
         },
+        // TODO: make mixin
         getDifficulty(inp) {
-            switch(inp) {
-                case 0: return "Easy"
-                case 1: return "Normal"
-                case 2: return "Advanced"
-                case 3: return "Expert"
-            }
+          return GameInfo.difficulties[Number(inp)]
         },
         getGamemode(inp) {
-            switch(inp) {
-                case "coop": return "Campaign"
-                case "tankrun": return "TankRun"
-                case "rocketdude": return "RocketDude"
-                default: {
-                    return inp[0].toUpperCase() + inp.slice(1)
-                }
-            }
+          // If we don't have a name for gamemode, just capitalize first char
+          return GameInfo.gamemodes[Number(inp)] ?? inp[0].toUpperCase() + inp.slice(1)
         },
         getCharacterName(number) {
             switch(number) {

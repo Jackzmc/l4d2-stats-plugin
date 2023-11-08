@@ -5,6 +5,11 @@
   "survivors": [
     "Nick", "Rochelle", "Ellis", "Coach", "Bill", "Zoey", "Francis", "Louis"
   ],
+  "gamemodes": {
+    "coop": "Campaign",
+    "tankrun": "TankRun",
+    "rocketdude": "RocketDude"
+  },
   "weapons": {
     "pistol": "Pistol",
     "pistol_magnum": "Magnum Pistol",

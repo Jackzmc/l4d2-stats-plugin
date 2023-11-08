@@ -1,7 +1,7 @@
 version: '3'
   services:
     l4d2stats-api:
-      image: node:17
+      image: node:18
       container_name: l4d2stats-api
       ports:
         - "8081:8081"
@@ -13,17 +13,15 @@ version: '3'
         - MYSQL_DB=dbname
         - MYSQL_USER=dbuser
         - MYSQL_PASSWORD=dbpass
-      command: sh -c "cd /backend && npm install && node index.js"
+      command: sh -c "cd /backend && npm install && npm run start"
       restart: unless-stopped
     l4d2stats-ui:
-      image: node:17
+      image: node:18
       container_name: l4d2stats-ui
       ports:
         - "8080:8080"
       volumes:
         - ./website-ui:/frontend
-      environment:
-        - NODE_OPTIONS=--openssl-legacy-provider
       command: sh -c "cd /frontend && npm install && chmod -R a+x node_modules && npm run build && npm run serve"
       depends_on:
         - l4d2stats-api

@@ -1,18 +1,28 @@
-require('dotenv').config();
-const app = require('express')();
+import dotenv from 'dotenv'
+import Express from 'express'
+import mysql from 'mysql2/promise'
+
+dotenv.config()
+const app = Express()
 
 const WEB_PORT = process.env.WEB_PORT||8081;
 app.listen(WEB_PORT,() => {
     console.info('[Server] Listening on :' + WEB_PORT)
 })
 
-const whitelist = process.env.CORS_WHITELIST ? process.env.CORS_WHITELIST.split(",") : []
+const whitelist = process.env.CORS_WHITELIST ? process.env.CORS_WHITELIST.split(",") : [];
 
 //TODO: record random player of the day
 //TODO: Possibly split some information to a cache total
 
-async function main() {
-    const mysql = require('mysql2/promise');
+import RouteUser from './routes/user.js'
+import RouteSessions from './routes/sessions.js'
+import RouteCampaigns from './routes/campaigns.js'
+import RouteTop from './routes/top.js'
+import RouteMisc from './routes/misc.js'
+
+
+(async function() {
     const details = {
         socketPath: process.env.MYSQL_SOCKET_PATH,
         host:     process.env.MYSQL_HOST   || 'localhost', 
@@ -30,15 +40,14 @@ async function main() {
         next()
     })
 
-    app.use('/api/user',       require('./routes/user')(pool))
-    app.use('/api/sessions',    require('./routes/sessions')(pool))
-    app.use('/api/campaigns',   require('./routes/campaigns')(pool))
-    app.use('/api/top',         require('./routes/top')(pool))
-    app.use('/api/',            require('./routes/misc')(pool))
+    app.use('/api/user',        RouteUser(pool))
+    app.use('/api/sessions',    RouteSessions(pool))
+    app.use('/api/campaigns',   RouteCampaigns(pool))
+    app.use('/api/top',         RouteTop(pool))
+    app.use('/api/',            RouteMisc(pool))
     
     app.get('*',(req,res) => {
         res.status(404).json({error:'PageNotFound'})
     })
     return pool;
-};
-module.exports = main()
+})()

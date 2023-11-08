@@ -1,5 +1,12 @@
 {
+  "difficulties": [
+    "Easy", "Normal", "Advanced", "Expert"
+  ],
+  "survivors": [
+    "Nick", "Rochelle", "Ellis", "Coach", "Bill", "Zoey", "Francis", "Louis"
+  ],
   "weapons": {
+    "pistol": "Pistol",
     "pistol_magnum": "Magnum Pistol",
     "autoshotgun": "Automatic Shotgun",
     "shotgun_chrome": "Chrome Shotgun",
@@ -14,11 +21,10 @@
     "rifle_m60": "M60",
     "rifle_desert": "Combat Rifle",
     "hunting_rifle": "Hunting Rifle",
-    "sniper_military": "Sniper Rifle",
+    "sniper_military": "Military Sniper",
     "sniper_awp": "AWP",
     "sniper_scout": "Scout Sniper",
     "grenade_launcher": "Grenade Launcher",
-    "melee": "Hunter Claws",
     "vomitjar": "Boomer Bile",
     "chainsaw": "Chainsaw",
     "frying_pan": "Frying Pan",
@@ -28,12 +34,13 @@
     "tonfa": "Nightstick",
     "molotov": "Molotov Cocktail",
     "pipe_bomb": "Pipe Bomb",
-    "propanetank": "Propane Tank",
-    "gascan": "Gas Can",
-    "oxygentank": "Oxygen Tank",
     "first_aid_kit": "First Aid Kit",
     "defibrilator": "Defibrillator",
     "adrenaline": "Adrenaline",
-    "pain_pills": "Pain Pills"
+    "pain_pills": "Pain Pills",
+    "baseball_bat": "Baseball Bat",
+    "didgeridoo": "Didgeridoo",
+    "cricket_bat": "Cricket Bat",
+    "fireaxe": "Fire Axe"
   }
 }

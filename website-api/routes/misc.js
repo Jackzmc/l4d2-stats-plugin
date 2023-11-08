@@ -1,6 +1,8 @@
-const router = require('express').Router();
-const routeCache = require('route-cache');
-module.exports = (pool) => {
+import Router from 'express'
+const router = Router()
+import routeCache from 'route-cache'
+
+export default function(pool) {
     router.get('/info', routeCache.cacheSeconds(120), async(req,res) => {
         try {
             const [totals] = await pool.execute("SELECT (SELECT COUNT(*) FROM `stats_users`) AS total_users, (SELECT COUNT(*) FROM `stats_games`) AS total_sessions");

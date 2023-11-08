@@ -1,7 +1,8 @@
-const router = require('express').Router();
-const routeCache = require('route-cache');
+import Router from 'express'
+const router = Router()
+import routeCache from 'route-cache'
 
-module.exports = (pool) => {
+export default function(pool) {
     router.get('/:id', routeCache.cacheSeconds(120), async(req,res) => {
         try {
             const [rows] = await pool.query("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid  WHERE left(`stats_games`.campaignID,8) = ? ORDER BY SpecialInfectedKills desc, SurvivorDamage asc, ZombieKills desc, DamageTaken asc", [req.params.id.substring(0,8)])

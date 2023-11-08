@@ -1,4 +1,10 @@
 {
+  "difficulties": [
+    "Easy", "Normal", "Advanced", "Expert"
+  ],
+  "survivors": [
+    "Nick", "Rochelle", "Ellis", "Coach", "Bill", "Zoey", "Francis", "Louis"
+  ],
   "weapons": {
     "pistol": "Pistol",
     "pistol_magnum": "Magnum Pistol",

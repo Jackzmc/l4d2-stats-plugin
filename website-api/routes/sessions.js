@@ -1,7 +1,8 @@
-const router = require('express').Router();
-const routeCache = require('route-cache');
+import Router from 'express'
+const router = Router()
+import routeCache from 'route-cache'
 
-module.exports = (pool) => {
+export default function(pool) {
     router.get('/', routeCache.cacheSeconds(120), async(req,res) => {
         try {
             let perPage = parseInt(req.query.perPage) || 10;

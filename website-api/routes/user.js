@@ -1,48 +1,20 @@
-const router = require('express').Router();
-const routeCache = require('route-cache');
-const fetch = require('node-fetch')
+import Router from 'express'
+const router = Router()
+import routeCache from 'route-cache'
 
-const Canvas = require('canvas')
+import Canvas from 'canvas'
 
 Canvas.registerFont('./assets/fonts/OpenSans-Light.ttf', { family: 'OpenSans', weight: 'Light' })
 Canvas.registerFont('./assets/fonts/micross.ttf', { family: 'MS-Sans-Serif' })
 Canvas.registerFont('./assets/fonts/Roboto-Bold.ttf', { family: 'Roboto', weight: 'Bold'})
 
-const SurvivorMap = {
-    0: 'nick',
-    1: 'rochelle',
-    2: 'ellis',
-    3: 'coach',
-    4: 'bill',
-    5: 'zoey',
-    6: 'francis',
-    7: 'louis'
-}
+import GameData from '../assets/gameinfo.json' assert { type: "json" };
+const SurvivorNames = GameData.survivors
+const WeaponNames = GameData.weapons
+const DifficultyNames = GameData.difficulties
+import { getMapName } from '../map.js'
 
-const { weapons: WeaponNames } = require('../assets/item_names.json')
-
-const Maps = {
-    "c1m": "Dead Center",
-    "c2m": "Dark Carnival",
-    "c3m": "Swamp Fever",
-    "c4m": "Hard Rain",
-    "c5m": "The Parish",
-    "c6m": "The Passing",
-    "c7m": "The Sacrifice",
-    "c8m": "No Mercy",
-    "c9m": "Crash Course",
-    "c10": "Death Toll",
-    "c11": "Dead Air",
-    "c12": "Blood Harvest",
-    "c13": "Cold Stream",
-    "c14": "Last Stand"
-}
-
-const DIFFICULTIES = [
-    "Easy", "Normal", "Advanced", "Expert"
-]
-
-module.exports = (pool) => {
+export default function(pool) {
     router.get('/random', routeCache.cacheSeconds(86400), async(req,res) => {
         try {
             const [results] = await pool.execute("SELECT * FROM `stats_users` ORDER BY RAND() LIMIT 1")
@@ -114,7 +86,7 @@ module.exports = (pool) => {
                         wins: 0
                     }
                     maps[row.map].wins++;
-                    const diff = DIFFICULTIES[row.difficulty].toLowerCase();
+                    const diff = DifficultyNames[row.difficulty].toLowerCase();
                     maps[row.map].difficulty[diff]++;
                     difficulty[diff]++;
                 })
@@ -284,7 +256,7 @@ module.exports = (pool) => {
     }
     async function getUserStats(user) {
         let [row] = await pool.execute("SELECT characterType as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND characterType IS NOT NULL GROUP BY `characterType` ORDER BY count DESC LIMIT 1", [user]);
-        const topCharacter = row.length > 0 ? SurvivorMap[row[0].k] : null;
+        const topCharacter = row.length > 0 ? SurvivorNames[row[0].k].toLowerCase() : null;
         [row] = await pool.execute("SELECT last_alias, witches_crowned, clowns_honked from stats_users WHERE steamid = ?", [user]);
         const stats = row.length > 0 ? row[0] : {};
         [row] = await pool.execute("SELECT map as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? GROUP BY `map` ORDER BY count desc", [user]);
@@ -303,7 +275,7 @@ module.exports = (pool) => {
                 map: {
                     id: topMap?.k,
                     count: topMap?.count,
-                    name: topMap ? Maps[topMap.k.slice(0,3)] : null
+                    name: topMap ? getMapName(topMap.k) : null
                 },
                 weapon: {
                     id: topWeapon,

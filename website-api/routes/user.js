@@ -45,7 +45,7 @@ const DIFFICULTIES = [
 module.exports = (pool) => {
     router.get('/random', routeCache.cacheSeconds(86400), async(req,res) => {
         try {
-            const [results] = await pool.execute("SELECT * FROM `left4dead2`.`stats_users` ORDER BY RAND() LIMIT 1")
+            const [results] = await pool.execute("SELECT * FROM `stats_users` ORDER BY RAND() LIMIT 1")
             return res.json({user: results[0]})
         }catch(err) {
             res.status(500).json({error:"Internal Server Error"})

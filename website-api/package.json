@@ -5,16 +5,16 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon"
+    "dev": "nodemon",
+    "start": "node index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "canvas": "^2.9.0",
-    "dotenv": "^8.2.0",
+    "canvas": "^2.11.2",
+    "dotenv": "^16.3.1",
     "express": "^4.17.1",
-    "got": "^11.3.0",
-    "mysql2": "^2.1.0",
-    "route-cache": "^0.4.5"
+    "mysql2": "^3.6.3",
+    "route-cache": "^0.6.1"
   }
 }

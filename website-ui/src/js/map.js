@@ -1,4 +1,5 @@
-import {official, custom} from '../assets/campaigns.json'
+import campaignData from '../assets/campaigns.json'
+const { official, custom } = campaignData
 import NoMapImage from '../assets/no_map_image.png';
 
 for(const campaign in official) {

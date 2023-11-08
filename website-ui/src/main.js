@@ -6,7 +6,6 @@ import Buefy from 'buefy'
 import 'buefy/dist/buefy.css'
 
 import Axios from 'axios'
-import { cacheAdapterEnhancer} from 'axios-extensions';
 import vueDebounce from 'vue-debounce'
 import Meta from 'vue-meta'
 
@@ -25,7 +24,6 @@ Vue.prototype.$http = Axios.create({
 	baseURL: '/',
 	headers: { 'Cache-Control': 'no-cache' },
 	// disable the default cache
-	adapter: cacheAdapterEnhancer(Axios.defaults.adapter, { enabledByDefault: false })
 });
 Vue.prototype.$SHARE_URL = process.env.VUE_APP_SHARE_URL;
 

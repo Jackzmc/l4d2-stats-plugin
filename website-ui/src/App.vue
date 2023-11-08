@@ -45,7 +45,7 @@
                     expanded
                     :loading="search.loading"
                     >
-                    <template slot="empty">No users were found</template>
+                    <template v-slot:empty>No users were found</template>
                     <template  v-slot:default="props">
                       <b>{{props.option.last_alias}}</b> ({{props.option.steamid}})
                     </template>

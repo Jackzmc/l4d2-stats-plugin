@@ -24,6 +24,7 @@ public Plugin myinfo =
 	url = "https://github.com/Jackzmc/sourcemod-plugins"
 };
 static ConVar hServerTags, hZDifficulty, hClownMode, hPopulationClowns, hMinShove, hMaxShove, hClownModeChangeChance;
+static ConVar hHeatmapInterval, hHeatmapMode;
 static Handle hHonkCounterTimer;
 static Database g_db;
 static char gamemode[32], serverTags[255], uuid[64];
@@ -95,6 +96,19 @@ enum PointRecordType {
 	PType_DeployAmmo
 }
 
+enum HeatMapType {
+	HeatMap_LedgeGrab,
+	HeatMap_Incap,
+	HeatMap_Death
+}
+
+enum struct HeatMapData {
+	HeatMapType type;
+	int timestamp;
+	// Round to nearest integer, so we can count occurrences
+	int pos[3];
+}
+
 enum struct Player {
 	char steamid[32];
 	int damageSurvivorGiven;
@@ -140,6 +154,11 @@ enum struct Player {
 	int sSpitterKills;
 	int sChargerKills;
 
+	// Pulled from database:
+	int connections;
+	int firstJoinedTime;
+	int lastJoinedTime;
+
 	//TODO: Hook player_reload
 
 	StringMap weaponStats;
@@ -147,11 +166,28 @@ enum struct Player {
 	char lastWeaponName[64];
 	int lastWeaponDamage;
 
+	int idleStartTime;
+	int totalIdleTime;
+
 	ArrayList pointsQueue;
+	ArrayList pendingHeatmaps;
 
 	void Init() {
 		this.weaponStats = new StringMap();
 		this.pointsQueue = new ArrayList(3); // [ type, amount, time ]
+		this.pendingHeatmaps = new ArrayList(sizeof(HeatMapData));
+	}
+
+	void RecordHeatMap(HeatMapType type, const float pos[3]) {
+		HeatMapData hmd;
+		hmd.timestamp = GetTime();
+		hmd.type = type;
+		int intPos[3];
+		intPos[0] = RoundToFloor(pos[0]);
+		intPos[1] = RoundToFloor(pos[1]);
+		intPos[2] = RoundToFloor(pos[2]);
+		hmd.pos = intPos;
+		this.pendingHeatmaps.PushArray(hmd);
 	}
 
 	void ResetFull() {
@@ -160,6 +196,8 @@ enum struct Player {
 		this.lastWeaponDamage = 0;
 		this.steamid[0] = '\0';
 		this.points = 0;
+		this.idleStartTime = 0;
+		this.totalIdleTime = 0;
 		if(this.weaponStats != null)
 			this.weaponStats.Clear();
 		if(this.pointsQueue != null)
@@ -225,7 +263,6 @@ public void OnPluginStart() {
 	hClownMode = CreateConVar("l4d2_honk_mode", "0", "Shows a live clown honk count and increased shove amount.\n0 = OFF, 1 = ON, 2 = Randomly change population", FCVAR_NONE, true, 0.0, true, 2.0);
 	hMinShove = FindConVar("z_gun_swing_coop_min_penalty");
 	hMaxShove = FindConVar("z_gun_swing_coop_max_penalty");
-	hPopulationClowns = FindConVar("l4d2_population_clowns");
 
 	hClownMode.AddChangeHook(CVC_ClownModeChanged);
 
@@ -239,6 +276,11 @@ public void OnPluginStart() {
 
 	hZDifficulty = FindConVar("z_difficulty");
 
+	hHeatmapInterval = CreateConVar("l4d2_statsrecorder_heatmap_interval", "5", "Determines how often position heatmaps are recorded in ms.", FCVAR_NONE, true, 0.1);
+	hHeatmapMode = CreateConVar("l4d2_statsrecorder_heatmap_mode", "Determines how heatmaps are recorded.\n0 = OFF\n1 = Record until stopped\n2 = Record until map change", "3", FCVAR_NONE, true, 0.0);
+
+	HookEvent("player_bot_replace", Event_PlayerEnterIdle);
+	HookEvent("bot_player_replace", Event_PlayerLeaveIdle);
 	//Hook all events to track statistics
 	HookEvent("player_disconnect", Event_PlayerFullDisconnect);
 	HookEvent("player_death", Event_PlayerDeath);
@@ -270,10 +312,12 @@ public void OnPluginStart() {
 	HookEvent("boomer_exploded", Event_BoomerExploded);
 	HookEvent("versus_round_start", Event_VersusRoundStart);
 	HookEvent("map_transition", Event_MapTransition);
+	HookEvent("player_ledge_grab", Event_LedgeGrab);
 	AddNormalSoundHook(SoundHook);
 	#if defined DEBUG
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 	#endif
+	RegAdminCmd("sm_stats", Command_PlayerStats, ADMFLAG_GENERIC);
 
 	AutoExecConfig(true, "l4d2_stats_recorder");
 
@@ -281,6 +325,7 @@ public void OnPluginStart() {
 		players[i].Init();
 	}
 }
+
 
 void LoadWeaponDatabase() {
 	WeaponIds = new StringMap();
@@ -363,11 +408,16 @@ public void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] n
 	strcopy(serverTags, sizeof(serverTags), newValue);
 }
 public void CVC_ClownModeChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
+	hPopulationClowns = FindConVar("l4d2_population_clowns");
+	if(hPopulationClowns == null) {
+		PrintToServer("[Stats] ERROR: Missing plugin for clown mode");
+		return;
+	}
 	if(hClownMode.IntValue > 0) {
 		hMinShove.IntValue = 20;
 		hMaxShove.IntValue = 40;
 		hPopulationClowns.FloatValue = 0.4;
-		hHonkCounterTimer = CreateTimer(30.0, Timer_HonkCounter, _, TIMER_REPEAT);
+		hHonkCounterTimer = CreateTimer(15.0, Timer_HonkCounter, _, TIMER_REPEAT);
 	} else {
 		hMinShove.IntValue = 5;
 		hMaxShove.IntValue = 15;
@@ -442,6 +492,21 @@ void Event_PlayerFullDisconnect(Event event, const char[] name, bool dontBroadca
 	}
 }
 
+void Event_PlayerEnterIdle(Event event, const char[] name, bool dontBroadcast) {
+	int client = GetClientOfUserId(event.GetInt("player"));
+	if(client > 0) {
+		players[client].idleStartTime = GetTime();
+	}
+}
+
+void Event_PlayerLeaveIdle(Event event, const char[] name, bool dontBroadcast) {
+	int client = GetClientOfUserId(event.GetInt("player"));
+	if(client > 0 && players[client].idleStartTime > 0) {
+		players[client].idleStartTime = 0;
+		players[client].totalIdleTime = GetTime() - players[client].idleStartTime;
+	}
+}
+
 ///////////////////////////////////
 //DB METHODS
 //////////////////////////////////
@@ -472,12 +537,13 @@ void SetupUserInDB(int client, const char steamid[32]) {
 		char query[128];
 		
 
-		Format(query, sizeof(query), "SELECT last_alias,points FROM stats_users WHERE steamid='%s'", steamid);
+		// TODO: 	connections, first_join last_join
+		Format(query, sizeof(query), "SELECT last_alias,points,connections,created_date,last_join_date FROM stats_users WHERE steamid='%s'", steamid);
 		SQL_TQuery(g_db, DBCT_CheckUserExistance, query, GetClientUserId(client));
 	}
 }
 //Increments a statistic by X amount
-void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriority = false) {
+void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriority = true) {
 	if(client > 0 && !IsFakeClient(client) && IsClientConnected(client)) {
 		//Only run if client valid client, AND has steamid. Not probably necessarily anymore.
 		if (players[client].steamid[0]) {
@@ -707,6 +773,7 @@ void FlushQueuedStats(int client, bool disconnect) {
 			SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, GetClientUserId(client));
 			SubmitPoints(client);
 			SubmitWeaponStats(client);
+			SubmitHeatmaps(client);
 		}
 	}
 }
@@ -760,6 +827,36 @@ void SubmitWeaponStats(int client) {
 		}
 	}
 } 
+
+void SubmitHeatmaps(int client) {
+	if(players[client].pendingHeatmaps != null && players[client].pendingHeatmaps.Length > 0) {
+		HeatMapData hmd;
+		char query[512];
+		Format(query, sizeof(query), "INSERT INTO stats_heatmaps (steamid,timestamp,map,type,x,y,z) VALUES ");
+		int length = players[client].pendingHeatmaps.Length;
+		for(int i = 0; i < length; i++) {
+			players[client].pendingHeatmaps.GetArray(i, hmd);
+			Format(query, sizeof(query), "%s('%s',%d,'%s',%d,%d,%d,%d)", 
+				query,
+				players[client].steamid,
+				game.name,
+				hmd.timestamp,
+				hmd.type,
+				hmd.pos[0],
+				hmd.pos[1],
+				hmd.pos[2]
+			);
+			// Add commas to every entry but trailing
+			if(i != length - 1) {
+				Format(query, sizeof(query), "%s,", query);
+			}
+		}
+
+		SQL_TQuery(g_db, DBCT_Generic, query, _, DBPrio_Low);
+		// Resize using the new length - old length, incase new data shows up.
+		players[client].pendingHeatmaps.Resize(players[client].pendingHeatmaps.Length - length);
+	}
+}
 
 //Record a special kill to local variable
 void IncrementSpecialKill(int client, int special) {
@@ -844,8 +941,8 @@ void IncrementSessionStat(int client) {
 //DATABASE CALLBACKS
 /////////////////////////////////
 //Handles the CreateDBUser() response. Either updates alias and stores points, or creates new SQL user.
-public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] error, any data) {
-	if(db == INVALID_HANDLE || queryHandle == INVALID_HANDLE) {
+public void DBCT_CheckUserExistance(Handle db, DBResultSet results, const char[] error, any data) {
+	if(db == INVALID_HANDLE || results == INVALID_HANDLE) {
 		LogError("DBCT_CheckUserExistance returned error: %s", error);
 		return;
 	}
@@ -854,7 +951,6 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 	if(client == 0) return;
 	int alias_length = 2*MAX_NAME_LENGTH+1;
 	char alias[MAX_NAME_LENGTH], ip[40], country_name[45];
-	char previous_alias[MAX_NAME_LENGTH];
 	char[] safe_alias = new char[alias_length];
 
 	//Get a SQL-safe player name, and their counttry and IP
@@ -864,12 +960,10 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 	GeoipCountry(ip, country_name, sizeof(country_name));
 
 	char query[255]; 
-	if(SQL_GetRowCount(queryHandle) == 0) {
+	if(results.RowCount == 0) {
 		//user does not exist in db, create now
-
 		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", players[client].steamid, safe_alias, country_name);
 		SQL_TQuery(g_db, DBCT_Generic, query);
-		AddUserName(players[client].steamid, safe_alias);
 
 		Format(query, sizeof(query), "%N is joining for the first time", client);
 		for(int i = 1; i <= MaxClients; i++) {
@@ -878,39 +972,29 @@ public void DBCT_CheckUserExistance(Handle db, Handle queryHandle, const char[] 
 			}
 		}
 		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, players[client].steamid);
-	} else {
+	}else{
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
-		while(SQL_FetchRow(queryHandle)) {
-			int field_num;
-			if(SQL_FieldNameToNum(queryHandle, "points", field_num)) {
-				players[client].points = SQL_FetchInt(queryHandle, field_num);
-			}
-			// Check if their name has changed and add the new one to user_names table:
-			if(SQL_FieldNameToNum(queryHandle, "last_alias", field_num)) {
-				SQL_FetchString(queryHandle, field_num, previous_alias, sizeof(previous_alias));
-				if(!StrEqual(previous_alias, alias)) {
-					AddUserName(players[client].steamid, safe_alias);
-				}
-			}
-		}
+		results.FetchRow();
 
+		// last_alias,points,connections,created_date,last_join_date
+		players[client].points = results.FetchInt(1);
+		players[client].connections = results.FetchInt(2);
+		players[client].firstJoinedTime = results.FetchInt(4);
+		players[client].lastJoinedTime = results.FetchInt(4);
+
+		if(players[client].points == 0) {
+			PrintToServer("[l4d2_stats_recorder] Warning: Existing player %N (%d) has no points", client, client);
+		}
 		int connections_amount = lateLoaded ? 0 : 1;
 
 		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, players[client].steamid);
 		SQL_TQuery(g_db, DBCT_Generic, query);
 	}
 }
-
-void AddUserName(const char[] steamid, const char[] name) {
-	char query[128];
-	PrintToServer("AddUserName: %s", players[client].steamid[10]);
-	Format(query, sizeof(query), "INSERT INTO `user_names` (steamid, timestamp, name) VALUES ('%s', UNIX_TIMESTAMP(), '%s')", players[client].steamid[10], previous_alias);
-	g_db.Query(DBCT_Generic, query);
-}
-
 //Generic database response that logs error
-public void DBCT_Generic(Handle db, Handle child, const char[] error, any data) {
-    if(db == null || child == null) {
+public void DBCT_Generic(Handle db, Handle child, const char[] error, any data)
+{
+	if(db == null || child == null) {
 		if(data) {
 			LogError("DBCT_Generic query `%s` returned error: %s", data, error);
 		}else {
@@ -940,6 +1024,53 @@ public void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, i
 ////////////////////////////
 // COMMANDS
 ///////////////////////////
+#define DATE_FORMAT "%F at %I:%M %p"
+Action Command_PlayerStats(int client, int args) {
+	if(args == 0) {
+		ReplyToCommand(client, "Syntax: /stats <player name>");
+		return Plugin_Handled;
+	}
+	char arg[32];
+	GetCmdArg(1, arg, sizeof(arg));
+	char arg1[32];
+	GetCmdArg(1, arg1, sizeof(arg1));
+	char target_name[MAX_TARGET_LENGTH];
+	int target_list[1], target_count;
+	bool tn_is_ml;
+	if ((target_count = ProcessTargetString(
+			arg1,
+			client,
+			target_list,
+			1,
+			COMMAND_FILTER_NO_BOTS,
+			target_name,
+			sizeof(target_name),
+			tn_is_ml)) <= 0)
+	{
+		/* This function replies to the admin with a failure message */
+		ReplyToTargetError(client, target_count);
+		return Plugin_Handled;
+	}
+	int player = target_list[0];
+	if(player > 0) {
+		ReplyToCommand(client, "");
+		ReplyToCommand(client, "\x04Name: \x05%N", player);
+		ReplyToCommand(client, "\x04Points: \x05%d", players[player].points);
+		ReplyToCommand(client, "\x04Joins: \x05%d", players[player].connections);
+		FormatTime(arg, sizeof(arg), DATE_FORMAT, players[player].firstJoinedTime);
+		ReplyToCommand(client, "\x04First Joined: \x05%s", arg);
+		FormatTime(arg, sizeof(arg), DATE_FORMAT, players[player].lastJoinedTime);
+		ReplyToCommand(client, "\x04Last Joined: \x05%s", arg);
+		if(players[player].idleStartTime > 0) {
+			FormatTime(arg, sizeof(arg), DATE_FORMAT, players[player].idleStartTime);
+			ReplyToCommand(client, "\x04Idle Start Time: \x05%s", arg);
+		}
+		ReplyToCommand(client, "\x04Minutes Idle: \x05%d", players[player].totalIdleTime);
+	}
+
+	return Plugin_Handled;
+}
+
 #if defined DEBUG
 public Action Command_DebugStats(int client, int args) {
 	if(client == 0 && !IsDedicatedServer()) {
@@ -1071,7 +1202,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 			players[attacker].damageInfectedGiven += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
-			players[attacker].RecordPoint(PType_FriendlyFire, -30);
+			players[attacker].RecordPoint(PType_FriendlyFire, -20);
 			players[attacker].damageSurvivorFF += dmg;
 			players[attacker].damageSurvivorFFCount++;
 			players[victim].damageFFTaken += dmg;
@@ -1088,6 +1219,9 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 		if(!IsFakeClient(victim)) {
 			if(victim_team == 2) {
 				IncrementStat(victim, "survivor_deaths", 1);
+				float pos[3];
+				GetClientAbsOrigin(victim, pos);
+				players[victim].RecordHeatMap(HeatMap_Death, pos);
 			}
 		}
 
@@ -1151,7 +1285,7 @@ public void Event_DoorOpened(Event event, const char[] name, bool dontBroadcast)
 	}
 }
 //Records anytime an item is picked up. Runs for any weapon, only a few have a SQL column. (Throwables)
-public void Event_ItemPickup(Event event, const char[] name, bool dontBroadcast) {
+void Event_ItemPickup(Event event, const char[] name, bool dontBroadcast) {
 	char statname[72], item[64];
 
 	int client = GetClientOfUserId(event.GetInt("userid"));
@@ -1166,14 +1300,26 @@ public void Event_ItemPickup(Event event, const char[] name, bool dontBroadcast)
 		IncrementStat(client, statname, 1);
 	}
 }
-public void Event_PlayerIncap(Event event, const char[] name, bool dontBroadcast) {
+void Event_PlayerIncap(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(!IsFakeClient(client) && GetClientTeam(client) == 2) {
+		IncrementStat(client, "survivor_incaps", 1);
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		players[client].RecordHeatMap(HeatMap_Incap, pos);
+	}
+}
+void Event_LedgeGrab(Event event, const char[] name, bool dontBroadcast) {
+	int client = GetClientOfUserId(event.GetInt("userid"));
+	if(!IsFakeClient(client) && GetClientTeam(client) == 2) {
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		players[client].RecordHeatMap(HeatMap_LedgeGrab, pos);
 		IncrementStat(client, "survivor_incaps", 1);
 	}
 }
 //Track heals, or defibs
-public void Event_ItemUsed(Event event, const char[] name, bool dontBroadcast) {
+void Event_ItemUsed(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
 		if(StrEqual(name, "heal_success", true)) {
@@ -1259,6 +1405,7 @@ bool isTransition = false;
 public void Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
 	game.startTime = GetTime();
 	game.clownHonks = 0;
+
 	PrintToServer("[l4d2_stats_recorder] Started recording statistics for new session");
 	for(int i = 1; i <= MaxClients; i++) {
 		ResetSessionStats(i, true);
@@ -1355,7 +1502,7 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 		ArrayList winners = new ArrayList();
 		int mostHonks;
 		for(int j = 1; j <= MaxClients; j++) {
-			if(players[j].clownsHonked <= 0 || IsClientConnected(j) && IsClientInGame(j) && IsFakeClient(j)) continue;
+			if(players[j].clownsHonked <= 0 || !IsClientConnected(j) || !IsClientInGame(j) || IsFakeClient(j)) continue;
 			if(players[j].clownsHonked > mostHonks || winners.Length == 0) {
 				mostHonks = players[j].clownsHonked;
 				// Clear the winners list
@@ -1372,17 +1519,22 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 				char msg[256];
 				Format(msg, sizeof(msg), "%N", winners.Get(0));
 				for(int i = 1; i < winners.Length; i++) {
+					int winner = winners.Get(i);
+					if(!IsClientConnected(winner)) continue;
 					if(i == winners.Length - 1) {
 						// If this is the last winner, use 'and '
-						Format(msg, sizeof(msg), "%s and %N", msg, winners.Get(i));
+						Format(msg, sizeof(msg), "%s and %N", msg, winner);
 					} else {
 						// In between first and last winner, comma
-						Format(msg, sizeof(msg), "%s, %N", msg, winners.Get(i));
+						Format(msg, sizeof(msg), "%s, %N", msg, winner);
 					}
 				}
 				PrintToChatAll("%s tied for the most clown honks with a count of %d", msg, mostHonks);
 			} else {
-				PrintToChatAll("%N had the most clown honks with a count of %d", winners.Get(0), mostHonks);
+				int winner = winners.Get(0);
+				if(IsClientConnected(winner)) {
+					PrintToChatAll("%N had the most clown honks with a count of %d", winner, mostHonks);
+				}
 			}
 		} 
 		delete winners;

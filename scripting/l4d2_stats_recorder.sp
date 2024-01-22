@@ -10,6 +10,7 @@
 #include <sdkhooks>
 #include <left4dhooks>
 #include <SteamWorks>
+#include <jutils>
 
 #undef REQUIRE_PLUGIN
 #include <l4d2_skill_detect>
@@ -23,8 +24,14 @@ public Plugin myinfo =
 	version = PLUGIN_VERSION, 
 	url = "https://github.com/Jackzmc/sourcemod-plugins"
 };
+
+// Each coordinate (x,y,z) is rounded to nearest multiple of this. 
+// TODO: 10
+#define HEATMAP_POINT_SIZE 5
+#define MAX_HEATMAP_VISUALS 200
+
 static ConVar hServerTags, hZDifficulty, hClownMode, hPopulationClowns, hMinShove, hMaxShove, hClownModeChangeChance;
-static ConVar hHeatmapInterval, hHeatmapMode;
+static ConVar hHeatmapInterval;
 static Handle hHonkCounterTimer;
 static Database g_db;
 static char gamemode[32], serverTags[255], uuid[64];
@@ -39,7 +46,8 @@ enum struct Game {
 	int finaleStartTime;
 	int clownHonks;
 	bool isVersusSwitched;
-	bool finished;
+	bool finished; // finale_vehicle_ready triggered
+	bool submitted; // finale_win triggered
 	char gamemode[32];
 	char uuid[64];
 	char name[64];
@@ -96,13 +104,51 @@ enum PointRecordType {
 	PType_DeployAmmo
 }
 
+ArrayList g_HeatMapEntities;
+bool IsHeatMapVisualActive() { return g_HeatMapEntities != null; }
+#define HEATMAP_RENDER_INTERVAL 5.0
+#define MAX_TEMP_ENTS 30
+#define RING_SIZE 10.0
+
 enum HeatMapType {
 	HeatMap_LedgeGrab,
 	HeatMap_Incap,
-	HeatMap_Death
-}
+	HeatMap_Death,
+	HeatMap_Periodic,
 
-enum struct HeatMapData {
+	HeatMap_Any
+	// TODO: boomed, periodic, jump?
+	// maybe separate for fall death?
+}
+int HEATMAP_TYPE_COLOR[HeatMap_Any][3] = {
+	{ 30, 187, 201 }, // ledges
+	{ 208, 208, 37 }, // incaps
+	{ 255, 0, 0 }, // deaths
+	{ 255, 255, 255 }, // periodic
+};
+char HEATMAP_ANIM[HeatMap_Any][] = {
+	"idle_incap_hanging1",
+	"idle_incap",
+	"die_incap",
+	""
+};
+
+float HEATMAP_ANIM_ANIM_FRAME[HeatMap_Any] = {
+	0.0,
+	0.0,
+	1.0,
+	0.0
+};
+
+char HEATMAP_IDS[view_as<int>(HeatMap_Any)+1][] = {
+	"ledges",
+	"incaps",
+	"deaths",
+	"periodic",
+	"(all)"
+};
+
+enum struct PendingHeatMapData {
 	HeatMapType type;
 	int timestamp;
 	// Round to nearest integer, so we can count occurrences
@@ -175,17 +221,18 @@ enum struct Player {
 	void Init() {
 		this.weaponStats = new StringMap();
 		this.pointsQueue = new ArrayList(3); // [ type, amount, time ]
-		this.pendingHeatmaps = new ArrayList(sizeof(HeatMapData));
+		this.pendingHeatmaps = new ArrayList(sizeof(PendingHeatMapData));
 	}
 
 	void RecordHeatMap(HeatMapType type, const float pos[3]) {
-		HeatMapData hmd;
+		if(this.pendingHeatmaps == null) return;
+		PendingHeatMapData hmd;
 		hmd.timestamp = GetTime();
 		hmd.type = type;
 		int intPos[3];
-		intPos[0] = RoundToFloor(pos[0]);
-		intPos[1] = RoundToFloor(pos[1]);
-		intPos[2] = RoundToFloor(pos[2]);
+		intPos[0] = RoundFloat(pos[0] / float(HEATMAP_POINT_SIZE)) * HEATMAP_POINT_SIZE;
+		intPos[1] = RoundFloat(pos[1] / float(HEATMAP_POINT_SIZE)) * HEATMAP_POINT_SIZE;
+		intPos[2] = RoundFloat(pos[2] / float(HEATMAP_POINT_SIZE)) * HEATMAP_POINT_SIZE;
 		hmd.pos = intPos;
 		this.pendingHeatmaps.PushArray(hmd);
 	}
@@ -202,6 +249,9 @@ enum struct Player {
 			this.weaponStats.Clear();
 		if(this.pointsQueue != null)
 			this.pointsQueue.Clear();
+		if(this.pendingHeatmaps != null) {
+			this.pendingHeatmaps.Clear();
+		}
 		// this.mostUsedWeapon.usage = 0;
 		// this.mostUsedWeapon.damage = 0.0;
 		// this.mostUsedWeapon.name[0] = '\0';
@@ -276,8 +326,7 @@ public void OnPluginStart() {
 
 	hZDifficulty = FindConVar("z_difficulty");
 
-	hHeatmapInterval = CreateConVar("l4d2_statsrecorder_heatmap_interval", "5", "Determines how often position heatmaps are recorded in ms.", FCVAR_NONE, true, 0.1);
-	hHeatmapMode = CreateConVar("l4d2_statsrecorder_heatmap_mode", "Determines how heatmaps are recorded.\n0 = OFF\n1 = Record until stopped\n2 = Record until map change", "3", FCVAR_NONE, true, 0.0);
+	hHeatmapInterval = CreateConVar("l4d2_statsrecorder_heatmap_interval", "60", "Determines how often position heatmaps are recorded in seconds.", FCVAR_NONE, true, 0.1);
 
 	HookEvent("player_bot_replace", Event_PlayerEnterIdle);
 	HookEvent("bot_player_replace", Event_PlayerLeaveIdle);
@@ -318,14 +367,29 @@ public void OnPluginStart() {
 	RegConsoleCmd("sm_debug_stats", Command_DebugStats, "Debug stats");
 	#endif
 	RegAdminCmd("sm_stats", Command_PlayerStats, ADMFLAG_GENERIC);
+	RegAdminCmd("sm_heatmaps", Command_Heatmaps, ADMFLAG_GENERIC);
+	RegAdminCmd("sm_heatmap", Command_Heatmaps, ADMFLAG_GENERIC);
 
 	AutoExecConfig(true, "l4d2_stats_recorder");
 
 	for(int i = 1; i <= MaxClients; i++) {
 		players[i].Init();
 	}
+
+	CreateTimer(hHeatmapInterval.FloatValue, Timer_HeatMapInterval, _, TIMER_REPEAT);
 }
 
+void ClearHeatMapEntities() {
+	if(g_HeatMapEntities != null) {
+		for(int i = 0 ; i < g_HeatMapEntities.Length; i++) {
+			int ref = g_HeatMapEntities.Get(i);
+			if(IsValidEntity(ref)) {
+				RemoveEntity(ref);
+			}
+		}
+		delete g_HeatMapEntities;
+	}
+}
 
 void LoadWeaponDatabase() {
 	WeaponIds = new StringMap();
@@ -382,16 +446,24 @@ public void OnPluginEnd() {
 			FlushQueuedStats(i, false);
 		}
 	}
+	ClearHeatMapEntities();
 }
 //////////////////////////////////
 // TIMER
 /////////////////////////////////
-public Action Timer_FlushStats(Handle timer) {
-	//Periodically flush the statistics
-	if(GetClientCount(true) > 0) {
-		for(int i=1; i<=MaxClients;i++) {
-			if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && players[i].steamid[0]) {
-				FlushQueuedStats(i, false);
+Action Timer_HeatMapInterval(Handle h) {
+	// Skip recording any points when visualizing or escape vehicle ready
+	if(game.finished || IsHeatMapVisualActive()) return Plugin_Continue;
+
+	float pos[3];
+	for(int i=1; i<=MaxClients;i++) {
+		if(IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && players[i].steamid[0]) {
+			MoveType moveType = GetEntityMoveType(i);
+			if(moveType != MOVETYPE_WALK && moveType != MOVETYPE_LADDER) continue;
+			GetClientAbsOrigin(i, pos);
+			players[i].RecordHeatMap(HeatMap_Periodic, pos);
+			if(players[i].pendingHeatmaps.Length > 25) {
+				SubmitHeatmaps(i);
 			}
 		}
 	}
@@ -578,6 +650,8 @@ void RecordCampaign(int client) {
 		char topWeapon[64];
 		ComputeTopWeapon(client, topWeapon, sizeof(topWeapon));
 
+		int ping = GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client);
+		if(ping < 0) ping = 0;
 
 		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
 		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`top_weapon`, `SurvivorFFCount`, `SurvivorFFTakenCount`, `SurvivorFFDamage`, `SurvivorFFTakenDamage`) VALUES ('%s','%s','%s','%s',%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,'%s',%d,%d,%d,%d)",
@@ -604,7 +678,7 @@ void RecordCampaign(int client) {
 			players[client].m_checkpointDeaths,
 			players[client].m_checkpointMeleeKills,
 			game.difficulty,
-			GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client), //record user ping
+			ping, //record user ping
 			players[client].sBoomerKills,
 			players[client].sSmokerKills,
 			players[client].sJockeyKills,
@@ -628,9 +702,6 @@ void RecordCampaign(int client) {
 			SQL_GetError(g_db, error, sizeof(error));
 			LogError("[l4d2_stats_recorder] RecordCampaign for %d failed. UUID %s | Query: `%s` | Error: %s", uuid, client, query, error);
 		}
-		#if defined DEBUG
-			PrintToServer("[l4d2_stats_recorder] DEBUG: Added finale (%s) to stats_maps for %s ", mapname, players[client].steamid);
-		#endif
 	}
 }
 
@@ -830,31 +901,33 @@ void SubmitWeaponStats(int client) {
 
 void SubmitHeatmaps(int client) {
 	if(players[client].pendingHeatmaps != null && players[client].pendingHeatmaps.Length > 0) {
-		HeatMapData hmd;
-		char query[512];
-		Format(query, sizeof(query), "INSERT INTO stats_heatmaps (steamid,timestamp,map,type,x,y,z) VALUES ");
+		PendingHeatMapData hmd;
+		char query[2048];
+		Format(query, sizeof(query), "INSERT INTO stats_heatmaps (steamid,map,timestamp,type,x,y,z) VALUES ");
 		int length = players[client].pendingHeatmaps.Length;
+		char commaChar = ',';
 		for(int i = 0; i < length; i++) {
 			players[client].pendingHeatmaps.GetArray(i, hmd);
-			Format(query, sizeof(query), "%s('%s',%d,'%s',%d,%d,%d,%d)", 
+			// Add commas to every entry but trailing
+			if(i == length - 1) {
+				commaChar = ' ';
+			}
+			Format(query, sizeof(query), "%s('%s','%s',%d,%d,%d,%d,%d)%c", 
 				query,
 				players[client].steamid,
-				game.name,
+				game.name, //map nam
 				hmd.timestamp,
 				hmd.type,
 				hmd.pos[0],
 				hmd.pos[1],
-				hmd.pos[2]
+				hmd.pos[2],
+				commaChar
 			);
-			// Add commas to every entry but trailing
-			if(i != length - 1) {
-				Format(query, sizeof(query), "%s,", query);
-			}
 		}
 
 		SQL_TQuery(g_db, DBCT_Generic, query, _, DBPrio_Low);
 		// Resize using the new length - old length, incase new data shows up.
-		players[client].pendingHeatmaps.Resize(players[client].pendingHeatmaps.Length - length);
+		players[client].pendingHeatmaps.Erase(length-1);
 	}
 }
 
@@ -1007,7 +1080,7 @@ public void DBCT_GetUUIDForCampaign(Handle db, Handle results, const char[] erro
 		SQL_FetchRow(results);
 		SQL_FetchString(results, 0, uuid, sizeof(uuid));
 		PrintToServer("UUID for campaign: %s | Difficulty: %d", uuid, game.difficulty);
-	}else{
+	} else {
 		LogError("RecordCampaign, failed to get UUID: %s", error);
 	}
 }
@@ -1024,6 +1097,155 @@ public void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, i
 ////////////////////////////
 // COMMANDS
 ///////////////////////////
+
+Action Command_Heatmaps(int client, int args) {
+	if(IsHeatMapVisualActive()) {
+		ClearHeatMapEntities();
+		ReplyToCommand(client, "Disabled heatmap visualization");
+		// If user specifies a filter switch to the filter without another command
+		if(args == 0)
+			return Plugin_Handled;
+	} 
+	HeatMapType type = HeatMap_Any;
+	char player[32];
+	if(args != 0) {
+		char arg[32];
+		GetCmdArg(1, arg, sizeof(arg));
+		if(StrEqual(arg, "filter")) {
+			GetCmdArg(2, player, sizeof(player));
+		} else if(StrEqual(arg, "filter")) {
+			GetCmdArg(2, arg, sizeof(arg));
+			type = GetHeatMapType(arg);
+		} else {
+			ReplyToCommand(client, "Syntax: sm_heatmap <\"player\"/\"filter\"> <player name / filter name>");
+			return Plugin_Handled;
+		}
+	}
+	ReplyToCommand(client, "Fetching heatmap data. \x04Player=\x05%s\x04 Filter=\x05%s\x01", player, HEATMAP_IDS[view_as<int>(type)]);
+	GetHeatMapData(type, player, GetClientUserId(client));
+	return Plugin_Handled;
+}
+
+void CreateHeatMapEntity(float pos[3], int color[3], int alpha = 255) {
+	PrecacheModel("models/props_fortifications/orange_cone001_reference.mdl");
+	int entity = CreateEntityByName("prop_dynamic");
+	if(entity == -1) return;
+	DispatchKeyValue(entity, "disableshadows", "1");
+	DispatchKeyValue(entity, "model", "models/props_fortifications/orange_cone001_reference.mdl");
+	DispatchKeyValue(entity, "targetname", "stats_heatmap_visual");
+	TeleportEntity(entity, pos, NULL_VECTOR, NULL_VECTOR);
+	if(!DispatchSpawn(entity)) return;
+	SetEntProp(entity, Prop_Send, "m_nSolidType", 6);
+	SetEntProp(entity, Prop_Send, "m_CollisionGroup", 1);
+	SetEntProp(entity, Prop_Send, "movetype", MOVETYPE_NONE);
+	L4D2_SetEntityGlow(entity, L4D2Glow_Constant, 10000, 0, color, false);
+	SetEntityRenderMode(entity, RENDER_TRANSALPHA);
+	SetEntityRenderColor(entity, 255, 255, 255, alpha);
+	g_HeatMapEntities.Push(EntIndexToEntRef(entity));
+}
+void CreateHeatMapStatue(HeatMapType type, float pos[3], int alpha = 255) {
+	PrecacheModel("models/survivors/survivor_teenangst.mdl");
+	int entity = CreateEntityByName("commentary_dummy");
+	if(entity == -1) return;
+	DispatchKeyValue(entity, "disableshadows", "1");
+	DispatchKeyValue(entity, "model", "models/survivors/survivor_teenangst.mdl");
+	DispatchKeyValue(entity, "targetname", "stats_heatmap_visual");
+	DispatchKeyValue(entity, "StartingAnim", HEATMAP_ANIM[type]);
+	TeleportEntity(entity, pos, NULL_VECTOR, NULL_VECTOR);
+	if(!DispatchSpawn(entity)) return;
+	SetEntProp(entity, Prop_Send, "m_nSolidType", 6);
+	SetEntProp(entity, Prop_Send, "m_CollisionGroup", 1);
+	SetEntProp(entity, Prop_Send, "movetype", MOVETYPE_NONE);
+	SetEntPropFloat(entity, Prop_Send, "m_flCycle", HEATMAP_ANIM_ANIM_FRAME[type]);
+	SetEntProp(entity, Prop_Data, "m_nNextThinkTick", -1);    
+	L4D2_SetEntityGlow(entity, L4D2Glow_Constant, 10000, 0, HEATMAP_TYPE_COLOR[type], false);
+	SetEntityRenderMode(entity, RENDER_TRANSALPHA);
+	SetEntityRenderColor(entity, 255, 255, 255, alpha);
+	g_HeatMapEntities.Push(EntIndexToEntRef(entity));
+}
+
+int GetTotalEntitiesCount() {
+	int count = 0;	    
+	int max = GetMaxEntities();
+	for (int i = 0; i < max; i++) {
+		if(IsValidEntity(i)) {
+			count++;
+		}
+	}
+	return count;
+}
+
+
+void GetHeatMapData(HeatMapType filterType, const char[] targetPlayer = "", int respondToUserId = 0) {
+	char query[1024];
+	if(filterType == HeatMap_Any) {
+		if(targetPlayer[0] == '\0')
+			Format(query, sizeof(query), "SELECT x,y,z,COUNT(*) as count,type FROM stats_heatmaps WHERE map='%s' GROUP BY x,y,z", game.name);
+		else
+			Format(query, sizeof(query), "SELECT x,y,z,COUNT(*) as count,type FROM stats_heatmaps WHERE map='%s' AND steamid='%s' GROUP BY x,y,z", game.name, targetPlayer);
+	} else {
+		if(targetPlayer[0] == '\0')
+			Format(query, sizeof(query), "SELECT x,y,z,COUNT(*) as count,type FROM stats_heatmaps WHERE type=%d AND map='%s' GROUP BY x,y,z", view_as<int>(filterType), game.name);
+		else
+			Format(query, sizeof(query), "SELECT x,y,z,COUNT(*) as count,type FROM stats_heatmaps WHERE type=%d AND map='%s' AND steamid='%s' GROUP BY x,y,z", view_as<int>(filterType), game.name, targetPlayer);
+	}
+	
+	
+	SQL_TQuery(g_db, DBCT_FetchHeatMap, query, respondToUserId);
+}
+
+void DBCT_FetchHeatMap(Handle db, DBResultSet results, const char[] error, int respondToUserId) {
+	if(db == null || results == null) {
+		LogError("DBCT_FetchHeatMap returned error: %s", error);
+		int respondTo = GetClientOfUserId(respondToUserId);
+		if(respondTo > 0) {
+			PrintToChat(respondTo, "Error fetching data");
+		}
+	} else {
+		int respondTo = GetClientOfUserId(respondToUserId);
+		if(respondTo > 0) {
+			PrintToChat(respondTo, "Enabled heatmap visualization. Enter command again to turn off.");
+		}
+		// 200 entity buffer to prevent crashes
+		int allowedPoints = (GetMaxEntities() - GetTotalEntitiesCount()) - 200;
+		g_HeatMapEntities = new ArrayList();
+		char buffer[32];
+		while(results.FetchRow() && allowedPoints > 0) {
+			float pos[3];
+			pos[0] = results.FetchFloat(0);
+			pos[1] = results.FetchFloat(1);
+			pos[2] = results.FetchFloat(2);
+			Format(buffer, sizeof(buffer), "%.0f,%.0f,%.0f", pos[0], pos[1], pos[2]);
+			// Set the count
+			int count = results.FetchInt(3);
+			int type = results.FetchInt(4);
+			
+			int alpha = count * 8;
+			if(type >= view_as<int>(HeatMap_Any))
+				type = view_as<int>(HeatMap_Periodic);
+			CreateHeatMapStatue(view_as<HeatMapType>(type), pos, alpha);
+			// CreateHeatMapEntity(pos, HEATMAP_TYPE_COLOR[type], alpha);
+			allowedPoints--;
+		}
+		if(results.RowCount == 0) {
+			ReplyToCommand(respondTo, "No data found for this map.");
+			delete g_HeatMapEntities;
+		} else if(allowedPoints <= 0) {
+			PrintToChat(respondTo, "Warn: Ran out of visualization budget. Try filtering certain types.");
+		} else {
+			PrintToChat(respondTo, "Showing \x04%d\x01 points", results.RowCount);
+		}
+	}
+}
+HeatMapType GetHeatMapType(const char arg[32]) {
+	for(int i = 0; i < view_as<int>(HeatMap_Any); i++) {
+		if(StrEqual(arg, HEATMAP_IDS[i])) {
+			return view_as<HeatMapType>(i);
+		}
+	}
+	return HeatMap_Any;
+}
+
 #define DATE_FORMAT "%F at %I:%M %p"
 Action Command_PlayerStats(int client, int args) {
 	if(args == 0) {
@@ -1079,6 +1301,12 @@ public Action Command_DebugStats(int client, int args) {
 		ReplyToCommand(client, "Statistics for %s", players[client].steamid);
 		ReplyToCommand(client, "lastDamage = %f", players[client].lastWeaponDamage);
 		ReplyToCommand(client, "points = %d", players[client].points);
+		for(int i = 1; i <= MaxClients; i++) {
+			if(IsClientInGame(i) && !IsFakeClient(i) && GetClientTeam(i) == 2) {
+				ReplyToCommand(client, "p#%i | pending heatmaps: %d | ", i, players[i].pendingHeatmaps.Length, players[i].pointsQueue.Length);
+			}
+		}
+		ReplyToCommand(client, "connections = %d", players[client].connections);
 		// ReplyToCommand(client, "Total weapons cache %d", game.weaponUsages.Size);
 	}
 	return Plugin_Handled;
@@ -1202,7 +1430,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 			players[attacker].damageInfectedGiven += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
-			players[attacker].RecordPoint(PType_FriendlyFire, -20);
+			players[attacker].RecordPoint(PType_FriendlyFire, -40);
 			players[attacker].damageSurvivorFF += dmg;
 			players[attacker].damageSurvivorFFCount++;
 			players[victim].damageFFTaken += dmg;
@@ -1405,6 +1633,7 @@ bool isTransition = false;
 public void Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
 	game.startTime = GetTime();
 	game.clownHonks = 0;
+	game.submitted = false;
 
 	PrintToServer("[l4d2_stats_recorder] Started recording statistics for new session");
 	for(int i = 1; i <= MaxClients; i++) {
@@ -1418,6 +1647,10 @@ public void OnMapStart() {
 	}else{
 		game.difficulty = GetDifficultyInt();
 	}
+	game.GetMap();
+}
+public void OnMapEnd() {
+	if(g_HeatMapEntities != null) delete g_HeatMapEntities;
 }
 public void Event_VersusRoundStart(Event event, const char[] name, bool dontBroadcast) {
 	if(game.IsVersusMode()) {
@@ -1466,12 +1699,11 @@ public void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBr
 	if(L4D_IsMissionFinalMap()) {
 		game.difficulty = GetDifficultyInt();
 		game.finished = true;
-		game.GetMap();
 	}
 }
 
 public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
-	if(!L4D_IsMissionFinalMap()) return;
+	if(!L4D_IsMissionFinalMap() || game.submitted) return;
 	game.difficulty = event.GetInt("difficulty");
 	game.finished = false;
 	char shortID[9];
@@ -1542,6 +1774,7 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 	for(int i = 1; i <= MaxClients; i++) {
 		players[i].clownsHonked = 0;
 	}
+	game.submitted = true;
 	game.clownHonks = 0;
 }
 
@@ -1600,25 +1833,4 @@ stock int GetDifficultyInt() {
 	else if(StrEqual(diff, "hard", false)) return 2;
 	else if(StrEqual(diff, "impossible", false)) return 3;
 	else return 1;
-}
-stock int GetSurvivorType(const char[] modelName) {
-	if(StrContains(modelName,"biker",false) > -1) {
-		return 6;
-	}else if(StrContains(modelName,"teenangst",false) > -1) {
-		return 5;
-	}else if(StrContains(modelName,"namvet",false) > -1) {
-		return 4;
-	}else if(StrContains(modelName,"manager",false) > -1) {
-		return 7;
-	}else if(StrContains(modelName,"coach",false) > -1) {
-		return 2;
-	}else if(StrContains(modelName,"producer",false) > -1) {
-		return 1;
-	}else if(StrContains(modelName,"gambler",false) > -1) {
-		return 0;
-	}else if(StrContains(modelName,"mechanic",false) > -1) {
-		return 3;
-	}else{
-		return -1;
-	}
 }

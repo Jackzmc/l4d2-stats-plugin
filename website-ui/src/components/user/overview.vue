@@ -266,7 +266,14 @@
                     <td>Clowns Honked</td>
                     <td class="tvalue">{{user.clowns_honked | formatNumber}}</td>
                 </tr>
-                <!-- rocks_hitby -->
+                <tr>
+                  <td>Boomed others</td>
+                  <td class="tvalue">{{ user.boomer_mellos | formatNumber }}</td>
+                </tr>
+                <tr>
+                  <td>Boomed self</td>
+                  <td class="tvalue">{{ user.boomer_mellos_self | formatNumber }}</td>
+                </tr>
                 </tbody>
             </table>
             </div>
@@ -286,10 +293,6 @@
                 <td class="tvalue">{{user.witches_crowned | formatNumber}}</td>
             </tr>
             <tr>
-                <td>Witches Crowned <em>(angry)</em></td>
-                <td class="tvalue">{{user.witches_crowned_angry | formatNumber}}</td>
-            </tr>
-            <tr>
                 <td>Smokers Self-cleared</td>
                 <td class="tvalue">{{user.smokers_selfcleared | formatNumber}}</td>
             </tr>
@@ -298,11 +301,11 @@
                 <td class="tvalue">{{user.hunters_deadstopped | formatNumber}}</td>
             </tr>
             <tr>
-                <td>Times Helped Pinned Teammate</td>
+                <td>Times helped pinned teammate</td>
                 <td class="tvalue">{{user.cleared_pinned | formatNumber}}</td>
             </tr>
             <tr>
-                <td>Times hit by Tank Rock</td>
+                <td>Times hit by tank rock</td>
                 <td class="tvalue">{{user.rocks_hitby | formatNumber}}</td>
             </tr>
             </tbody>

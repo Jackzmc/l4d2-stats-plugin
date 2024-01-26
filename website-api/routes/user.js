@@ -237,7 +237,8 @@ export default function(pool) {
 
             ctx.font = 'light 8pt "arial"'
             ctx.fillStyle = '#737578'
-            ctx.fillText('stats.jackz.me', canvas.width - 72, canvas.height - 8)
+            if(process.env.IMAGE_CREDITS)
+                ctx.fillText(process.env.IMAGE_CREDITS, canvas.width - 72, canvas.height - 8)
 
             res.set('Content-Type', 'image/png')
             canvas.createPNGStream().pipe(res)

@@ -101,7 +101,7 @@ export default {
           return name ?? weapon
         },
         formatMinutes(minutes) {
-          return formatDistance(0, new Date(minutes * 60000))
+          return formatDistance(0, new Date(minutes * 60 * 1000))
         },
         formatNumber(num) {
           return Number(num).toLocaleString()

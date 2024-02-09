@@ -186,6 +186,14 @@
                     <td>With Melee</td>
                     <td class="tvalue">{{user.melee_kills | formatNumber}}</td>
                 </tr>
+                <tr>
+                    <td>Incaps</td>
+                    <td class="tvalue">{{user.survivor_incaps | formatNumber}}</td>
+                </tr>
+                <tr>
+                    <td>Deaths</td>
+                    <td class="tvalue">{{user.survivor_deaths | formatNumber}}</td>
+                </tr>
                 </tbody>
             </table>
             </div>
@@ -239,14 +247,6 @@
                 </thead>
                 <tbody>
                 <tr>
-                    <td>Incaps</td>
-                    <td class="tvalue">{{user.survivor_incaps | formatNumber}}</td>
-                </tr>
-                <tr>
-                    <td>Deaths</td>
-                    <td class="tvalue">{{user.survivor_deaths | formatNumber}}</td>
-                </tr>
-                <tr>
                     <td>Doors Opened</td>
                     <td class="tvalue">{{user.door_opens | formatNumber}}</td>
                 </tr>
@@ -267,12 +267,16 @@
                     <td class="tvalue">{{user.clowns_honked | formatNumber}}</td>
                 </tr>
                 <tr>
-                  <td>Boomed others</td>
+                  <td>Boomed Others</td>
                   <td class="tvalue">{{ user.boomer_mellos | formatNumber }}</td>
                 </tr>
                 <tr>
-                  <td>Boomed self</td>
+                  <td>Boomed Self</td>
                   <td class="tvalue">{{ user.boomer_mellos_self | formatNumber }}</td>
+                </tr>
+                <tr>
+                  <td>Kits Forgotten</td>
+                  <td class="tvalue">{{ user.forgot_kit_count | formatNumber }}</td>
                 </tr>
                 </tbody>
             </table>

@@ -1082,7 +1082,7 @@ Action SoundHook(int clients[MAXPLAYERS], int& numClients, char sample[PLATFORM_
 	if(numClients > 0 && StrContains(sample, "clown") > -1) {
 		// The sound of the honk comes from the honker directly, so we loop all the receiving clients
 		// Then the one with the exact coordinates of the sound, is the honker 
-		float zPos[3], survivorPos[3];
+		static float zPos[3], survivorPos[3];
 		GetEntPropVector(entity, Prop_Send, "m_vecOrigin", zPos);
 		for(int i = 0; i < numClients; i++) {
 			int client = clients[i];
@@ -1426,7 +1426,8 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 				IncrementSessionStat(client);
 				RecordCampaign(client);
 				IncrementStat(client, "finales_won", 1);
-				PrintToChat(client, "View this game's statistics at https://jackz.me/c/%s", shortID);
+				if(game.uuid[0] != '\0')
+					PrintToChat(client, "View this game's statistics at https://jackz.me/c/%s", shortID);
 				if(game.clownHonks > 0) {
 					PrintToChat(client, "%d clowns were honked this session, you honked %d", game.clownHonks, players[client].clownsHonked);
 				}

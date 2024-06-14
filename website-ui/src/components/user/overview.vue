@@ -34,7 +34,7 @@
                 <th>Total Time Played</th>
                 <td style="color: blue">{{ humanReadable(user.minutes_played)}}</td>
             </tr>
-            <tr>
+            <!-- <tr v-if="playrating.data||playstyle.data">
                 <td><b>Play Style</b> <em class="is-pulled-right is-inline">(in alpha)</em></td>
                 <td v-if="playstyle.error">
                     <b-tooltip type="is-danger" class="has-text-danger" :label="playstyle.error">Failed to fetch</b-tooltip>
@@ -63,7 +63,7 @@
                     <em>No rating</em>
                 </td>
                 <td v-else>Loading...</td>
-            </tr>
+            </tr> -->
             </tbody>
         </table>
         <hr>
@@ -603,47 +603,47 @@ export default {
                 console.error('Could not load average values', err)
             })
         },
-        fetchPlaystyle() {
-            this.playstyle.data = null
-            this.playstyle.error = null
-            this.$http.get(`https://jackz.me/l4d2/scripts/analyze.php?steamid=${this.user.steamid}&concise=1`)
-            .then(res => {
-                if(res.data.result)
-                  return this.playstyle.data = `${res.data.result.name} (${Math.round(res.data.result.value * 10000) / 10000})`
-                switch(res.data.code) {
-                  case "NO_DATA":
-                    this.playstyle.data = "Not enough data"
-                    break
-                  case "NO_SESSION_DATA":
-                    this.playstyle.data = "No sessions have been played"
-                    break
-                  default:
-                    this.playstyle.data = res.data.code
-                }
-            })
-            .catch(err => {
-                console.error('Could not get playstyle: ', err)
-                this.playstyle.error = err.message
-            })
-        },
-        fetchPlayrating() {
-            this.playrating.data = null
-            this.playrating.error = null
-            const url = process.env.NODE_ENV === "production"
-                ? "https://admin.jackz.me/api/analyze/"
-                : "http://localhost:8081/api/analyze/"
-            this.$http.get(`${url}${this.user.steamid}`)
-            .then(res => {
-                this.playrating.data = res.data.rating
-            })
-            .catch(err => {
-                console.error('Could not get playrating: ', err)
-                if(err.request.status)
-                    this.playrating.data = { key: null }
-                else
-                    this.playrating.error = err.message
-            })
-        },
+        // fetchPlaystyle() {
+        //     this.playstyle.data = null
+        //     this.playstyle.error = null
+        //     this.$http.get(`https://jackz.me/l4d2/scripts/analyze.php?steamid=${this.user.steamid}&concise=1`)
+        //     .then(res => {
+        //         if(res.data.result)
+        //           return this.playstyle.data = `${res.data.result.name} (${Math.round(res.data.result.value * 10000) / 10000})`
+        //         switch(res.data.code) {
+        //           case "NO_DATA":
+        //             this.playstyle.data = "Not enough data"
+        //             break
+        //           case "NO_SESSION_DATA":
+        //             this.playstyle.data = "No sessions have been played"
+        //             break
+        //           default:
+        //             this.playstyle.data = res.data.code
+        //         }
+        //     })
+        //     .catch(err => {
+        //         console.error('Could not get playstyle: ', err)
+        //         this.playstyle.error = err.message
+        //     })
+        // },
+        // fetchPlayrating() {
+        //     this.playrating.data = null
+        //     this.playrating.error = null
+        //     const url = process.env.NODE_ENV === "production"
+        //         ? "https://admin.jackz.me/api/analyze/"
+        //         : "http://localhost:8081/api/analyze/"
+        //     this.$http.get(`${url}${this.user.steamid}`)
+        //     .then(res => {
+        //         this.playrating.data = res.data.rating
+        //     })
+        //     .catch(err => {
+        //         console.error('Could not get playrating: ', err)
+        //         if(err.request.status)
+        //             this.playrating.data = { key: null }
+        //         else
+        //             this.playrating.error = err.message
+        //     })
+        // },
         fetchTopStats() {
             return this.$http.get(`/api/user/${this.user.steamid}/top`)
             .then(res => {

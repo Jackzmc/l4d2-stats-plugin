@@ -211,8 +211,6 @@ export default function(pool) {
 
             const canvas = Canvas.createCanvas(588, 194)
             const ctx = canvas.getContext('2d')
-
-            const playStyle = await getPlayStyle(req.params.user)
             if(req.query.gradient !== undefined) {
                 const bannerBase = await Canvas.loadImage(`assets/banner-base.png`)
                 ctx.drawImage(bannerBase, 0, 0, canvas.width, canvas.height)
@@ -225,9 +223,12 @@ export default function(pool) {
             ctx.fillStyle = '#cc105f'
             ctx.fillText(name, 120, 40)
 
-            ctx.font = '16pt Sans'
-            ctx.fillStyle = '#5c5e5e'
-            ctx.fillText(playStyle.name, 120, 60)
+            const playStyle = await getPlayStyle(req.params.user)
+            if(playStyle) {
+                ctx.font = '16pt Sans'
+                ctx.fillStyle = '#5c5e5e'
+                ctx.fillText(playStyle.name, 120, 60)
+            }
 
             setLine(ctx, 'Top Weapon: ', top.weapon.name || top.weapon.id, 120, 90)
             setLine(ctx, 'Top Map: ', top.map.name || top.map.id, 120, 111)
@@ -265,11 +266,11 @@ export default function(pool) {
         [row] = await pool.execute("SELECT top_weapon as k, COUNT(*) as count FROM `stats_games` WHERE steamid = ? AND top_weapon IS NOT NULL AND top_weapon != '' GROUP BY `top_weapon` ORDER BY count DESC LIMIT 1 ", [user]);
         const topWeapon = row.length > 0 ? (row[0]?.k).replace('weapon_','') : null;
         [row] = await pool.execute('SELECT (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` NOT RLIKE "^c[0-9]+m") as custom,  (SELECT COUNT(*) FROM `stats_games` WHERE `steamid` = ? AND `map` RLIKE "^c[0-9]+m") as official FROM `stats_games` LIMIT 1', [user, user]);
-        const maps = {
-            official: row[0].official,
+        const maps = row[0] ? {
+            official: row[0].official ,
             custom: row[0].custom,
             total: row[0].custom + row[0].official,
-        }
+        } : { official: 0, custom: 0, total: 0 }
         return {
             top: {
                 characterName: topCharacter,
@@ -292,8 +293,10 @@ export default function(pool) {
         }
     }
 
-    async function getPlayStyle(user) {
-        const res = await fetch(`https://jackz.me/l4d2/scripts/analyze.php?steamid=${user}&concise=1`)
+    async function getPlayStyle(steamid) {
+        if(!process.env.PLAYSTYLE_API) return
+        const url = process.env.PLAYSTYLE_API.replace(/\{steamid}/g, steamid)
+        const res = await fetch(url)
         if(res.ok) {
             const { result } = await res.json()
             return result

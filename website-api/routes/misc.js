@@ -110,10 +110,8 @@ export default function(pool) {
             avg(nullif(hunter_kills,0)) as hunter_kills,
             avg(nullif(charger_kills,0)) as charger_kills
             FROM stats_games WHERE date_start > 0`)
-            if(topStats.length == 0 || maps.length == 0 || userCount.length == 0) {
-                return res.status(500).json({error:'Internal Server Error'})
-            }else{
-                let stats = {};
+            let stats = {};
+            if(topStats[0]) {
                 for(const key in topStats[0]) {
                     if(key == "difficulty") {
                         stats[key] = Math.round(parseFloat(topStats[0][key]))
@@ -121,13 +119,13 @@ export default function(pool) {
                         stats[key] = parseFloat(topStats[0][key])
                     }
                 }
-                res.json({
-                    topMap: maps[0].map,
-                    bottomMap: maps[maps.length-1].map,
-                    averagePlayers: Math.round(parseFloat(userCount[0].avgPlayers)),
-                    stats
-                })
             }
+            res.json({
+                topMap: maps.length > 0 ? maps[0].map : null,
+                bottomMap: maps.length > 0 ? maps[maps.length-1].map : null,
+                averagePlayers: userCount.length > 0 ? Math.round(parseFloat(userCount[0].avgPlayers)) : 0,
+                stats
+            })
         }catch(err) {
             console.error('/api/summary',err.message)
             res.status(500).json({error:'Internal Server Error'})

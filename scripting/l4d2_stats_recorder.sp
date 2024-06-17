@@ -335,7 +335,7 @@ public void OnPluginStart() {
 
 	hZDifficulty = FindConVar("z_difficulty");
 
-	hHeatmapActive = CreateConVar("l4d2_statsrecorder_heatmaps_enabled", "1", "Should heatmap data be recorded? 1 for ON. Visualize heatmaps with /heatmaps", FCVAR_NONE, true, 0.1);
+	hHeatmapActive = CreateConVar("l4d2_statsrecorder_heatmaps_enabled", "0", "Should heatmap data be recorded? 1 for ON. Visualize heatmaps with /heatmaps", FCVAR_NONE, true, 0.1);
 	hHeatmapInterval = CreateConVar("l4d2_statsrecorder_heatmap_interval", "60", "Determines how often position heatmaps are recorded in seconds.", FCVAR_NONE, true, 0.1);
 
 

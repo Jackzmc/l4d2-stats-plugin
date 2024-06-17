@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.28, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.37, for Linux (x86_64)
 --
 -- Host: 127.0.0.1    Database: left4dead2
 -- ------------------------------------------------------
--- Server version	5.5.5-10.6.16-MariaDB-1:10.6.16+maria~deb11
+-- Server version	11.3.2-MariaDB-1:11.3.2+maria~deb11
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -16,43 +16,27 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `stats_points`
---
-
-DROP TABLE IF EXISTS `stats_points`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `stats_points` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `steamid` varchar(32) NOT NULL,
-  `type` smallint(6) NOT NULL,
-  `amount` smallint(6) NOT NULL,
-  `timestamp` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `stats_points_stats_users_steamid_fk` (`steamid`),
-  KEY `stats_points_timestamp_index` (`timestamp`),
-  CONSTRAINT `stats_points_stats_users_steamid_fk` FOREIGN KEY (`steamid`) REFERENCES `stats_users` (`steamid`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=310703 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `stats_games`
 --
 
-DROP TABLE IF EXISTS `stats_games`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `stats_games` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `steamid` varchar(20) NOT NULL,
-  `map` varchar(128) NOT NULL,
+  `map` varchar(128) NOT NULL COMMENT 'the map id',
   `flags` tinyint(4) NOT NULL DEFAULT 0,
-  `campaignID` varchar(255) DEFAULT NULL,
+  `campaignID` uuid NOT NULL COMMENT 'unique campaign session id',
   `gamemode` varchar(30) CHARACTER SET ascii COLLATE ascii_general_ci DEFAULT NULL,
   `difficulty` tinyint(2) NOT NULL DEFAULT 0,
-  `date_start` bigint(20) unsigned DEFAULT NULL,
+  `duration` int(11) GENERATED ALWAYS AS ((`date_end` - `date_start`) / 60) VIRTUAL COMMENT 'in minutes',
+  `join_time` bigint(20) unsigned NOT NULL COMMENT 'when user first joined game',
+  `date_start` bigint(20) unsigned DEFAULT NULL COMMENT 'when campaign started',
   `date_end` bigint(20) NOT NULL,
   `finale_time` int(11) unsigned NOT NULL,
+  `characterType` tinyint(3) unsigned DEFAULT NULL,
+  `ping` tinyint(4) unsigned DEFAULT NULL,
+  `server_tags` text DEFAULT NULL,
   `ZombieKills` int(10) unsigned NOT NULL DEFAULT 0,
   `MeleeKills` smallint(10) unsigned NOT NULL DEFAULT 0,
   `SurvivorDamage` int(10) unsigned NOT NULL DEFAULT 0,
@@ -72,15 +56,12 @@ CREATE TABLE `stats_games` (
   `ReviveOtherCount` smallint(10) unsigned NOT NULL DEFAULT 0,
   `Incaps` smallint(10) unsigned NOT NULL DEFAULT 0,
   `Deaths` tinyint(10) unsigned NOT NULL DEFAULT 0,
-  `ping` tinyint(3) unsigned DEFAULT NULL,
   `boomer_kills` smallint(10) unsigned DEFAULT NULL,
   `smoker_kills` smallint(10) unsigned DEFAULT NULL,
   `jockey_kills` smallint(10) unsigned DEFAULT NULL,
   `hunter_kills` smallint(10) unsigned DEFAULT NULL,
   `spitter_kills` smallint(10) unsigned DEFAULT NULL,
   `charger_kills` smallint(10) unsigned DEFAULT NULL,
-  `server_tags` text DEFAULT NULL,
-  `characterType` tinyint(3) unsigned DEFAULT NULL,
   `SpecialInfectedKills` int(10) unsigned GENERATED ALWAYS AS (`boomer_kills` + `spitter_kills` + `jockey_kills` + `charger_kills` + `hunter_kills` + `smoker_kills`) VIRTUAL,
   `honks` smallint(5) unsigned DEFAULT 0,
   `top_weapon` varchar(64) DEFAULT NULL,
@@ -101,17 +82,17 @@ CREATE TABLE `stats_games` (
   PRIMARY KEY (`id`),
   KEY `userindex` (`steamid`),
   CONSTRAINT `matchUser` FOREIGN KEY (`steamid`) REFERENCES `stats_users` (`steamid`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=56686 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=65406 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `stats_heatmaps`
 --
 
-DROP TABLE IF EXISTS `stats_heatmaps`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `stats_heatmaps` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `steamid` varchar(32) NOT NULL,
   `timestamp` int(11) NOT NULL DEFAULT unix_timestamp(),
   `map` varchar(64) NOT NULL,
@@ -119,15 +100,33 @@ CREATE TABLE `stats_heatmaps` (
   `x` int(11) DEFAULT NULL,
   `y` int(11) DEFAULT NULL,
   `z` int(11) DEFAULT NULL,
-  PRIMARY KEY (`steamid`,`timestamp`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=409357 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `stats_points`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stats_points` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `steamid` varchar(32) NOT NULL,
+  `type` smallint(6) NOT NULL,
+  `amount` smallint(6) NOT NULL,
+  `timestamp` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `stats_points_stats_users_steamid_fk` (`steamid`),
+  KEY `stats_points_timestamp_index` (`timestamp`),
+  CONSTRAINT `stats_points_stats_users_steamid_fk` FOREIGN KEY (`steamid`) REFERENCES `stats_users` (`steamid`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=778980 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `stats_users`
 --
 
-DROP TABLE IF EXISTS `stats_users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `stats_users` (
@@ -187,6 +186,7 @@ CREATE TABLE `stats_users` (
   `kills_minigun` int(10) unsigned NOT NULL DEFAULT 0,
   `caralarms_activated` smallint(5) unsigned NOT NULL DEFAULT 0,
   `witches_crowned` int(10) unsigned NOT NULL DEFAULT 0,
+  `witches_crowned_angry` smallint(5) unsigned NOT NULL DEFAULT 0,
   `smokers_selfcleared` int(10) unsigned NOT NULL DEFAULT 0,
   `rocks_hitby` int(10) unsigned NOT NULL DEFAULT 0,
   `hunters_deadstopped` int(10) unsigned NOT NULL DEFAULT 0,
@@ -194,9 +194,9 @@ CREATE TABLE `stats_users` (
   `times_pinned` int(10) unsigned NOT NULL DEFAULT 0,
   `clowns_honked` smallint(5) unsigned NOT NULL DEFAULT 0,
   `minutes_idle` mediumint(8) unsigned NOT NULL DEFAULT 0,
-  `times_boomed` mediumint(8) unsigned NOT NULL DEFAULT 0,
   `boomer_mellos` int(11) DEFAULT 0,
   `boomer_mellos_self` smallint(6) DEFAULT 0,
+  `forgot_kit_count` smallint(5) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`steamid`),
   KEY `points` (`steamid`),
   FULLTEXT KEY `last_alias` (`last_alias`)
@@ -207,7 +207,6 @@ CREATE TABLE `stats_users` (
 -- Table structure for table `stats_weapons_usage`
 --
 
-DROP TABLE IF EXISTS `stats_weapons_usage`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `stats_weapons_usage` (
@@ -220,6 +219,21 @@ CREATE TABLE `stats_weapons_usage` (
   PRIMARY KEY (`steamid`,`weapon`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `map_info`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `map_info` (
+  `mapid` varchar(32) NOT NULL,
+  `name` varchar(128) NOT NULL,
+  `chapter_count` smallint(6) DEFAULT NULL,
+  `flags` smallint(6) DEFAULT 0 COMMENT '1:official',
+  PRIMARY KEY (`mapid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -230,4 +244,4 @@ CREATE TABLE `stats_weapons_usage` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-11-19 10:59:10
+-- Dump completed on 2024-06-17 13:36:16

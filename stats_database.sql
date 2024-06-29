@@ -235,6 +235,15 @@ CREATE TABLE `map_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+create table map_ratings
+(
+    map_id  int          not null,
+    steamid varchar(32)  not null,
+    value   tinyint      not null,
+    comment varchar(200) null,
+    primary key (map_id, steamid)
+);
+
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

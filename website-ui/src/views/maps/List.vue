@@ -20,6 +20,9 @@
                 <strong>{{ props.row.map_name || props.row.map_id }}</strong>
               </router-link>
             </b-table-column>
+            <b-table-column v-slot="props" field="games_played" label="Games Played">
+                {{ props.row.games_played | formatNumber }}
+            </b-table-column>
             <b-table-column v-slot="props" field="avg_rating" label="Rating">
             <b-icon size="is-small" pack="fas" icon="star" v-for="i in Math.round(props.row.avg_rating)" :key="i" />
             <b-icon size="is-small" pack="far" icon="star" v-for="i in 5-Math.round( props.row.avg_rating ) " :key="i+10" />

@@ -237,7 +237,7 @@ CREATE TABLE `map_info` (
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 create table map_ratings
 (
-    map_id  int          not null,
+    map_id  varchar(64)  not null,
     steamid varchar(32)  not null,
     value   tinyint      not null,
     comment varchar(200) null,

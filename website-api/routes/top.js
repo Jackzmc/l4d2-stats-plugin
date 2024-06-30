@@ -3,7 +3,7 @@ const router = Router()
 import routeCache from 'route-cache'
 
 export default function(pool) {
-    router.get('/users/:page?',async(req,res) => {
+    router.get('/users/:page?', routeCache.cacheSeconds(60), async(req,res) => {
         try {
             const MAX_RESULTS = req.query.max_results ? parseInt(req.query.max_results) || 15 : 15;
     

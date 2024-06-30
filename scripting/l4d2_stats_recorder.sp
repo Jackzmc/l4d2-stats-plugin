@@ -38,6 +38,7 @@ enum queryType {
 	QUERY_POINTS,
 	QUERY_UPDATE_USER,
 	QUERY_MAP_INFO,
+	QUERY_MAP_RATE,
 	_QUERY_MAX
 }
 char QUERY_TYPE_ID[_QUERY_MAX][] = {
@@ -47,7 +48,8 @@ char QUERY_TYPE_ID[_QUERY_MAX][] = {
 	"UPDATE_STAT",
 	"POINTS",
 	"UPDATE_USER",
-	"MAP_INFO"
+	"MAP_INFO",
+	"MAP_RATE"
 };
 
 static ConVar hServerTags, hZDifficulty, hClownMode, hPopulationClowns, hMinShove, hMaxShove, hClownModeChangeChance;
@@ -60,6 +62,7 @@ static bool lateLoaded; //Has finale started?
 
 int g_iLastBoomUser;
 float g_iLastBoomTime;
+Menu g_rateMenu;
 
 enum struct Game {
 	int difficulty;
@@ -71,7 +74,8 @@ enum struct Game {
 	bool submitted; // finale_win triggered
 	char gamemode[32];
 	char uuid[64];
-	char name[64];
+	char mapId[64];
+	char mapTitle[128];
 	bool isCustomMap;
 
 	bool IsVersusMode() {
@@ -79,8 +83,9 @@ enum struct Game {
 	}
 
 	void GetMap() {
-		GetCurrentMap(this.name, sizeof(this.name));
-		this.isCustomMap = this.name[0] != 'c' || !IsCharNumeric(this.name[1]) || this.name[2] != 'm';
+		GetCurrentMap(this.mapId, sizeof(this.mapId));
+		this.isCustomMap = this.mapId[0] != 'c' || !IsCharNumeric(this.mapId[1]) || this.mapId[2] != 'm';
+		InfoEditor_GetString(0, "DisplayTitle", this.mapTitle, sizeof(this.mapTitle));
 	}
 }
 
@@ -306,6 +311,8 @@ public void OnPluginStart() {
 		SetFailState("Failed to connect to database.");
 	}
 
+	g_rateMenu = SetupRateMenu();
+
 	if(lateLoaded) {
 		//If plugin late loaded, grab all real user's steamids again, then recreate user
 		for(int i = 1; i <= MaxClients; i++) {
@@ -362,6 +369,7 @@ public void OnPluginStart() {
 	//Used for campaign recording:
 	HookEvent("finale_start", Event_FinaleStart);
 	HookEvent("gauntlet_finale_start", Event_FinaleStart);
+	HookEvent("finale_vehicle_leaving", Event_FinaleVehicleLeaving);
 	HookEvent("finale_vehicle_ready", Event_FinaleVehicleReady);
 	HookEvent("finale_win", Event_FinaleWin);
 	HookEvent("hegrenade_detonate", Event_GrenadeDenonate);
@@ -382,6 +390,7 @@ public void OnPluginStart() {
 	RegAdminCmd("sm_stats", Command_PlayerStats, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_heatmaps", Command_Heatmaps, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_heatmap", Command_Heatmaps, ADMFLAG_GENERIC);
+	RegConsoleCmd("sm_rate", Command_RateMap);
 
 	AutoExecConfig(true, "l4d2_stats_recorder");
 
@@ -616,7 +625,7 @@ void RecordCampaign(int client) {
 		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
 		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `join_time`,`date_start`,`date_end`, `zombieKills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `MeleeKills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`characterType`,`honks`,`top_weapon`, `SurvivorFFCount`, `SurvivorFFTakenCount`, `SurvivorFFDamage`, `SurvivorFFTakenDamage`) VALUES ('%s','%s','%s','%s',%d,%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,'%s',%d,%d,%d,%d)",
 			players[client].steamid,
-			game.name,
+			game.mapId,
 			gamemode,
 			game.uuid,
 			finaleTimeTotal,
@@ -787,7 +796,7 @@ void SubmitHeatmaps(int client) {
 			Format(query, sizeof(query), "%s('%s','%s',%d,%d,%d,%d,%d)%c", 
 				query,
 				players[client].steamid,
-				game.name, //map nam
+				game.mapId, //map nam
 				hmd.timestamp,
 				hmd.type,
 				hmd.pos[0],
@@ -942,12 +951,22 @@ public void DBCT_Generic(Handle db, Handle child, const char[] error, queryType 
 		}
 	}
 }
+void DBCT_RateMap(Handle db, Handle child, const char[] error, int userid) { 
+	int client = GetClientOfUserId(userid);
+	if(client == 0) return;
+	if(db == null || child == null) {
+		LogError("DBCT_RateMap error: %s", error);
+		PrintToChat(client, "An error occurred while rating campaign");
+	} else {
+		PrintToChat(client, "Rating submitted for %s", game.mapTitle);
+	}
+}
 void SubmitMapInfo() {
 	char title[128];
 	InfoEditor_GetString(0, "DisplayTitle", title, sizeof(title));
 	int chapters = L4D_GetMaxChapters();
 	char query[128];
-	g_db.Format(query, sizeof(query), "INSERT INTO map_info (mapid,name,chapter_count) VALUES ('%s','%s',%d)", game.name, title, chapters);
+	g_db.Format(query, sizeof(query), "INSERT INTO map_info (mapid,name,chapter_count) VALUES ('%s','%s',%d)", game.mapId, title, chapters);
 	g_db.Query(DBCT_Generic, query, QUERY_MAP_INFO, DBPrio_Low);
 }
 public void DBCT_GetUUIDForCampaign(Handle db, DBResultSet results, const char[] error, any data) {
@@ -1048,6 +1067,63 @@ public Action Command_DebugStats(int client, int args) {
 	return Plugin_Handled;
 }
 #endif
+
+// RATING
+
+Menu SetupRateMenu() {
+	Menu menu = new Menu(MapVoteHandler);
+	menu.SetTitle("Rate Map");
+	// menu.AddItem("0", "0");
+	menu.AddItem("1", "1");
+	menu.AddItem("2", "2");
+	menu.AddItem("3", "3");
+	menu.AddItem("4", "4");
+	menu.AddItem("5", "5 (Good)");
+	menu.ExitButton = true;
+	return menu;
+}
+
+Action Command_RateMap(int client, int args) {
+	if(args == 0) {
+		g_rateMenu.SetTitle("Rate %s", game.mapTitle);
+		g_rateMenu.Display(client, 0);
+	} else if(args > 1) {
+		char arg[255];
+		GetCmdArg(1, arg, sizeof(arg));
+		int value = StringToInt(arg);
+
+		GetCmdArg(2, arg, sizeof(arg));
+		SubmitMapRating(client, value, arg);
+	}
+	return Plugin_Handled;
+}
+
+void SubmitMapRating(int client, int rating, const char[] comment = "") {
+	char query[1024];
+	g_db.Format(query, sizeof(query), "INSERT INTO map_ratings (map_id,steamid,value,comment) VALUES ('%s','%s',%d,'%s') ON DUPLICATE KEY UPDATE value = %d, comment = %s",
+		game.mapId,
+		players[client].steamid,
+		rating,
+		comment,
+		rating,
+		comment
+	);
+	g_db.Query(DBCT_RateMap, query, GetClientUserId(client));
+}
+
+int MapVoteHandler(Menu menu, MenuAction action, int param1, int param2) {
+	if (action == MenuAction_Select) {
+		static char info[2];
+		menu.GetItem(param2, info, sizeof(info));
+		int value = StringToInt(info);
+		if(players[param1].steamid[0] == '\0') return 0;
+		
+		SubmitMapRating(param1, value);
+	} else if (action == MenuAction_End) {
+		delete menu;
+	} 
+	return 0;
+}
 
 ////////////////////////////
 // EVENTS 
@@ -1408,17 +1484,17 @@ finale_win: Record all players, campaignFinished = false
 if player disconnects && campaignFinished: record their session. Won't be recorded in finale_win
 */
 //Fetch UUID from finale start, should be ready for events finale_win OR escape_vehicle_ready
-public void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
+void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
 	game.finaleStartTime = GetTime();
 	game.difficulty = GetDifficultyInt();
 	//Use the same UUID for versus
 	//FIXME: This was causing UUID to not fire another new one for back-to-back-coop
 	//if(game.IsVersusMode && game.isVersusSwitched) return;
 	char query[128];
-	g_db.Format(query, sizeof(query), "SELECT UUID() AS UUID, (SELECT !ISNULL(mapid) from map_info where mapid = '%s') as mapid", game.name);
+	g_db.Format(query, sizeof(query), "SELECT UUID() AS UUID, (SELECT !ISNULL(mapid) from map_info where mapid = '%s') as mapid", game.mapId);
 	g_db.Query(DBCT_GetUUIDForCampaign, query, _);
 }
-public void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast) {
+void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast) {
 	//Get UUID on finale_start
 	if(L4D_IsMissionFinalMap()) {
 		game.difficulty = GetDifficultyInt();
@@ -1426,7 +1502,19 @@ public void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBr
 	}
 }
 
-public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
+void Event_FinaleVehicleLeaving(Event event, const char[] name, bool dontBroadcast) {
+	if(L4D_IsMissionFinalMap()) {
+		// TODO: check if user has rated?
+		g_rateMenu.SetTitle("Rate %s", game.mapTitle);
+		for(int i = 1; i <= MaxClients; i++) {
+			if(IsClientInGame(i) && !IsFakeClient(i) && GetClientTeam(i) == 2) {
+				g_rateMenu.Display(i, 0);
+			}
+		}
+	}
+}
+
+void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	if(!L4D_IsMissionFinalMap() || game.submitted) return;
 	game.difficulty = event.GetInt("difficulty");
 	game.finished = false;
@@ -1501,6 +1589,7 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) 
 	}
 	game.submitted = true;
 	game.clownHonks = 0;
+	PrintToChatAll("Rate this map with /rate or /rate <1-5> [optional comment]");
 }
 
 

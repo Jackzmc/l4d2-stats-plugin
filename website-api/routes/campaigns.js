@@ -5,7 +5,10 @@ import routeCache from 'route-cache'
 export default function(pool) {
     router.get('/:id', routeCache.cacheSeconds(120), async(req,res) => {
         try {
-            const [rows] = await pool.query("SELECT `stats_games`.*,last_alias,points FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid  WHERE left(`stats_games`.campaignID,8) = ? ORDER BY SpecialInfectedKills desc, SurvivorDamage asc, ZombieKills desc, DamageTaken asc", [req.params.id.substring(0,8)])
+            const [rows] = await pool.query(
+                "SELECT `stats_games`.*, last_alias, points, i.name as map_name FROM `stats_games` INNER JOIN `stats_users` ON `stats_games`.steamid = `stats_users`.steamid INNER JOIN map_info i ON i.mapid = stats_games.map WHERE left(`stats_games`.campaignID, 8) = ? ORDER BY SpecialInfectedKills desc, SurvivorDamage asc, ZombieKills desc, DamageTaken asc", 
+                [req.params.id.substring(0,8)]
+            )
             res.json(rows)
         }catch(err) {
             console.error('[/api/user/:user]',err.message);
@@ -42,8 +45,11 @@ export default function(pool) {
                     SUM(Deaths) as Deaths, 
                     SUM(MedkitsUsed), 
                     (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as ThrowableTotal, 
-                    server_tags 
-                FROM \`stats_games\` as g INNER JOIN \`stats_users\` ON g.steamid = \`stats_users\`.steamid 
+                    server_tags,
+                    i.name as map_name
+                FROM \`stats_games\` as g 
+                INNER JOIN \`stats_users\` ON g.steamid = \`stats_users\`.steamid 
+                INNER JOIN map_info i ON i.mapid = g.map
                 WHERE FIND_IN_SET(?, server_tags) ${mapSearchString} AND gamemode LIKE ? AND ? IS NULL OR difficulty = ?
                 GROUP BY g.campaignID 
                 ORDER BY date_end DESC LIMIT ?, ?`, 

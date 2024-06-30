@@ -25,19 +25,6 @@ const routes = [
     component: Leaderboard
   },
   {
-    path: '/maps/:map?',
-    name: 'Maps',
-    meta: {
-      title_part: 'Maps'
-    },
-    component: () => import(/* webpackChunkName: "maps" */ '@/views/Maps'),
-  },
-  {
-    path: '/maps/:map/details',
-    name: 'MapDetails',
-    component: () => import(/* webpackChunkName: "mapsdetails" */ '@/views/MapDetails'),
-  },
-  {
     path: '/search/:query',
     name: 'Search',
     meta: {
@@ -54,22 +41,22 @@ const routes = [
   },
   {
     path: '/maps',
-    name: 'MapList',
+    name: 'Campaigns',
     component: () => import(/* webpackChunkName: "campaignsdetails" */ '@/views/maps/List.vue')
   },
   {
     path: '/maps/:id',
-    name: 'MapDetail',
+    name: 'Campaign',
     component: () => import(/* webpackChunkName: "campaignsdetails" */ '@/views/maps/Details.vue')
   },
   {
     path: '/campaigns/:id',
-    name: 'Campaign',
+    name: 'Game',
     component: () => import(/* webpackChunkName: "campaignsdetails" */ '@/views/campaigns/Details.vue')
   },
   {
     path: '/campaigns',
-    name: 'Campaigns',
+    name: 'Games',
     component: () => import(/* webpackChunkName: "campaigns" */ '@/views/campaigns/List.vue')
   },
   {

@@ -190,6 +190,7 @@
 </template>
 
 <script>
+import GameInfo from '@/assets/gameinfo.json'
 import { getMapName } from '@/js/map'
 export default {
     data() {
@@ -213,7 +214,8 @@ export default {
         return gamemode === "versus" || gamemode === "scavenge"
       },
       mapTitle() {
-          return this.sessions.length > 0 ? getMapName(this.sessions[0].map) : null;
+        if(this.sessions.length == 0) return null
+        return this.sessions[0].map_name || getMapName(this.sessions[0].map)
       },
       highestHonkCount() {
         if(this.totals.honks > 0) {

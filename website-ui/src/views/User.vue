@@ -61,7 +61,6 @@
 </template>
 
 <script>
-import 'vue2-animate/dist/vue2-animate.min.css'
 export default {
   metaInfo () {
     // const title = this.user.steamid ? `${this.user.last_alias}'s Profile - L4D2 Stats Plugin` : "L4D2 Stats Plugin"

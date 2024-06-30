@@ -4,50 +4,20 @@
         <div class="hero-body">
             <div class="container has-text-centered">
             <h1 class="title">
-                Campaigns
+                Games
             </h1>
-            <p class="subtitle is-4">{{total_campaigns | formatNumber}} total campaigns played</p>
+            <p class="subtitle is-4">{{total_campaigns | formatNumber}} total games played</p>
             </div>
         </div>
     </section>
     <br>
     <div class="container is-fluid has-text-centered">
         <h5 class="title is-5">Recently Played Games</h5>
-        <!-- <b-carousel-list
-            v-if="recentCampaigns.length > 0"
-            v-model="selectedRecent"
-            :data="recentCampaigns"
-            :items-to-show="4"
-            :items-to-list="1"
-        >
-            <template #item="campaign">
-                <div class="box">
-                    <img class="is-inline-block is-pulled-left image is-128x128" :src="getMapImage(campaign.list.map)" />
-                    <h6 class="title is-6">{{getMapName(campaign.list.map).substring(0,20)}}</h6>
-                    <p class="subtitle is-6">{{getGamemode(campaign.list.gamemode)}} • {{formatDifficulty(campaign.list.difficulty)}}</p>
-                    <hr class="player-divider">
-                    <ul class="has-text-right">
-                        <li><b>{{secondsToHms((campaign.list.date_end-campaign.list.date_start))}}</b> long</li>
-                        <li><b>{{campaign.list.Deaths}}</b> deaths</li>
-                        <li><b>{{campaign.list.CommonsKilled | formatNumber}}</b> commons killed</li>
-                        <li><b>{{campaign.list.FF | formatNumber}}</b> friendly fire dealt</li>
-                    </ul>
-                    <br>
-                    <b-taglist v-if="campaign.list.server_tags">
-                        <b-tag v-for="tag in campaign.list.server_tags.split(',')" :key="tag" :type="getTagType(tag)">
-                            {{tag}}
-                        </b-tag>
-                    </b-taglist>
-                    <span v-else><br><br></span>
-                    <b-button type="is-info" tag="router-link" :to="'/campaigns/' + campaign.campaignID" expanded>View Details</b-button>
-                </div>
-            </template>
-        </b-carousel-list> -->
         <div class="columns is-multiline">
             <div v-for="campaign in recentCampaigns" class="column is-3" :key="campaign.campaignID">
                 <div class="box">
                     <img class="is-inline-block is-pulled-left image is-128x128" :src="getMapImage(campaign.map)" />
-                    <h6 class="title is-6">{{getMapName(campaign.map).substring(0,20)}}</h6>
+                    <h6 class="title is-6">{{campaign.map_name || campaign.map}}</h6>
                     <p class="subtitle is-6"><span class="has-text-info">{{getGamemode(campaign.gamemode)}}</span> • <span class="has-text-info">{{formatDifficulty(campaign.difficulty)}}</span></p>
                     <hr class="player-divider">
                     <ul class="has-text-right">
@@ -74,6 +44,7 @@
         <span class="has-text-left">
         <b-field grouped>
             <b-field label="Tag Selection">
+                <!-- TODO: fetch from server -->
                 <b-select v-model="filtered.filters.tag" placeholder="Select a tag">
                     <option value="prod">All</option>
                     <!-- <option value="dev" v-if="process.env.NODE_ENV !== 'production'">Dev</option> -->
@@ -121,7 +92,7 @@
         <div class="columns is-multiline">
             <div v-for="campaign in filtered.list" class="column is-3" :key="campaign.campaignID">
                 <div class="box" style="height: 100%">
-                    <h4 class="title is-4">{{getMapName(campaign.map).substring(0,40)}}</h4>
+                    <h4 class="title is-4">{{campaign.map_name ?? campaign.map}}</h4>
                     <p class="subtitle is-6">
                         <span class="has-text-info">{{getGamemode(campaign.gamemode)}}</span> • <span class="has-text-info">{{formatDifficulty(campaign.difficulty)}}</span>
                         <br>Played <b>{{formatDate(campaign.date_end)}}</b>

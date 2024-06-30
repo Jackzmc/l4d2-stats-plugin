@@ -5,7 +5,7 @@ import routeCache from 'route-cache'
 export default function(pool) {
     router.get('/', routeCache.cacheSeconds(120), async (req, res) => {
         const [rows] = await pool.query(
-            "SELECT i.name, r.map_id, AVG(value) as avg_rating FROM map_ratings r LEFT JOIN map_info i ON i.mapid = r.map_id GROUP BY map_id ORDER BY avg_rating DESC"
+            "SELECT i.name as map_name, r.map_id, AVG(value) as avg_rating FROM map_ratings r LEFT JOIN map_info i ON i.mapid = r.map_id GROUP BY map_id ORDER BY avg_rating DESC"
         )
 
         return res.json(rows)

@@ -184,7 +184,7 @@
                 <div class="box">
                     <div class="has-text-left">
                         <strong>Map</strong>
-                        <p>{{mapTitle}} <em class="is-pulled-right">({{session.map}})</em></p>
+                        <p>{{session.map_name}} <em class="is-pulled-right">({{session.map}})</em></p>
                         <div>
                           <span class="is-inline-block">
                           <strong>Gamemode</strong>
@@ -295,7 +295,7 @@
 </template>
 
 <script>
-import GameInfo from '@/assets/gameinfo.json'
+const GameInfo = require('@/assets/gameinfo.json')
 
 import { getMapName } from '../js/map'
 import {PieChart, BarChart, getChartData } from '../js/graphs.js'
@@ -387,13 +387,7 @@ export default {
                 }
             ], '#62a4b4');
         },
-        mapTitle() {
-            return this.session.map ? getMapName(this.session.map) : null
-        },
-        mapId() {
-            const title = this.mapTitle;
-            return title ? title.toLowerCase().replace(/\s/, '-') : null
-        },
+
         campaignURL() {
             return this.session && this.session.campaignID ?
                 `/campaigns/${this.session.campaignID.substring(0,8)}` : '#'

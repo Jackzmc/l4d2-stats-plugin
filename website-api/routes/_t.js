@@ -1,6 +1,8 @@
-const router = require('express').Router();
-const routeCache = require('route-cache');
-module.exports = (pool) => {
-    
-    return router;
+import Router from 'express'
+const router = Router()
+import routeCache from 'route-cache'
+
+export default function(pool) {
+
+    return router
 }

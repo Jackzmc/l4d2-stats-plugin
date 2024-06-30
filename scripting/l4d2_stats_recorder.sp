@@ -1087,10 +1087,17 @@ Action Command_RateMap(int client, int args) {
 	if(args == 0) {
 		g_rateMenu.SetTitle("Rate %s", game.mapTitle);
 		g_rateMenu.Display(client, 0);
-	} else if(args > 1) {
+	} else {
 		char arg[255];
 		GetCmdArg(1, arg, sizeof(arg));
 		int value = StringToInt(arg);
+		if(value <= 0 || value > 5) {
+			ReplyToCommand(client, "Invalid rating. Syntax: /rate <1-5>");
+			return Plugin_Handled;
+		} else if(args > 1 && GetUserAdmin(client) == INVALID_ADMIN_ID) {
+			ReplyToCommand(client, "Only server admins can add comments with their rating. Syntax: /rate <1-5>");
+			return Plugin_Handled;
+		}
 
 		GetCmdArg(2, arg, sizeof(arg));
 		SubmitMapRating(client, value, arg);

@@ -22,7 +22,7 @@ export default function(pool) {
             [req.params.map]
         )
 
-        return res.json(rows.map(row => {
+        const ratings = rows.map(row => {
             return {
                 user: {
                     id: row.steamid,
@@ -34,7 +34,11 @@ export default function(pool) {
                     name: row.name
                 }
             }
-        }))
+        })
+
+        return res.json({
+            ratings
+        })
     })
 
     return router

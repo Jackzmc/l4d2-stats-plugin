@@ -42,8 +42,6 @@ export default {
     data() {
         return {
             ratings: [],
-            details: null,
-            selected: null,
             loading: true
         }
     },
@@ -65,9 +63,6 @@ export default {
                     onAction: () => this.fetchMaps()
                 })
             }).finally(() => this.loading = false)
-        },
-        onDetailsOpen(obj) {
-            this.details = obj;
         },
         getCampaignDetailLink(mapId) {
             return `/maps/${mapId}`

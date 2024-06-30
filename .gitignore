@@ -1,4 +1,4 @@
-plan.txt
 node_modules
 .vscode/settings.json
-website-ui/build.bat
+*.bat
+*.sh

@@ -227,6 +227,7 @@ CREATE TABLE `stats_weapons_usage` (
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `map_info` (
+  `mission_id`    varchar(64)        null,
   `mapid` varchar(32) NOT NULL,
   `name` varchar(128) NOT NULL,
   `chapter_count` smallint(6) DEFAULT NULL,

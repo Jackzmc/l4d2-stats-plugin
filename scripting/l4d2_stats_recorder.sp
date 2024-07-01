@@ -93,6 +93,7 @@ enum struct Game {
 	char uuid[64];
 	char mapId[64];
 	char mapTitle[128];
+	char missionId[64];
 	bool isCustomMap;
 
 	bool IsVersusMode() {
@@ -101,13 +102,15 @@ enum struct Game {
 
 	void GetMap() {
 		GetCurrentMap(this.mapId, sizeof(this.mapId));
-		this.isCustomMap = this.mapId[0] != 'c' || !IsCharNumeric(this.mapId[1]) || this.mapId[2] != 'm';
+		this.isCustomMap = this.mapId[0] != 'c' || !IsCharNumeric(this.mapId[1]) || !(IsCharNumeric(this.mapId[2]) || this.mapId[2] == 'm');
 		if(this.isCustomMap)
 			InfoEditor_GetString(0, "DisplayTitle", this.mapTitle, sizeof(this.mapTitle));
 		else {
 			int mapIndex = StringToInt(this.mapId[1]) - 1;
 			strcopy(this.mapTitle, sizeof(this.mapTitle), OFFICIAL_MAP_NAMES[mapIndex]);
 		}
+		InfoEditor_GetString(0, "Name", this.missionId, sizeof(this.missionId));
+		PrintToServer("[Stats] %s \"%s\" %s (c=%b)", this.mapId, this.mapTitle, this.missionId, this.isCustomMap);
 	}
 }
 

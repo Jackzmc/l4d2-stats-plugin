@@ -64,6 +64,23 @@ int g_iLastBoomUser;
 float g_iLastBoomTime;
 Menu g_rateMenu;
 
+char OFFICIAL_MAP_NAMES[14][] = {
+	"Dead Center",   // c1
+	"Dark Carnival", // c2
+	"Swamp Fever",   // c3
+	"Hard Rain",     // c4
+	"The Parish",    // c5
+	"The Passing",   // c6
+	"The Sacrifice", // c7
+	"No Mercy",      // c8
+	"Crash Course",  // c9
+	"Death Toll",    // c10
+	"Dead Air",      // c11
+	"Blood Harvest", // c12
+	"Cold Stream",   // c13
+	"Last Stand",    // c14
+};
+
 enum struct Game {
 	int difficulty;
 	int startTime;
@@ -85,7 +102,12 @@ enum struct Game {
 	void GetMap() {
 		GetCurrentMap(this.mapId, sizeof(this.mapId));
 		this.isCustomMap = this.mapId[0] != 'c' || !IsCharNumeric(this.mapId[1]) || this.mapId[2] != 'm';
-		InfoEditor_GetString(0, "DisplayTitle", this.mapTitle, sizeof(this.mapTitle));
+		if(this.isCustomMap)
+			InfoEditor_GetString(0, "DisplayTitle", this.mapTitle, sizeof(this.mapTitle));
+		else {
+			int mapIndex = StringToInt(this.mapId[1]) - 1;
+			strcopy(this.mapTitle, sizeof(this.mapTitle), OFFICIAL_MAP_NAMES[mapIndex]);
+		}
 	}
 }
 
@@ -1073,17 +1095,20 @@ public Action Command_DebugStats(int client, int args) {
 Menu SetupRateMenu() {
 	Menu menu = new Menu(MapVoteHandler);
 	menu.SetTitle("Rate Map");
-	// menu.AddItem("0", "0");
-	menu.AddItem("1", "1");
-	menu.AddItem("2", "2");
-	menu.AddItem("3", "3");
-	menu.AddItem("4", "4");
-	menu.AddItem("5", "5 (Good)");
+	menu.AddItem("1", "1 stars (Bad)");
+	menu.AddItem("2", "2 stars");
+	menu.AddItem("3", "3 stars");
+	menu.AddItem("4", "4 stars");
+	menu.AddItem("5", "5 stars (Good)");
 	menu.ExitButton = true;
 	return menu;
 }
 
 Action Command_RateMap(int client, int args) {
+	if(!L4D_IsMissionFinalMap()) {
+		ReplyToCommand(client, "Can only rate on map finales");
+		return Plugin_Handled;
+	}
 	if(args == 0) {
 		g_rateMenu.SetTitle("Rate %s", game.mapTitle);
 		g_rateMenu.Display(client, 0);
@@ -1107,7 +1132,7 @@ Action Command_RateMap(int client, int args) {
 
 void SubmitMapRating(int client, int rating, const char[] comment = "") {
 	char query[1024];
-	g_db.Format(query, sizeof(query), "INSERT INTO map_ratings (map_id,steamid,value,comment) VALUES ('%s','%s',%d,'%s') ON DUPLICATE KEY UPDATE value = %d, comment = %s",
+	g_db.Format(query, sizeof(query), "INSERT INTO map_ratings (map_id,steamid,value,comment) VALUES ('%s','%s',%d,'%s') ON DUPLICATE KEY UPDATE value = %d, comment = '%s'",
 		game.mapId,
 		players[client].steamid,
 		rating,
@@ -1127,7 +1152,7 @@ int MapVoteHandler(Menu menu, MenuAction action, int param1, int param2) {
 		
 		SubmitMapRating(param1, value);
 	} else if (action == MenuAction_End) {
-		delete menu;
+		// Don't delete, shared menu
 	} 
 	return 0;
 }
@@ -1510,15 +1535,15 @@ void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast
 }
 
 void Event_FinaleVehicleLeaving(Event event, const char[] name, bool dontBroadcast) {
-	if(L4D_IsMissionFinalMap()) {
-		// TODO: check if user has rated?
-		g_rateMenu.SetTitle("Rate %s", game.mapTitle);
-		for(int i = 1; i <= MaxClients; i++) {
-			if(IsClientInGame(i) && !IsFakeClient(i) && GetClientTeam(i) == 2) {
-				g_rateMenu.Display(i, 0);
-			}
-		}
-	}
+	// if(L4D_IsMissionFinalMap()) {
+	// 	// TODO: check if user has rated?
+	// 	g_rateMenu.SetTitle("Rate %s", game.mapTitle);
+	// 	for(int i = 1; i <= MaxClients; i++) {
+	// 		if(IsClientInGame(i) && !IsFakeClient(i) && GetClientTeam(i) == 2) {
+	// 			// g_rateMenu.Display(i, 0);
+	// 		}
+	// 	}
+	// }
 }
 
 void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
@@ -1593,10 +1618,15 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	}
 	for(int i = 1; i <= MaxClients; i++) {
 		players[i].clownsHonked = 0;
+		if(IsClientInGame(i) && !IsFakeClient(i)) {
+			if(GetUserAdmin(i) != INVALID_ADMIN_ID)
+				PrintToChat(i, "Rate this map with /rate or /rate <1-5> [comment]");
+			else
+				PrintToChat(i, "Rate this map with /rate or /rate <1-5>");
+		}
 	}
 	game.submitted = true;
 	game.clownHonks = 0;
-	PrintToChatAll("Rate this map with /rate or /rate <1-5> [optional comment]");
 }
 
 

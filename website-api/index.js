@@ -18,7 +18,7 @@ const whitelist = process.env.CORS_WHITELIST ? process.env.CORS_WHITELIST.split(
 import RouteUser from './routes/user.js'
 import RouteSessions from './routes/sessions.js'
 import RouteCampaigns from './routes/campaigns.js'
-import RouteRatings from './routes/ratings.js'
+import RouteMaps from './routes/maps.js'
 import RouteTop from './routes/top.js'
 import RouteMisc from './routes/misc.js'
 
@@ -44,7 +44,7 @@ import RouteMisc from './routes/misc.js'
     app.use('/api/user',        RouteUser(pool))
     app.use('/api/sessions',    RouteSessions(pool))
     app.use('/api/campaigns',   RouteCampaigns(pool))
-    app.use('/api/ratings',     RouteRatings(pool))
+    app.use('/api/maps',     RouteMaps(pool))
     app.use('/api/top',         RouteTop(pool))
     app.use('/api/',            RouteMisc(pool))
     

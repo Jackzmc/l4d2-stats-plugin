@@ -48,7 +48,7 @@ export default {
     methods: {
         async fetchMaps() {
             this.loading = true;
-            this.$http.get(`/api/ratings`, { cache: true })
+            this.$http.get(`/api/maps`, { cache: true })
             .then(res => {
                 this.ratings = res.data
             })

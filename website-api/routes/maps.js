@@ -17,8 +17,16 @@ export default function(pool) {
     })
 
     router.get('/:map', routeCache.cacheSeconds(120), async (req, res) => {
+        const [maps] = await pool.query("SELECT name, chapter_count FROM map_info WHERE mapid = ?", [req.params.map])
+        if(maps.length == 0) {
+            return res.status(400).json({
+                error: "NO_MAP_FOUND",
+                message: "Unknown map"
+            })
+        }
+        const map = maps[0]
         const [rows] = await pool.query(
-            "SELECT i.name, r.*, u.last_alias as user_name FROM map_ratings r LEFT JOIN map_info i ON i.mapid = r.map_id JOIN stats_users u ON u.steamid = r.steamid WHERE map_id = ?",
+            "SELECT r.*, u.last_alias as user_name FROM map_ratings r JOIN stats_users u ON u.steamid = r.steamid WHERE map_id = ?",
             [req.params.map]
         )
 
@@ -29,14 +37,15 @@ export default function(pool) {
                     name: row.user_name
                 },
                 rating: row.value,
-                map: {
-                    id: row.map_id,
-                    name: row.name
-                }
             }
         })
 
         return res.json({
+            map: {
+                id: req.params.map,
+                name: map.name,
+                chapters: map.chapter_count
+            },
             ratings
         })
     })

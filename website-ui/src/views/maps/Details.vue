@@ -4,10 +4,10 @@
     <div class="hero-body">
       <div class="container has-text-centered">
         <h1 class="title">
-
+          {{ mapInfo.name }}
         </h1>
         <p class="subtitle">
-
+          {{ this.$route.params.id }}
         </p>
       </div>
     </div>
@@ -31,6 +31,7 @@ import { getMapName, getMapImage} from '@/js/map'
 export default {
     data() {
         return {
+            mapInfo: { name: "Unknown" },
             ratings: [],
             loading: true
         }
@@ -38,8 +39,9 @@ export default {
     methods: {
         async fetchDetails() {
             this.loading = true;
-            this.$http.get(`/api/ratings/${this.$route.params.map}`, { cache: true })
+            this.$http.get(`/api/maps/${this.$route.params.id}`, { cache: true })
             .then(res => {
+              this.mapInfo = res.data.map
                 this.ratings = res.data.ratings
             })
             .catch(err => {

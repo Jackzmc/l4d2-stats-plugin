@@ -10,7 +10,7 @@ export default function(pool) {
             LEFT JOIN left4dead2.map_ratings r ON i.mapid = r.map_id
             LEFT JOIN left4dead2.stats_games g ON g.map = i.mapid
             GROUP BY i.mapid
-            ORDER BY avg_rating DESC, games_played DESC
+            ORDER BY games_played DESC, avg_rating DESC
         `)
 
         return res.json(rows)

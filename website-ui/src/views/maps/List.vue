@@ -15,18 +15,24 @@
     <div class="columns">
       <div class="column">
         <b-table :loading="loading"  :data="ratings">
-            <b-table-column v-slot="props" field="map_name" label="Map">
-              <router-link :to="getCampaignDetailLink( props.row.map_id )">
-                <strong>{{ props.row.map_name || props.row.map_id }}</strong>
+            <b-table-column v-slot="props" field="map.name" label="Map">
+              <router-link :to="getCampaignDetailLink( props.row.map.id )">
+                <strong>{{ props.row.map.name || props.row.map.id }}</strong>
               </router-link>
             </b-table-column>
-            <b-table-column v-slot="props" field="games_played" label="Games Played">
-                {{ props.row.games_played | formatNumber }}
+            <b-table-column v-slot="props" field="gamesPlayed" label="Games Played">
+                {{ props.row.gamesPlayed | formatNumber }}
             </b-table-column>
-            <b-table-column v-slot="props" field="avg_rating" label="Rating">
-            <b-icon size="is-small" pack="fas" icon="star" v-for="i in Math.round(props.row.avg_rating)" :key="i" />
-            <b-icon size="is-small" pack="far" icon="star" v-for="i in 5-Math.round( props.row.avg_rating ) " :key="i+10" />
-             {{ Number(props.row.avg_rating).toFixed(1) }}
+            <b-table-column v-slot="props" field="avgRating" label="Rating">
+              <template v-if=" props.row.avgRating">
+                <b-icon size="is-small" pack="fas" icon="star" v-for="i in Math.round(props.row.avgRating)" :key="i" />
+                <b-icon size="is-small" pack="far" icon="star" v-for="i in 5-Math.round( props.row.avgRating ) " :key="i+10" />
+                {{ Number(props.row.avgRating).toFixed(1) }}
+              </template>
+              <span v-else>(no ratings)</span>
+            </b-table-column>
+            <b-table-column v-slot="props" field="numRatings" label="# Ratings">
+              {{ props.row.numRatings | formatNumber  }}
             </b-table-column>
         </b-table>
       </div>

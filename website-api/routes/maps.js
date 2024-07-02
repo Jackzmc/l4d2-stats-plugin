@@ -29,7 +29,7 @@ export default function(pool) {
     router.get('/:map', routeCache.cacheSeconds(120), async (req, res) => {
         const [maps] = await pool.query("SELECT name, chapter_count FROM map_info WHERE mapid = ?", [req.params.map])
         if(maps.length == 0) {
-            return res.status(400).json({
+            return res.status(404).json({
                 error: "NO_MAP_FOUND",
                 message: "Unknown map"
             })

@@ -1120,7 +1120,7 @@ Action Command_RateMap(int client, int args) {
 		GetCmdArg(1, arg, sizeof(arg));
 		int value = StringToInt(arg);
 		if(value <= 0 || value > 5) {
-			ReplyToCommand(client, "Invalid rating. Syntax: /rate <1-5>");
+			ReplyToCommand(client, "Invalid rating, must be between 1 (low) and 5 (high). Syntax: /rate <1-5>");
 			return Plugin_Handled;
 		} else if(args > 1 && GetUserAdmin(client) == INVALID_ADMIN_ID) {
 			ReplyToCommand(client, "Only server admins can add comments with their rating. Syntax: /rate <1-5>");
@@ -1622,10 +1622,7 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	for(int i = 1; i <= MaxClients; i++) {
 		players[i].clownsHonked = 0;
 		if(IsClientInGame(i) && !IsFakeClient(i)) {
-			if(GetUserAdmin(i) != INVALID_ADMIN_ID)
-				PrintToChat(i, "Rate this map with /rate or /rate <1-5> [comment]");
-			else
-				PrintToChat(i, "Rate this map with /rate or /rate <1-5>");
+			PrintToChat(i, "Rate this map with /rate # (1 lowest, 5 highest)");
 		}
 	}
 	game.submitted = true;

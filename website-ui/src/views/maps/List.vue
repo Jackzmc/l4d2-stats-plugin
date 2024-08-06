@@ -25,8 +25,8 @@
             </b-table-column>
             <b-table-column v-slot="props" field="avgRating" label="Rating">
               <template v-if=" props.row.avgRating">
-                <b-icon size="is-small" pack="fas" icon="star" v-for="i in Math.round(props.row.avgRating)" :key="i" />
-                <b-icon size="is-small" pack="far" icon="star" v-for="i in 5-Math.round( props.row.avgRating ) " :key="i+10" />
+                <b-icon size="is-small" pack="fas" icon="star" v-for="i in Math.floor(props.row.avgRating)" :key="i" />
+                <b-icon size="is-small" pack="far" icon="star" v-for="i in 5-Math.floor( props.row.avgRating ) " :key="i+10" />
                 {{ Number(props.row.avgRating).toFixed(1) }}
               </template>
               <span v-else>(no ratings)</span>

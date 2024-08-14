@@ -1122,12 +1122,15 @@ Action Command_RateMap(int client, int args) {
 		if(value <= 0 || value > 5) {
 			ReplyToCommand(client, "Invalid rating, must be between 1 (low) and 5 (high). Syntax: /rate <1-5>");
 			return Plugin_Handled;
-		} else if(args > 1 && GetUserAdmin(client) == INVALID_ADMIN_ID) {
-			ReplyToCommand(client, "Only server admins can add comments with their rating. Syntax: /rate <1-5>");
-			return Plugin_Handled;
+		} 
+		if(args > 1) {
+			if(GetUserAdmin(client) == INVALID_ADMIN_ID) {
+				ReplyToCommand(client, "Only server admins can add comments with their rating. Syntax: /rate <1-5>");
+				return Plugin_Handled;
+			}
+			GetCmdArg(2, arg, sizeof(arg));
 		}
 
-		GetCmdArg(2, arg, sizeof(arg));
 		SubmitMapRating(client, value, arg);
 	}
 	return Plugin_Handled;

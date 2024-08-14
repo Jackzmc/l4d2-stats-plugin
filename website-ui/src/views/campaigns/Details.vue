@@ -259,7 +259,7 @@ export default {
         },
         fetchDetails() {
             if(!this.$route.params.id) return;
-            if(this.$route.name !== "Campaign") return;
+            if(this.$route.name !== "Game") return;
 
             this.loading = true;
             this.$http.get(`/api/campaigns/${this.$route.params.id}`)

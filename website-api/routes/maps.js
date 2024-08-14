@@ -49,6 +49,7 @@ export default function(pool) {
                     name: row.user_name
                 },
                 value: row.value,
+                comment: row.comment
             }
         })
 

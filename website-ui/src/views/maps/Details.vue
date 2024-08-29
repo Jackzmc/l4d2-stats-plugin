@@ -22,24 +22,30 @@
     <div class="columns">
       <div class="column">
         <h4 class="title is-4">Ratings ({{ ratings.length }})</h4>
-        <div class="columns" v-if="ratings">
+        <div class="columns is-multiline is-vcentered" v-if="ratings">
           <div class="column is-3" v-for="rating, i in ratings" :key="i">
             <div class="card">
               <div class="card-content">
-                <div class="media">
+                <div class="media mb-0">
                   <div class="media-content">
-                    <p class="title is-4">{{ rating.user.name }}</p>
-                    <p class="subtitle is-6">{{ rating.user.id }}</p>
+                    <div class="columns">
+                      <div class="column is-8">
+                        <p class="title is-4">{{ rating.user.name }}</p>
+                        <p class="subtitle is-6">{{ rating.user.id }}</p>
+                      </div>
+                      <div class="column is-4">
+                        <b-icon size="is-small" pack="fas" icon="star" v-for="  i in rating.value  " :key="i" />
+                        <b-icon size="is-small" pack="far" icon="star" v-for="   i in 5 - rating.value   " :key="i + 10" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <b-icon size="is-small" pack="fas" icon="star" v-for=" i in rating.value " :key="i" />
-                <b-icon size="is-small" pack="far" icon="star" v-for="  i in 5 - rating.value  " :key="i + 10" />
-                {{ rating.value }}
-                <article class="message" v-if="rating.comment">
-                  <div class="message-body">
+                <article class="message my-2" v-if="rating.comment">
+                  <div class="message-body py-2">
                     {{ rating.comment }}
                   </div>
                 </article>
+                <div class='block my-6' v-else></div>
               </div>
             </div>
           </div>

@@ -681,7 +681,7 @@ export default {
           this.fetchTopStats();
         }
         Promise.all([
-            this.fetchPlaystyle(),
+            // this.fetchPlaystyle(),
             this.fetchPlayrating()
         ])
 

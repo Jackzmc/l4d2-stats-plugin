@@ -23,6 +23,9 @@
             <b-table-column v-slot="props" field="gamesPlayed" label="Games Played">
                 {{ props.row.gamesPlayed | formatNumber }}
             </b-table-column>
+            <b-table-column v-slot="props" field="avgDuration" label="Average Duration">
+              {{ props.row.avgDuration }} minutes
+            </b-table-column>
             <b-table-column v-slot="props" field="avgRating" label="Rating">
               <template v-if=" props.row.avgRating">
                 <b-icon size="is-small" pack="fas" icon="star" v-for="i in Math.floor(props.row.avgRating)" :key="i" />

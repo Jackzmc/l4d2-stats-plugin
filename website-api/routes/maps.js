@@ -5,7 +5,7 @@ import routeCache from 'route-cache'
 export default function(pool) {
     router.get('/', routeCache.cacheSeconds(120), async (req, res) => {
         const [rows] = await pool.query(`
-            SELECT i.mapid as map_id, i.name as map_name, AVG(r.value) as avg_rating, COUNT(DISTINCT r.steamid) as num_ratings, COUNT(g.id) as games_played
+            SELECT i.mapid as map_id, i.name as map_name, AVG(r.value) as avg_rating, COUNT(DISTINCT r.steamid) as num_ratings, COUNT(g.id) as games_played, AVG(g.duration) as avg_duration
             FROM map_info i
             LEFT JOIN left4dead2.map_ratings r ON i.mapid = r.map_id
             LEFT JOIN left4dead2.stats_games g ON g.map = i.mapid
@@ -21,7 +21,8 @@ export default function(pool) {
                 },
                 avgRating: row.avg_rating,
                 numRatings: row.num_ratings,
-                gamesPlayed: row.games_played
+                gamesPlayed: row.games_played,
+                avgDuration: row.avg_duration
             }
         }))
     })

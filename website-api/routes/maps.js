@@ -22,7 +22,8 @@ export default function(pool) {
                 avgRating: row.avg_rating,
                 numRatings: row.num_ratings,
                 gamesPlayed: row.games_played,
-                avgDuration: row.avg_duration
+                avgDuration: row.avg_duration,
+                lastPlayedTime: row.last_played_time
             }
         }))
     })

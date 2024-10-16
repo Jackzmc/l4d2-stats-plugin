@@ -3,6 +3,12 @@ const router = Router()
 import routeCache from 'route-cache'
 
 export default function(pool) {
+    router.get('/values', routeCache.cacheSeconds(600), async(req, res) => {
+        const [gamemodes] = await pool.query("SELECT gamemode, COUNT(gamemode) count from stats_games GROUP BY gamemode ORDER BY count DESC")
+        res.json({
+            gamemodes
+        })
+    })
     router.get('/:id', routeCache.cacheSeconds(120), async(req,res) => {
         try {
             const [rows] = await pool.query(
@@ -24,7 +30,8 @@ export default function(pool) {
             const offset = pageNumber * perPage;
 
             const difficulty         = isNaN(req.query.difficulty) ? null : parseInt(req.query.difficulty)
-            let selectTag            = req.query.tag || "prod"
+            let selectTag            = req.query.tag
+            if(!selectTag || selectTag === "any") selectTag = "prod"
             let gamemodeSearchString = req.query.gamemode && req.query.gamemode !== "all" ? `${req.query.gamemode}` : `%`
             let mapSearchString      = "" // RLIKE "^c[0-9]m"
             if(req.query.type) {

@@ -46,17 +46,15 @@
             <b-field label="Tag Selection">
                 <!-- TODO: fetch from server -->
                 <b-select v-model="filtered.filters.tag" placeholder="Select a tag">
-                    <option value="prod">All</option>
-                    <!-- <option value="dev" v-if="process.env.NODE_ENV !== 'production'">Dev</option> -->
-                    <option value="lgs">Main (Private)</option>
-                    <option value="server-r">Vanilla (Reserved)</option>
-                    <option value="public">Public</option>
-                    <optgroup label="Regions">
-                        <option value="tx">Texas</option>
-                    </optgroup>
-                    <optgroup label="Server">
-                        <option v-for="i of 7" :key="i" :value="'server-' + i">Server TX-P{{i}}</option>
-                    </optgroup>
+                    <option value="any">Any</option>
+                    <template v-for="entry in selectableTags">
+                      <optgroup v-if="entry.list" :label="entry.label" :key="entry.label">
+                        <option v-for="subentry in entry.list" :key="subentry.value" :value="subentry.value">
+                          {{ subentry.label }}
+                        </option>
+                      </optgroup>
+                      <option v-else :value="entry.value" :key="entry.value">{{ entry.label }}</option>
+                    </template>
                 </b-select>
             </b-field>
             <b-field label="Map Type">
@@ -69,12 +67,9 @@
             <b-field label="Gamemode">
                 <b-select v-model="filtered.filters.gamemode">
                     <option value="all">Any</option>
-                    <option value="coop">Coop</option>
-                    <option value="versus">Versus</option>
-                    <option value="survival">Survival</option>
-                    <option value="TankRun">Tank Run</option>
-                    <option value="RocketDude">RocketDude</option>
-                    <option value="Realism">Realism</option>
+                    <option v-for="entry in selectableGamemodes" :key="entry.gamemode" :value="entry.gamemode">
+                      {{ entry.label }} ({{entry.count.toLocaleString()}})
+                    </option>
                 </b-select>
             </b-field>
             <b-field label="Difficulty">
@@ -124,6 +119,7 @@
 
 <script>
 import { getMapName, getMapImage } from '@/js/map'
+import Settings from "@/assets/settings.json"
 export default {
     data() {
         return {
@@ -133,7 +129,7 @@ export default {
             selectedRecent: 0,
             filtered: {
                 filters: {
-                    tag: null,
+                    tag: "any",
                     type: "all",
                     gamemode: 'all',
                     difficulty: 'all',
@@ -142,15 +138,17 @@ export default {
 
                 list: [],
                 loading: true,
-            }
+            },
+            gamemodes: []
         }
     },
     mounted() {
         /*let routerPage = parseInt(this.$route.params.page);
         if(isNaN(routerPage) || routerPage <= 0) routerPage = 1;
         this.current_page = routerPage;*/
-        this.fetchCampaigns()
         document.title = `Campaigns - L4D2 Stats Plugin`
+        this.fetchGamemodes()
+        this.fetchCampaigns()
     },
     watch: {
         "filtered.filters": {
@@ -160,9 +158,34 @@ export default {
             deep: true
         }
     },
+    computed: {
+      selectableGamemodes() {
+        const arr = []
+        for(const entry of Object.values(this.gamemodes)) {
+          const label = Settings.gamemodeLabels ? Settings.gamemodeLabels[entry.gamemode] : undefined
+          arr.push({
+            gamemode: entry.gamemode,
+            count: entry.count,
+            label: label ?? entry.gamemode
+          })
+        }
+        return arr
+      },
+      selectableTags() {
+        return Settings.selectableTags || []
+      }
+    },
     methods: {
         getMapName,
         getMapImage,
+        async fetchGamemodes() {
+          try {
+            const res = await this.$http.get('/api/campaigns/values', { cache: true })
+            this.gamemodes = res.data.gamemodes
+          } catch(err) {
+            console.error("Could not fetch values: ", err)
+          }
+        },
         fetchFilteredCampaigns() {
             this.filtered.loading = true;
             const queryParams = `?page=${this.filtered.filters.page}&perPage=16&tag=${this.filtered.filters.tag}&gamemode=${this.filtered.filters.gamemode}&type=${this.filtered.filters.type}&difficulty=${this.filtered.filters.difficulty}

@@ -14,7 +14,7 @@
               </b-tooltip>
           </b-table-column>
           <b-table-column field="points" label="Points" v-slot="props">
-              <span style="color: blue">{{ props.row.points | formatNumber }}</span>
+              <span style="color: blue">{{ Math.round(props.row.points) | formatNumber }}</span>
               <!-- <em> {{Math.round(props.row.points / (props.row.minutes_played / 60)) | formatNumber}} p/h</em> -->
           </b-table-column>
           <b-table-column label="Last Played" v-slot="props">

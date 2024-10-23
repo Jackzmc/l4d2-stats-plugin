@@ -16,14 +16,21 @@ export default function(pool) {
                 version = "v1"
             } else {
                 [rows] = await pool.query(`select
-                    steamid,last_alias,minutes_played,last_join_date,
+                     steamid,last_alias,minutes_played,last_join_date,
+                    points as points_old,
                     (
-                        (common_kills / 100 * 0.1) +
-                        (kills_all_specials * 0.5) +
+                        (common_kills / 1000 * 0.10) +
+                        (kills_all_specials * 0.25) +
                         (revived_others * 0.05) +
                         (heal_others * 0.05) -
-                        (survivor_deaths * 0.1) +
-                        (damage_to_tank*0.2/minutes_played)
+                        (survivor_incaps * 0.10) -
+                        (survivor_deaths * 0.05) +
+                        (survivor_ff * 0.03) +
+                        (damage_to_tank*0.15/minutes_played) +
+                        ((kills_molotov+kills_pipe)*0.025) +
+                        (witches_crowned*0.2) -
+                        (rocks_hitby*0.2) +
+                        (cleared_pinned*0.05)
                     ) as points
                     from stats_users
                     order by points desc

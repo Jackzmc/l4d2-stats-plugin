@@ -79,7 +79,7 @@
             <h6 class="title is-6">Random Player of the Day</h6>
             <router-link :to="'/user/' + randomPlayer.steamid + '/overview'" class="title">{{randomPlayer.last_alias}}</router-link>
             <br>
-            <p class="subtitle is-6"><em>{{randomPlayer.points | formatNumber}} points</em></p>
+            <p class="subtitle is-6"><em>{{Math.round(randomPlayer.points) | formatNumber}} points</em></p>
           </div>
         </div>
       </div>
@@ -163,7 +163,8 @@ export default {
     refreshTop() {
       console.debug('Loading users for page' + this.top_page)
       this.loading = true;
-      return this.$http.get(`/api/top/users/${this.top_page}`, { cache: true })
+      const params = this.$route.query.version ? `?version=${this.$route.query.version}` : ""
+      return this.$http.get(`/api/top/users/${this.top_page}${params}`, { cache: true })
       .then((r) => {
         this.top_today = r.data.users;
       })

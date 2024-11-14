@@ -10,9 +10,38 @@ export default function(pool) {
             const selectedPage = req.params.page || 0;
             const pageNumber = (isNaN(selectedPage) || selectedPage <= 0) ? 0 : (parseInt(req.params.page) - 1);
             const offset = pageNumber * MAX_RESULTS;
-            const [rows] = await pool.query("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats_users` ORDER BY `points` DESC, `minutes_played` DESC LIMIT ?,?", [offset, MAX_RESULTS])
+            let rows, version
+            if(req.query.version == "1") {
+                [rows] = await pool.query("SELECT steamid,last_alias,minutes_played,last_join_date,points FROM `stats_users` ORDER BY `points` DESC, `minutes_played` DESC LIMIT ?,?", [offset, MAX_RESULTS])
+                version = "v1"
+            } else {
+                [rows] = await pool.query(`select
+                     steamid,last_alias,minutes_played,last_join_date,
+                    points as points_old,
+                    (
+                        (common_kills / 1000 * 0.10) +
+                        (kills_all_specials * 0.25) +
+                        (revived_others * 0.05) +
+                        (heal_others * 0.05) -
+                        (survivor_incaps * 0.10) -
+                        (survivor_deaths * 0.05) +
+                        (survivor_ff * 0.03) +
+                        (damage_to_tank*0.15/minutes_played) +
+                        ((kills_molotov+kills_pipe)*0.025) +
+                        (witches_crowned*0.2) -
+                        (rocks_hitby*0.2) +
+                        (cleared_pinned*0.05)
+                    ) as points
+                    from stats_users
+                    order by points desc
+                    limit ?,?`, 
+                    [offset, MAX_RESULTS]
+                )
+                version = "v2"
+            }
             res.json({
                 users: rows,
+                version
             });
         }catch(err) {
             console.error('[/api/top]',err.message);

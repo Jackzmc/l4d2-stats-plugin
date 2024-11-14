@@ -1,0 +1,21 @@
+{
+    "selectableTags": [
+        { "value": "main", "label": "Main (Private)" },
+        { "value": "vanilla+", "label": "Reserved (Private)" },
+        { "value": "public", "label": "Public" },
+        {
+            "label": "Regions",
+            "list": [
+                {"value": "tx", "label": "Texas"}
+            ]
+        }
+    ],
+    "gamemodeLabels": {
+        "coop": "Coop",
+        "versus": "Versus",
+        "survival": "Survival",
+        "tankrun": "Tank Run",
+        "rocketdude": "Rocket Dude",
+        "realism": "Realism"
+    }
+}

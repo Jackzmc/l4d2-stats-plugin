@@ -267,9 +267,9 @@ void GetHeatMapData(int respondToUser = 0) {
 	char query[1024];
 	// TODO: dynamically select types instead of filtering out visually
 	if(g_heatMapPlayer[0] == '\0')
-		Format(query, sizeof(query), "SELECT x,y,z,COUNT(*) as count,type FROM stats_heatmaps WHERE map='%s' GROUP BY x,y,z", game.name);
+		Format(query, sizeof(query), "SELECT x,y,z,COUNT(*) as count,type FROM stats_heatmaps WHERE map='%s' GROUP BY x,y,z", game.mapId);
 	else
-		Format(query, sizeof(query), "SELECT x,y,z,COUNT(*) as count,type FROM stats_heatmaps WHERE map='%s' AND SUBSTRING(steamid, 11) = '%s' GROUP BY x,y,z", game.name, g_heatMapPlayer);
+		Format(query, sizeof(query), "SELECT x,y,z,COUNT(*) as count,type FROM stats_heatmaps WHERE map='%s' AND SUBSTRING(steamid, 11) = '%s' GROUP BY x,y,z", game.mapId, g_heatMapPlayer);
 	
 	int userid = respondToUser > 0 ? GetClientUserId(respondToUser) : 0;
 	SQL_TQuery(g_db, DBCT_FetchHeatMap, query, userid);

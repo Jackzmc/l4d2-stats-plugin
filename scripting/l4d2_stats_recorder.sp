@@ -20,6 +20,7 @@
 #define HEATMAP_POINT_SIZE 10
 #define MAX_HEATMAP_VISUALS 200
 #define HEATMAP_PAGINATION_SIZE 500
+#define DISTANCE_CALC_TIMER_INTERVAL 4.0
 
 public Plugin myinfo = 
 {
@@ -37,6 +38,7 @@ enum queryType {
 	QUERY_UPDATE_STAT,
 	QUERY_POINTS,
 	QUERY_UPDATE_USER,
+	QUERY_UPDATE_NAME_HISTORY,
 	QUERY_MAP_INFO,
 	QUERY_MAP_RATE,
 	_QUERY_MAX
@@ -48,6 +50,7 @@ char QUERY_TYPE_ID[_QUERY_MAX][] = {
 	"UPDATE_STAT",
 	"POINTS",
 	"UPDATE_USER",
+	"UPDATE_USER_NAME_HISTORY",
 	"MAP_INFO",
 	"MAP_RATE"
 };
@@ -208,6 +211,35 @@ enum struct ActiveWeaponData {
 	}
 }
 
+enum struct DistanceCalculator {
+	float accumulation;
+	int recordTime;
+	float lastPos[3];
+
+	// TODO: in future, avg speed?
+}
+enum struct TimeCalculator {
+	float seconds;
+	int lastTime;
+	bool enabled;
+	// Starts calculator and marks timestamp, if not already started
+	void TryStart() {
+		if(!this.enabled) {
+			this.enabled = true;
+			this.lastTime = GetTime();
+		}
+	}
+	// Record number of seconds, if enabled
+	bool TryEnd() {
+		if(this.enabled) {
+			this.seconds += (GetTime() - this.lastTime);
+			this.enabled = false;
+			return true;
+		}
+		return false;
+	}
+}
+
 enum struct Player {
 	char steamid[32];
 	int damageSurvivorGiven;
@@ -228,6 +260,9 @@ enum struct Player {
 	int molotovKills;
 	int minigunKills;
 	int clownsHonked;
+	DistanceCalculator distance;
+	TimeCalculator timeInFire;
+	TimeCalculator timeInAcid;
 
 	//Used for table: stats_games;
 	int m_checkpointZombieKills;
@@ -257,7 +292,6 @@ enum struct Player {
 	int connections;
 	int firstJoinedTime; // When user first joined server (first recorded statistics)
 	int lastJoinedTime; // When the user last connected
-
 	int joinedGameTime; // When user joined game session (not connected)
 
 	ActiveWeaponData wpn;
@@ -309,6 +343,19 @@ enum struct Player {
 			this.pointsQueue.Set(index, GetTime(), 2);
 		}
 	}
+
+	void MeasureDistance(int client) {
+		// TODO: add guards (no noclip, must touch ground, survivor)
+		// int timeDiff = GetTime() - this.distance.recordTime;
+		if(!(GetEntityFlags(client) & FL_ONGROUND )) { return; }
+		if(!IsPlayerAlive(client) || GetClientTeam(client) < 2) return;
+
+		float pos[3];
+		GetClientAbsOrigin(client, pos);
+		this.distance.accumulation += GetVectorDistance(this.distance.lastPos, pos);
+		this.distance.lastPos = pos;
+		this.distance.recordTime = GetTime();
+	}
 }
 Player players[MAXPLAYERS+1];
 Game game;
@@ -335,6 +382,7 @@ public void OnPluginStart() {
 	} else if(!ConnectDB()) {
 		SetFailState("Failed to connect to database.");
 	}
+	RunMigrations();
 
 	g_rateMenu = SetupRateMenu();
 
@@ -423,7 +471,9 @@ public void OnPluginStart() {
 		players[i].Init();
 	}
 
+	
 	CreateTimer(hHeatmapInterval.FloatValue, Timer_HeatMapInterval, _, TIMER_REPEAT);
+	CreateTimer(DISTANCE_CALC_TIMER_INTERVAL, Timer_CalculateDistances, _, TIMER_REPEAT);
 }
 
 //When plugin is being unloaded: flush all user's statistics.
@@ -434,6 +484,17 @@ public void OnPluginEnd() {
 		}
 	}
 	ClearHeatMapEntities();
+}
+
+#define MAX_MIGRATIONS 1
+char MIGRATIONS[MAX_MIGRATIONS][] = {
+	"alter table stats_users add total_distance_travelled float default 0 null"
+};
+
+void RunMigrations() {
+	for(int i = 0; i < MAX_MIGRATIONS; i++) {
+		g_db.Query(DBCT_Migration, MIGRATIONS[i], i);
+	}
 }
 //////////////////////////////////
 // TIMER
@@ -456,6 +517,19 @@ Action Timer_HeatMapInterval(Handle h) {
 	}
 	return Plugin_Continue;
 }
+Action Timer_CalculateDistances(Handle h) {
+	if(game.finished) return Plugin_Continue;
+
+	for(int i=1; i<= MaxClients;i++) {
+		if(IsClientInGame(i) && !IsFakeClient(i) && players[i].steamid[0]) {
+			MoveType moveType = GetEntityMoveType(i);
+			if(moveType != MOVETYPE_WALK && moveType != MOVETYPE_LADDER) continue;
+			players[i].MeasureDistance(i);
+		}
+	}
+	return Plugin_Continue;
+}
+
 /////////////////////////////////
 // CONVAR CHANGES
 /////////////////////////////////
@@ -711,7 +785,7 @@ void FlushQueuedStats(int client, bool disconnect) {
 	//Prevent points from being reset by not recording until user has gotten a point. 
 	if(players[client].points > 0) {
 		char query[1023];
-		Format(query, sizeof(query), "UPDATE stats_users SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,survivor_ff_rec=survivor_ff_rec+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d, points=%d, packs_used=packs_used+%d, damage_molotov=damage_molotov+%d, kills_molotov=kills_molotov+%d, kills_pipe=kills_pipe+%d, kills_minigun=kills_minigun+%d, clowns_honked=clowns_honked+%d WHERE steamid='%s'",
+		Format(query, sizeof(query), "UPDATE stats_users SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,survivor_ff_rec=survivor_ff_rec+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d,points=%d,packs_used=packs_used+%d,damage_molotov=damage_molotov+%d,kills_molotov=kills_molotov+%d,kills_pipe=kills_pipe+%d,kills_minigun=kills_minigun+%d,clowns_honked=clowns_honked+%d,total_distance_travelled=total_distance_travelled+%d WHERE steamid='%s'",
 			//VARIABLE													//COLUMN NAME
 
 			players[client].damageSurvivorGiven, 						//survivor_damage_give
@@ -735,6 +809,7 @@ void FlushQueuedStats(int client, bool disconnect) {
 			players[client].molotovKills,								//kills_molotov
 			players[client].minigunKills,								//kills_minigun
 			players[client].clownsHonked,								//clowns_honked
+			players[client].distance.accumulation,						//total_distance_travelled
 			players[client].steamid[0]
 		);
 		
@@ -950,11 +1025,12 @@ public void DBCT_CheckUserExistance(Handle db, DBResultSet results, const char[]
 	} else {
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
 		results.FetchRow();
-
+		char prevName[32];
 		// last_alias,points,connections,created_date,last_join_date
+		results.FetchString(0, prevName, sizeof(prevName));
 		players[client].points = results.FetchInt(1);
 		players[client].connections = results.FetchInt(2);
-		players[client].firstJoinedTime = results.FetchInt(4);
+		players[client].firstJoinedTime = results.FetchInt(3);
 		players[client].lastJoinedTime = results.FetchInt(4);
 
 		if(players[client].points == 0) {
@@ -964,16 +1040,27 @@ public void DBCT_CheckUserExistance(Handle db, DBResultSet results, const char[]
 
 		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, players[client].steamid);
 		g_db.Query(DBCT_Generic, query, QUERY_UPDATE_USER);
+		if(!StrEqual(prevName, alias)) {
+			// Add prev name to history
+			g_db.Format(query, sizeof(query), "INSERT INTO user_names_history (steamid, name, created) VALUES ('%s','%s', UNIX_TIMESTAMP())", players[client].steamid, alias);
+			g_db.Query(DBCT_Generic, query, QUERY_UPDATE_NAME_HISTORY);
+		}
 	}
 }
 //Generic database response that logs error
-public void DBCT_Generic(Handle db, Handle child, const char[] error, queryType data) {
+void DBCT_Generic(Handle db, Handle child, const char[] error, queryType data) {
 	if(db == null || child == null) {
 		if(data != QUERY_ANY) {
 			LogError("DBCT_Generic query `%s` returned error: %s", QUERY_TYPE_ID[data], error);
 		} else {
 			LogError("DBCT_Generic returned error: %s", error);
 		}
+	}
+}
+
+void DBCT_Migration(Handle db, Handle child, const char[] error, int migrationIndex) {
+	if(db == null || child == null) {
+		LogError("Migration #%d failed: %s", migrationIndex, error);
 	}
 }
 void DBCT_RateMap(Handle db, Handle child, const char[] error, int userid) { 
@@ -994,7 +1081,8 @@ void SubmitMapInfo() {
 	g_db.Format(query, sizeof(query), "INSERT INTO map_info (mapid,name,chapter_count) VALUES ('%s','%s',%d)", game.mapId, title, chapters);
 	g_db.Query(DBCT_Generic, query, QUERY_MAP_INFO, DBPrio_Low);
 }
-public void DBCT_GetUUIDForCampaign(Handle db, DBResultSet results, const char[] error, any data) {
+#define MAX_UUID_RETRY_ATTEMPTS 1
+public void DBCT_GetUUIDForCampaign(Handle db, DBResultSet results, const char[] error, int attempt) {
 	if(results != INVALID_HANDLE) {
 		if(results.FetchRow()) {
 			results.FetchString(0, game.uuid, sizeof(game.uuid));
@@ -1005,11 +1093,18 @@ public void DBCT_GetUUIDForCampaign(Handle db, DBResultSet results, const char[]
 				SubmitMapInfo();
 			}
 			PrintToServer("UUID for campaign: %s | Difficulty: %d", game.uuid, game.difficulty);
+			return;
 		} else {
+			game.uuid[0] = '\0';
 			LogError("RecordCampaign, failed to get UUID: no data was returned");
 		}
 	} else {
 		LogError("RecordCampaign, failed to get UUID: %s", error);
+	}
+	// Error
+	game.uuid[0] = '\0';
+	if(attempt < MAX_UUID_RETRY_ATTEMPTS) {
+		FetchUUID(attempt + 1);
 	}
 }
 //After a user's stats were flushed, reset any statistics needed to zero.
@@ -1465,6 +1560,19 @@ void EntityCreateCallback(int entity) {
 		}
 	}
 }
+public void L4D2_CInsectSwarm_CanHarm_Post(int acid, int spitter, int entity) {
+	if(entity <= 32 && GetClientTeam(entity) == 2) {
+		players[entity].timeInAcid.TryStart();
+	}
+	// TODO: accumulate
+}
+public void OnPlayerRunCmdPost(int client, int buttons, int impulse, const float vel[3], const float angles[3], int weapon, int subtype, int cmdnum, int tickcount, int seed, const int mouse[2]) {
+	if(GetEntityFlags(client) & FL_ONFIRE) {
+		players[client].timeInFire.TryStart();
+	} else {
+		players[client].timeInFire.TryEnd();
+	}
+}
 bool isTransition = false;
 ////MAP EVENTS
 public void Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
@@ -1528,9 +1636,12 @@ void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
 	//Use the same UUID for versus
 	//FIXME: This was causing UUID to not fire another new one for back-to-back-coop
 	//if(game.IsVersusMode && game.isVersusSwitched) return;
+	FetchUUID();
+}
+void FetchUUID(int attempt = 0) {
 	char query[128];
 	g_db.Format(query, sizeof(query), "SELECT UUID() AS UUID, (SELECT !ISNULL(mapid) from map_info where mapid = '%s') as mapid", game.mapId);
-	g_db.Query(DBCT_GetUUIDForCampaign, query, _);
+	g_db.Query(DBCT_GetUUIDForCampaign, query, attempt);
 }
 void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast) {
 	//Get UUID on finale_start

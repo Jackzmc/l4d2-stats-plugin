@@ -13,8 +13,8 @@ pipeline {
             steps {
                 echo 'Starting to build docker image'
                 script {
+                    def customImage = docker.build("${env.registry_user}/${env.image_name}:${env.BUILD_ID}")
                     docker.withRegistry("${env.registry_url}", "${env.registry_creds}") {
-                        def customImage = docker.build("${env.registry_user}/${env.image_name}:${env.BUILD_ID}")
                         customImage.push()
                     }
                 }

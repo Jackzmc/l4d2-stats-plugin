@@ -3,7 +3,7 @@ pipeline {
         image_name = "l4d2-stats-server"
         registry_user = 'jackzmc'
         registry_creds = 'dockerhub'
-        registry_url = 'https://docker.io'
+        registry_url = ''
     }
 
     agent any

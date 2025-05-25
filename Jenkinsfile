@@ -18,8 +18,10 @@ pipeline {
             }
         }
         stage("Publish image") {
-            docker.withRegistry("${env.registry_url}", "${env.registry_creds}") {
-                customImage.push()
+            steps {
+                docker.withRegistry("${env.registry_url}", "${env.registry_creds}") {
+                    customImage.push()
+                }
             }
         }
     }

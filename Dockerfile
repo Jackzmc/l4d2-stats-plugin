@@ -1,8 +1,8 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Dependencies for node-canvas
-RUN apk update && apk add build-base g++ cairo-dev pango-dev giflib-dev cairo
+# Build time dependencies for node-canvas
+RUN apk update && apk add build-base g++ cairo-dev pango-dev giflib-dev
 
 COPY website-api/package*.json ./server/package.json
 RUN cd ./server/ && yarn install --production=true
@@ -18,6 +18,10 @@ COPY website-ui/ ./ui
 RUN cd /app/ui/ && vue-cli-service build
 
 FROM node:20-alpine AS prod
+
+# Runtime dependencies for canvas
+RUN apk update && apk add cairo pango giflib cairo
+
 COPY --from=builder /app/server /app/server
 COPY --from=builder /app/ui/dist /app/server/static
 WORKDIR /app/server

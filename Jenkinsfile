@@ -5,8 +5,11 @@ pipeline {
             steps {
                 echo 'Starting to build docker image'
                 script {
-                    def customImage = docker.build("l4d2-stats-server:${env.BUILD_ID}")
-                    customImage.push()
+                    docker.withRegistry('https://docker.io', 'dockerhub') {
+                        def customImage = docker.build("l4d2-stats-server:${env.BUILD_ID}")
+                        customImage.push()
+                    }
+                    
                 }
             }
         }

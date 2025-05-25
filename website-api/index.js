@@ -47,7 +47,7 @@ import RouteMisc from './routes/misc.js'
         next()
     })
     
-    app.use('/', Express.static("static"))
+    app.use('/', Express.static(process.env.STATIC_PATH ?? "static"))
 
     app.use('/api/user',        RouteUser(pool))
     app.use('/api/sessions',    RouteSessions(pool))

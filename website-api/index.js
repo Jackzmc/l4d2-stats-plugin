@@ -28,7 +28,7 @@ import RouteMisc from './routes/misc.js'
         socketPath: process.env.MYSQL_SOCKET_PATH,
         host:     process.env.MYSQL_HOST   || 'localhost', 
         database: process.env.MYSQL_DB     || 'left4dead2',
-        user:     process.env.MYSQL_USER   || 'root', 
+        user:     process.env.MYSQL_USER   || 'left4dead2', 
         password: process.env.MYSQL_PASSWORD
     }
     const pool = mysql.createPool(details);

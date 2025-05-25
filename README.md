@@ -1,38 +1,67 @@
 # L4D2 Stats Plugin
 
-NOTE: This is more of a custom personal project that I decided to have open sourced - limited support and some features will not work as they rely on my custom systems (such as "Play Style" and "Rating" in user overview)
+> [!NOTE]
+> This is more of a custom personal project that I decided to have open sourced - limited support and some features will not work as they rely on my custom systems (such as "Play Style" and "Rating" in user overview)
 
-A plugin for l4d2 that records statistics for all players on the server and shows it publicly on a website. This was designed for co-op, and so versus and other gamemodes may not track statistics correctly.
+A sourcemod plugin for l4d2 that records statistics for all players on the server and a server that shows the statistics. This was designed for co-op, and so versus and other gamemodes may not track statistics correctly.
 
 This is a 3-part project:
-* Frontend UI (vue.js)
-* Backend API (express.js server)
+
+* Frontend UI (Vue 2)
+* Backend API (Express.js server)
 * Sourcemod Plugin
 
-Requires a MySQL server for statistic storage.
+Requires a MySQL/MariaDB server, see `stats_database.sql` for the tables.
 
 Demo: https://stats.jackz.me
 
-### Building
-You can build the sourcemod plugin from the scripting/ folder.
+## Deploying
 
-The webserver is built using VueJS and you can just cd to the folder and run `<yarn/npm> install && <yarn/npm run> build`
+## Plugin
 
-The api server, just install npm packages with yarn or npm, and run index.js. You do need to set the following environment variables to hook to mysql:
+The plugin can be downloaded from [plugins/l4d2_stats_recorder.smx](./plugins/l4d2_stats_recorder.smx)
+
+## Env Variables
 ```
-MYSQL_HOST=
-MYSQL_USER=l4d2
-MYSQL_DB=l4d2
-MYSQL_PASSWORD=
-# optional
-WEB_PORT=8080 #default
+# Defaults
+
+MYSQL_HOST=localhost
+MYSQL_DB=left4dead2
+MYSQL_USER=left4dead2
+MYSQL_PASSWORD=left4dead2
+
+# Optional
+## Comma separated list of domains to whitelist
+CORS_WHITELIST=stats.example.com 
+## Port for server to listen to
+WEB_PORT=8080
 ```
 
-The demo server is setup as followed:
-1. The UI is served from static files (/var/www/)
-2. /api/ route is proxied to the api server running locally
+## Docker
 
-Example nginx configuration: (implies nodejs server is running on same server on port 8989, set WEB_PORT env for that)
+A docker image is available at [https://hub.docker.com/jackzmc/l4d2-stats-server](https://hub.docker.com/repository/docker/jackzmc/l4d2-stats-server)
+
+An addition a [docker-compose.yml](./docker-compose.yml) file is included. It does not include a database, as you should use the same database sourcemod is using.
+
+`docker run jackzmc/l4d2-stats-server:latest`
+
+## Manual
+```
+# build ui
+cd website-ui; yarn && yarn build; cp dist/ /var/www/l4d2-stats
+
+# run server
+cd website-api; yarn && node index.js
+```
+
+## External Nginx
+
+The docker server has express.js serve the UI's static files, but it may be better to use an external reverse proxy
+
+This serves static files in `/var/www/stats.jackz.me` through nginx, and all `/api/*` requests to the API server.
+
+The demo server does not use docker but has UI built and deployed to /var/www/stats.jackz.me and the *.js copied to server folder and uses the same config below.
+
 ```
 server {
     listen 80;
@@ -51,4 +80,22 @@ server {
         proxy_set_header Host $http_host;
     }
 }
+```
+
+
+
+## Building
+
+You can build the sourcemod plugin from the scripting/ folder.
+
+The webserver is built using VueJS and you can just cd to the folder and run `<yarn/npm> install && <yarn/npm run> build`
+
+The api server, just install npm packages with yarn or npm, and run index.js. You do need to set the following environment variables to hook to mysql:
+```
+MYSQL_HOST=
+MYSQL_USER=l4d2
+MYSQL_DB=l4d2
+MYSQL_PASSWORD=
+# optional
+WEB_PORT=8080 #default
 ```

@@ -1,4 +1,4 @@
-import campaignData from '../assets/campaigns.json'
+import campaignData from '../assets/campaigns.json' with { type: 'json' }
 const { official, custom } = campaignData
 import NoMapImage from '../assets/no_map_image.png';
 

@@ -1,0 +1,13 @@
+services:
+  server:
+    image: jackzmc/l4d2-stats-server
+    container_name: stats-server
+    ports:
+      - "8081:80"
+    environment:
+      - NODE_ENV=production
+      - MYSQL_HOST=left4dead2
+      - MYSQL_DB=left4dead2
+      - MYSQL_USER=left4dead2
+      - MYSQL_PASSWORD=password
+    restart: unless-stopped

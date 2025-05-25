@@ -40,6 +40,8 @@ import RouteMisc from './routes/misc.js'
         }
         next()
     })
+    
+    app.use('/', Express.static("static"))
 
     app.use('/api/user',        RouteUser(pool))
     app.use('/api/sessions',    RouteSessions(pool))
@@ -48,7 +50,7 @@ import RouteMisc from './routes/misc.js'
     app.use('/api/top',         RouteTop(pool))
     app.use('/api/',            RouteMisc(pool))
     
-    app.get('*',(req,res) => {
+    app.get('/api/*',(req,res) => {
         res.status(404).json({error:'PageNotFound'})
     })
     return pool;

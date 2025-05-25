@@ -1,7 +1,6 @@
 pipeline {
     environment {
         image_name = "l4d2-stats-server"
-        registry_user = 'jackzmc'
         registry_creds = 'dockerhub'
     }
 
@@ -10,12 +9,10 @@ pipeline {
     stages {
         stage('Build image') {
             steps {
-                echo 'Starting to build docker image'
-                script {
-                    def customImage = docker.build("${env.registry_user}/${env.image_name}:${env.BUILD_ID}")
-                    docker.withRegistry(credentialsId: "${env.registry_creds}") {
-                        customImage.push()
-                    }
+                withCredentials([usernamePassword(credentialsId: "${env.registry_creds}", usernameVariable: 'registry_user', passwordVariable: 'registry_token')]) {
+                    sh "docker build -t ${env.registry_user}/${env.image_name}:${env.BUILD_ID} ."
+                    sh "docker login -u ${env.registry_user} -p ${env.registry_token}"
+                    sh "docker push ${env.registry_user}/${env.image_name}:${env.BUILD_ID}"
                 }
             }
         }

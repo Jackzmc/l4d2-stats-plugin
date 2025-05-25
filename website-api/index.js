@@ -32,7 +32,13 @@ import RouteMisc from './routes/misc.js'
         password: process.env.MYSQL_PASSWORD
     }
     const pool = mysql.createPool(details);
-    console.log('Connecting to', (details.socketPath || details.host), 'database', details.database)
+    console.log('[DB] Connecting to', (details.socketPath || details.host), 'database', details.database)
+
+    // Test connection
+    await pool.query("SELECT 1").catch(err => {
+        console.error("[DB] Failed to connect:", err)
+        process.exit(1)
+    })
 
     app.use((req, res, next) => {
         if(!req.headers.origin || whitelist.includes(req.headers.origin)) {

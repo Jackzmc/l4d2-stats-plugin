@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /campaigns/*
+Disallow: /sessions/details/*
+Disallow: /api

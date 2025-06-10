@@ -1,13 +1,14 @@
--- MySQL dump 10.13  Distrib 8.0.37, for Linux (x86_64)
+/*M!999999\- enable the sandbox mode */ 
+-- MariaDB dump 10.19  Distrib 10.6.22-MariaDB, for debian-linux-gnu (x86_64)
 --
--- Host: 127.0.0.1    Database: left4dead2
+-- Host: ovh1    Database: left4dead2
 -- ------------------------------------------------------
--- Server version	11.3.2-MariaDB-1:11.3.2+maria~deb11
+-- Server version	11.4.5-MariaDB-deb12-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
+/*!40101 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -20,8 +21,8 @@
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `stats_games` (
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `stats_games` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `steamid` varchar(20) NOT NULL,
   `map` varchar(128) NOT NULL COMMENT 'the map id',
@@ -80,9 +81,9 @@ CREATE TABLE `stats_games` (
   `DamageDealt` int(10) unsigned NOT NULL DEFAULT 0,
   `CarAlarmsActivated` tinyint(3) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
-  KEY `userindex` (`steamid`),
-  CONSTRAINT `matchUser` FOREIGN KEY (`steamid`) REFERENCES `stats_users` (`steamid`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=65406 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  UNIQUE KEY `campaignID` (`campaignID`,`steamid`),
+  KEY `userindex` (`steamid`)
+) ENGINE=InnoDB AUTO_INCREMENT=76197 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -90,8 +91,8 @@ CREATE TABLE `stats_games` (
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `stats_heatmaps` (
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `stats_heatmaps` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `steamid` varchar(32) NOT NULL,
   `timestamp` int(11) NOT NULL DEFAULT unix_timestamp(),
@@ -101,16 +102,17 @@ CREATE TABLE `stats_heatmaps` (
   `y` int(11) DEFAULT NULL,
   `z` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=409357 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=420596 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
 -- Table structure for table `stats_points`
 --
 
+DROP TABLE IF EXISTS `stats_points`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `stats_points` (
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `stats_points` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `steamid` varchar(32) NOT NULL,
   `type` smallint(6) NOT NULL,
@@ -120,7 +122,7 @@ CREATE TABLE `stats_points` (
   KEY `stats_points_stats_users_steamid_fk` (`steamid`),
   KEY `stats_points_timestamp_index` (`timestamp`),
   CONSTRAINT `stats_points_stats_users_steamid_fk` FOREIGN KEY (`steamid`) REFERENCES `stats_users` (`steamid`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=778980 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1283831 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -128,14 +130,15 @@ CREATE TABLE `stats_points` (
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `stats_users` (
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `stats_users` (
   `steamid` varchar(20) NOT NULL,
   `last_alias` varchar(32) NOT NULL,
   `last_join_date` bigint(11) NOT NULL,
   `created_date` bigint(11) NOT NULL,
   `connections` int(11) unsigned NOT NULL DEFAULT 1,
-  `country` varchar(45) NOT NULL,
+  `country` varchar(60) NOT NULL,
+  `region` varchar(60) DEFAULT NULL,
   `points` int(10) unsigned NOT NULL DEFAULT 0,
   `survivor_deaths` int(11) unsigned NOT NULL DEFAULT 0,
   `infected_deaths` int(11) unsigned NOT NULL DEFAULT 0,
@@ -197,6 +200,9 @@ CREATE TABLE `stats_users` (
   `boomer_mellos` int(11) DEFAULT 0,
   `boomer_mellos_self` smallint(6) DEFAULT 0,
   `forgot_kit_count` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `total_distance_travelled` float DEFAULT 0,
+  `kills_all_specials` int(11) GENERATED ALWAYS AS (`kills_boomer` + `kills_charger` + `kills_smoker` + `kills_jockey` + `kills_hunter` + `kills_spitter`) VIRTUAL,
+  `kits_slapped` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`steamid`),
   KEY `points` (`steamid`),
   FULLTEXT KEY `last_alias` (`last_alias`)
@@ -208,8 +214,8 @@ CREATE TABLE `stats_users` (
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `stats_weapons_usage` (
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `stats_weapons_usage` (
   `steamid` varchar(32) NOT NULL,
   `weapon` varchar(64) NOT NULL,
   `minutesUsed` float DEFAULT NULL,
@@ -221,13 +227,29 @@ CREATE TABLE `stats_weapons_usage` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `map_ratings`
+--
+
+DROP TABLE IF EXISTS `map_ratings`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `map_ratings` (
+  `map_id` varchar(64) NOT NULL,
+  `steamid` varchar(32) NOT NULL,
+  `value` tinyint(4) NOT NULL,
+  `comment` varchar(200) DEFAULT NULL,
+  PRIMARY KEY (`map_id`,`steamid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `map_info`
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `map_info` (
-  `mission_id`    varchar(64)        null,
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `map_info` (
+  `mission_id` varchar(64) DEFAULT NULL,
   `mapid` varchar(32) NOT NULL,
   `name` varchar(128) NOT NULL,
   `chapter_count` smallint(6) DEFAULT NULL,
@@ -236,15 +258,6 @@ CREATE TABLE `map_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-create table map_ratings
-(
-    map_id  varchar(64)  not null,
-    steamid varchar(32)  not null,
-    value   tinyint      not null,
-    comment varchar(200) null,
-    primary key (map_id, steamid)
-);
-
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
@@ -254,4 +267,4 @@ create table map_ratings
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-17 13:36:16
+-- Dump completed on 2025-06-10 16:09:22

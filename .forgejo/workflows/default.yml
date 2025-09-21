@@ -1,6 +1,7 @@
 on: [push]
 jobs:
-  build:
+  build-server:
+    name: Build Server
     runs-on: ubuntu-full
     env:
       image: l4d2-stats-plugin

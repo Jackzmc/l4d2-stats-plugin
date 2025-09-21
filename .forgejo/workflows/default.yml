@@ -18,7 +18,7 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: .
+          # context: .
           push: true
           tags: git.jackz.me/${{ github.repository_owner }}/${{ env.image }}:${{ env.tag }}
 

@@ -1,0 +1,138 @@
+---
+import Layout, { type PageInfo } from "../layouts/Layout.astro";
+import SummaryExtra from "../components/misc/SummaryExtra.astro";
+const meta: PageInfo = {
+	title: "Summary",
+	hero: { subtitle: "A summarization of all recorded sessions" }
+}
+import * as GameSummary from '../models/GameSummary.ts'
+import { Image } from "astro:assets";
+
+function formatNumber(number: number) {
+    return Number(number).toLocaleString(undefined, {
+        maximumFractionDigits: 0
+    })
+}
+
+const [totals, averages, [worstMap, bestMap]] = await Promise.all([
+    GameSummary.getSummaryTotals(),  
+    GameSummary.getSummaryAverages(),
+    GameSummary.getBestWorstOfficialMap()
+])
+
+const IMAGE_MAP: Record<string, Promise<any>> = Object.fromEntries(Object.entries({
+    "c1m4_atrium": "c1_dead_center.jpeg",
+    "c3m4_plantation": "c3_swamp_fever.jpeg",
+    "c4m5_milltown_escape": "c4_hard_rain.jpeg",
+    "c5m5_bridge": "c5_the_parish.jpeg",
+    "c6m3_port": "c6_the_passing.jpeg",
+    "c7m3_port": "c7_the_sacrifice.jpeg",
+    "c8m5_rooftop": "c8_no_mercy.jpeg",
+    "c9m2_lots": "c9_crash_course.jpeg",
+    "c2m5_concert": "c2_dark_carnival.jpeg",
+    "c10m5_houseboat": "c10_death_toll.jpeg",
+    "c11m5_runway": "c11_dead_air.jpeg",
+    "c12m5_cornfield": "c12_blood_harvest.jpeg",
+    "c13m4_cutthroatcreek": "c13_cold_stream.png",
+    "c14m2_lighthouse": "c14_last_stand.jpeg",
+}).map(([id, file]) => {
+    return [id, import(`../assets/posters/official/${file}`)]
+}))
+
+export const prerender = true
+Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
+---
+
+<Layout meta={meta}>
+	<div class="container content">
+		<div class="container">
+            <p class="title is-6">Totals</p>
+            <nav class="level">
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Games Played</p>
+                    <p class="title"><span class="countup">{formatNumber(totals.total_games)}</span></p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Total Playtime</p>
+                    <p class="title"><span class="countup">{formatNumber((totals.game_duration / 60 / 60))}</span> hours</p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Total FF Damage</p>
+                    <p class="title"><span class="countup">{formatNumber(totals.survivor_ff)}</span> HP</p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Zombies Killed</p>
+                    <p class="title"><span class="countup">{formatNumber(totals.zombie_kills)}</span></p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Unique Players</p>
+                    <p class="title"><span class="countup">{formatNumber(totals.total_users)}</span></p>
+                    </div>
+                </div>
+            </nav>
+            <SummaryExtra values={totals} />
+            <hr>
+
+            <p class="title is-6">Averages</p>
+            <nav class="level">
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Average Game Duration</p>
+                    <p class="title"><span class="countup">{formatNumber((averages.game_duration / 60))}</span> min</p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Average Zombies Killed</p>
+                    <p class="title"><span class="countup">{formatNumber(averages.zombie_kills)}</span></p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Players per Game</p>
+                    <p class="title"><span class="countup">{formatNumber(averages.avgPlayers)}</span></p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Average FF Damage</p>
+                    <p class="title"><span class="countup">{formatNumber(averages.survivor_ff)}</span> HP</p>
+                    </div>
+                </div>
+                <div class="level-item has-text-centered">
+                    <div>
+                    <p class="heading">Average Ping</p>
+                    <p class="title"><span class="countup">{formatNumber(averages.ping)}</span> ms</p>
+                    </div>
+                </div>
+            </nav>
+            <SummaryExtra values={averages} />
+            <hr>
+            <div class="columns has-text-centered">
+                <div class="column">
+                    <p class="title is-6">Most Played Official Map</p>
+                    <figure class="image is-4by3">
+                        <Image alt={`Poster for ${bestMap.name}`} src={IMAGE_MAP[bestMap.map]} />
+                    </figure>
+                    <p class="is-family-sans-serif is-size-4">{bestMap.name}</p>
+                </div>
+                <div class="column">
+                    <p class="title is-6">Least Played Official Map</p>
+                    <figure class="image is-4by3">
+                        <Image alt={`Poster for ${worstMap.name}`} src={IMAGE_MAP[worstMap.map]} />
+                    </figure>
+                    <p class="is-family-sans-serif is-size-4">{worstMap.name}</p>
+                </div>
+            </div>
+        </div>
+	</div>
+</Layout>

@@ -1,0 +1,20 @@
+---
+
+<img class="is-inline-block is-pulled-left image is-128x128" :src="getMapImage(campaign.map)" />
+<h6 class="title is-6">{{campaign.map_name || campaign.map}}</h6>
+<p class="subtitle is-6"><span class="has-text-info">{{getGamemode(campaign.gamemode)}}</span> • <span class="has-text-info">{{formatDifficulty(campaign.difficulty)}}</span></p>
+<hr class="player-divider">
+<ul class="has-text-right">
+    <li><b>{{getGameDuration((campaign.date_end-campaign.date_start))}}</b> long</li>
+    <li><b>{{campaign.Deaths}}</b> deaths</li>
+    <li><b>{{campaign.CommonsKilled | formatNumber}}</b> commons killed</li>
+    <li><b>{{campaign.FF | formatNumber}}</b> friendly fire dealt</li>
+</ul>
+<br>
+<b-taglist v-if="campaign.server_tags">
+    <b-tag v-for="tag in parseTags(campaign.server_tags)" :key="tag" :type="getTagType(tag)">
+        {{tag}}
+    </b-tag>
+</b-taglist>
+<span v-else><br><br></span>
+<b-button type="is-info" tag="router-link" :to="'/campaigns/' + campaign.campaignID" expanded>View Details</b-button>

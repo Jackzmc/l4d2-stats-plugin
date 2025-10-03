@@ -1,11 +1,9 @@
 ---
 import Layout, { type PageInfo } from "../layouts/Layout.astro";
-import Table, { type TableColumn } from "../components/bulma/Table.astro";
 import { Icon } from 'astro-icon/components'
-import { Image } from "astro:assets";
 const meta: PageInfo = {
 	title: "Campaigns",
-	description: "View stats about total number of games or minutes played and rating for all campaign maps"
+	description: "View stats about total number of games, minutes played and ratings for all maps"
 }
 
 import { getMapPoster } from '../utils/index.ts'
@@ -15,14 +13,6 @@ import { Picture } from "astro:assets";
 const topMaps = await getMapPlayCount(false, 3)
 const mapRatings = await getMapRatings()
 
-const COLUMNS: TableColumn[] = [
-    { name: "Map", formatFunction: (row) => `` },
-    { name: "Games Played", formatFunction: (row) => row['count'].toLocaleString() },
-    { name: "Average Duration", formatFunction: (row) => "n/a" },
-    { name: "Rating", formatFunction: (row) => `<Icon name="proicons:star" />`},
-    { name: "# of Ratings", formatFunction: (row) => "n/a" },
-]
-
 export const prerender = true
 Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
 ---
@@ -31,13 +21,16 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
 	<div class="container">
         <p class="title is-6">Top Maps</p>
         <nav class="level">
-            {topMaps.map(map => {
+            {topMaps.map((map, i) => {
                 return <div class="level-item has-text-centered">
                     <div class="topmap">
+                        <h3 class="title is-3 mb-2 l4d2-text">
+                            #{i+1}
+                        </h3>
                         <figure class="image">
                             <Picture width={200} height={300} src={getMapPoster(map.map)} alt={`Poster for ${map.name}`}/>
                         </figure>
-                        <p class="title is-4">{map.name}</p>
+                        <p class="title is-4 l4d2-text">{map.name}</p>
                         <div class="subtitle is-6">{map.count.toLocaleString()} games played</div>
                     </div>
                 </div>
@@ -84,8 +77,9 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
     padding: 15px;
 }
 .level-item > div {
-    padding: 15px;
-    border: 1px solid black;
+    padding: 20px;
+    border: 2px solid black;
+    box-shadow: 0.2em 0.2em;
 }
 .level-item figure {
     height: 300px;

@@ -1,0 +1,38 @@
+---
+import Layout, { type PageInfo } from "../layouts/Layout.astro";
+import { getTotals } from "../models/GameSummary.ts";
+import { getMapPlayCount } from "../models/Map.ts";
+const games = await getTotals()
+const meta: PageInfo = {
+	title: "Games",
+	description: "View recently played games or search through all played games",
+    hero: {
+        subtitle: `${games.totalGames.toLocaleString()} games played`
+    }
+}
+
+import { getMapPoster } from '../utils/index.ts'
+import { Picture } from "astro:assets";
+
+const maps = await getMapPlayCount(undefined, 8)
+
+export const prerender = true
+Astro.response.headers.set('Cache-Control', 'public, max-age=120');
+---
+
+<Layout meta={meta}>
+	<div class="container">
+        <p class="title is-6">Recently Played</p>
+            <div class="fixed-grid has-4-cols">
+                <div class="grid">
+                    {maps.map(map => 
+                        <div class="cell box">
+                            
+                        </div>
+                    )}
+                </div>
+            </div>
+        <hr>
+        <p class="title is-6">Filter Maps</p>
+	</div>
+</Layout>

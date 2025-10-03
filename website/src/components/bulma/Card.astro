@@ -1,42 +1,50 @@
 ---
+import { Icon } from 'astro-icon/components'
+import BulmaIcon from './BulmaIcon.astro'
 interface Props {
     title: string,
+    /** Should element start collapsed (default true) */
     collapsed?: boolean
 }
-const { title, collapsed } = Astro.props
+const { title, collapsed = true } = Astro.props
 ---
 
 
-<div class="card">
-  <header class="card-header">
-    <p class="card-header-title">{ title }</p>
-    <button class="card-header-icon" aria-label="toggle card">
-        <span class="icon">
-            <i class="fas fa-angle-down" aria-hidden="true"></i>
-        </span>
+<div class="card" data-collapsed={collapsed ? "true" : "false"}>
+  <header class="card-header is-clickable">
+    <p class="card-header-title mb-0">{ title }</p>
+    <!-- hide button by default, until JS kicks in. If user has JS disabled, card will be shown -->
+    <button class="card-header-icon" aria-label="toggle card" style="display:none">
+      <BulmaIcon name="weui:back-outlined" />
     </button>
   </header>
-  <div class="card-content" style="display: none">
+  <div class="card-content">
     <slot />
   </div>
 </div>
 
 <script>
-const cards = document.querySelectorAll('div.card');
+const cards = document.querySelectorAll<HTMLElement>('div.card');
 
 cards.forEach((card) => {
-    const button = card.querySelector("header.card-header button.card-header-icon")
+    const cardHeader = card.querySelector<HTMLElement>("header.card-header")
+    const button = card.querySelector<HTMLButtonElement>("header.card-header button.card-header-icon")
     const content = card.querySelector<HTMLElement>("div.card-content")
-    if(!button || !content) return
-    const isHidden = content.style.display === "none"
-    button.textContent = isHidden ? "Show" : "Hide"
+    if(!button || !content || !cardHeader) return console.error("Invalid card", card)
 
+    // Show or hide the card deepnding on data-collapsed
+    const startCollapsed = card.dataset.collapsed === "true"
+    button.style.display = "block"
+    content.style.display = startCollapsed ? "none" : "block"
+    button.style.rotate = startCollapsed ? "-90deg" : "90deg"
 
-    button.addEventListener("click", () => {
-        const isHidden = content.style.display === "none"
-        content.style.display = isHidden ? "block" : "none"
+    function onClick() {
+      const isHidden = content!.style.display === "none"
+      content!.style.display = isHidden ? "block" : "none"
 
-        button.textContent = isHidden ? "Show" : "Hide"
-    })
+      button!.style.rotate = isHidden ? "90deg" : "-90deg"
+    }
+
+    cardHeader.addEventListener("click", onClick)
   });
 </script>

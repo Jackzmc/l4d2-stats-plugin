@@ -11,7 +11,7 @@ export interface Summary {
 }
 export async function getTotals(): Promise<Summary> {
     const [totals] = await db.execute<RowDataPacket[]>(`SELECT
-        (SELECT UNIQUE COUNT(campaignID) FROM stats_users) AS total_games, 
+        (select count(distinct campaignID) from stats_games) AS total_games, 
         (SELECT COUNT(*) FROM stats_games) AS total_sessions
     `);
     return {

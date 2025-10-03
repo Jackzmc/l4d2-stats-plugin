@@ -12,6 +12,7 @@
     "@astrojs/node": "^9.4.4",
     "@codemint/astro-meta": "^3.1.4",
     "astro": "^5.14.1",
+    "astro-seo": "^0.8.4",
     "bulma": "^1.0.4",
     "date-fns": "^4.1.0",
     "mysql2": "^3.15.1"

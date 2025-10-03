@@ -2,6 +2,7 @@
 import Bulma from "bulma/css/bulma.min.css?url";
 
 import { MetaTags } from "@codemint/astro-meta";
+import { SEO } from "astro-seo";
 
 export interface Props {
     pageTitle?: string;
@@ -9,9 +10,10 @@ export interface Props {
 
     siteTitle: string;
 
-    noIndex?: boolean
+    noIndex?: boolean,
+    noFollow?: boolean
 }
-const { pageTitle, pageDescription, siteTitle, noIndex } = Astro.props;
+const { pageTitle, pageDescription, siteTitle, noIndex, noFollow } = Astro.props;
 
 const title = pageTitle ? `${pageTitle} | ${siteTitle}` : siteTitle;
 const description = pageDescription;
@@ -24,11 +26,10 @@ const description = pageDescription;
     <title>{title}</title>
     <link rel="stylesheet" href={Bulma}  />
     <link rel="stylesheet" href="/css/main.css" />
-
-    <MetaTags
+    <SEO
         title={title}
         description={description}
-        canonicalUrl={Astro.url.href}
-        index={noIndex != undefined ? !noIndex : undefined }
+        noindex={noIndex}
+        nofollow={noFollow}
     />
 </head>

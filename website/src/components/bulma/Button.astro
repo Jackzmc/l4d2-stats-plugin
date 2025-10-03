@@ -1,0 +1,18 @@
+---
+import type { ColorType, Size } from '../../types/bulma.ts'
+
+interface Props {
+    type?: ColorType,
+    size?: Size,
+
+    /** Button will turn into <a> */
+    href?: string
+}
+
+const { type, size, href } = Astro.props
+
+const Element = href ? "a" : "button"
+---
+<Element class:list={["button", type, size ]} href={href}>
+    <slot />
+</Element>

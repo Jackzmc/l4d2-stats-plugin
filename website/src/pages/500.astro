@@ -1,0 +1,37 @@
+---
+import Button from "../components/bulma/Button.astro";
+import Layout, { type PageInfo } from "../layouts/Layout.astro";
+interface Props {
+    error: unknown
+}
+const { error } = Astro.props
+
+const message = error instanceof Error ? error.message : "Unknown error"
+
+const meta: PageInfo = {
+	title: "L4D2 Stats",
+	hero: { title: "An error occurred", subtitle: message, type: "is-danger" },
+
+    noIndex: true
+}
+
+export const prerender = true
+---
+
+<Layout meta={meta}>
+	<div class="container content">
+		<div class="block is-size-4 content">
+			<h4>Unknown Error</h4>
+            <p>The cause of this error is unknown</p>
+            <p class="subtitle">Try reloading the page or performing the action again</p>
+		</div>
+
+		{!import.meta.env.PROD && (
+            <hr />
+            <div class="box">
+                <h4 class='title is-4'>Stacktrace</h4>
+                <pre>{error instanceof Error && error.stack}</pre>
+            </div>
+        )}
+	</div>
+</Layout>

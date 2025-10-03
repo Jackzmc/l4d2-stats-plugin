@@ -1,0 +1,35 @@
+---
+import Button from "../components/bulma/Button.astro";
+import Layout, { type PageInfo } from "../layouts/Layout.astro";
+const meta: PageInfo = {
+	title: "L4D2 Stats",
+	hero: { title: "Page Not Found", subtitle: `No page matching ${Astro.url.pathname} exists` },
+}
+
+export const prerender = true
+---
+
+<Layout meta={meta}>
+	<div class="container content">
+		<div class="block is-size-4">
+			<h4>Left 4 Dead 2 Statistics</h4>
+			<p>Welcome to the L4D2 stats website. Here you can view statistics about any played games, view the map ratings, see the player leaderboards, and view player's stats.</p>
+			<p>This site shows recorded statistics for servers using the <a href="https://github.com/jackzmc/l4d2-stats-plugin">L4D2 Stats Plugin</a> in-game.</p>
+		</div>
+        <hr>
+		<div class="block is-size-4">
+            <h4 class="title is-4">Try one of these pages:</h4>
+            <div class="buttons">
+                <Button href="/leaderboards">
+                    View Player Leaderboards
+                </Button>
+                <Button href="/summary">
+                    View Stat Summaries
+                </Button>
+                <Button href="/maps">
+                    View Maps
+                </Button>
+            </div>
+        </div>
+	</div>
+</Layout>

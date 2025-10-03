@@ -8,8 +8,10 @@ export interface Props {
     pageDescription?: string;
 
     siteTitle: string;
+
+    noIndex?: boolean
 }
-const { pageTitle, pageDescription, siteTitle } = Astro.props;
+const { pageTitle, pageDescription, siteTitle, noIndex } = Astro.props;
 
 const title = pageTitle ? `${pageTitle} | ${siteTitle}` : siteTitle;
 const description = pageDescription;
@@ -18,15 +20,15 @@ const description = pageDescription;
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- <link rel="icon" type="image/svg+xml" href="/favicon.svg" /> -->
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
-    <link rel="stylesheet" href={Bulma} />
+    <link rel="stylesheet" href={Bulma}  />
     <link rel="stylesheet" href="/css/main.css" />
 
     <MetaTags
         title={title}
         description={description}
         canonicalUrl={Astro.url.href}
+        index={noIndex != undefined ? !noIndex : undefined }
     />
 </head>

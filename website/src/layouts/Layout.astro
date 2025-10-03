@@ -2,6 +2,7 @@
 import Hero from "../components/bulma/Hero.astro";
 import HTMLHead from "../components/layout/HTMLHead.astro";
 import NavBar from "../components/layout/NavBar.astro";
+import type { ColorType } from "../types/bulma.ts";
 
 export interface Props {
     meta: PageInfo
@@ -11,7 +12,7 @@ export interface PageInfo {
     /** The title of the page such as "Summary" */
     title: string,
     /** Description of the page, shown in og:description and default for heros */
-    description: string,
+    description?: string,
 
     /** Determines the hero, enabled by default. set to null to turn off, undefined for default (on) */
     hero?: {
@@ -19,18 +20,26 @@ export interface PageInfo {
         title?: string,
         /** Subtitle to use for hero, defaults to page description */
         subtitle?: string
-    } | undefined | null
+        /** Overwrites the hero's type */
+        type?: ColorType
+        /** Adds to the hero's class */
+        class?: string
+    } | undefined | null,
+
+    /** Marks page to not be indexed */
+    noIndex?: boolean
 }
 const siteTitle = import.meta.env.SITE_TITLE || "L4D2 Stats"
+const siteDescription = import.meta.env.SITE_DESC
 const { meta } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en">
-    <HTMLHead pageTitle={meta.title} pageDescription={meta.description} siteTitle={siteTitle} />
+    <HTMLHead pageTitle={meta.title} pageDescription={meta.description ?? siteDescription} siteTitle={siteTitle} noIndex={meta.noIndex} />
     <body>
         <NavBar siteTitle={siteTitle} />
-        <Hero type="is-dark" centered
+        <Hero type={meta.hero?.type || "is-dark"} centered class={meta.hero?.class}
             title={meta.hero?.title ?? meta.title} 
             subtitle={meta.hero?.subtitle ?? meta.description} 
         />

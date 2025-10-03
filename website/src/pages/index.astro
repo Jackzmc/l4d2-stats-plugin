@@ -3,11 +3,11 @@ import Layout, { type PageInfo } from "../layouts/Layout.astro";
 import Card from '../components/bulma/Card.astro'
 const meta: PageInfo = {
 	title: "L4D2 Stats",
-	description: "View all in-game statistics for Left 4 Dead 2, with a leaderboard, game overviews and user statistics",
 	hero: { subtitle: "" }
 }
 
 export const prerender = true
+throw new Error("a")
 ---
 
 <Layout meta={meta}>

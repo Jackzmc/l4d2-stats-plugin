@@ -1,9 +1,5 @@
 {
     "private": true,
-    "workspaces": [
-        "website-ui",
-        "website-api"
-    ],
     "repository": {
         "type": "git",
         "url": "https://github.com/Jackzmc/l4d2-stats-plugin"

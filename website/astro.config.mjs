@@ -12,7 +12,8 @@ const env = loadEnv(process.env.NODE_ENV ?? "production", process.cwd(), "");
 export default defineConfig({
   integrations: [icon({
     include: {
-      proicons: ["chevron-left", "chevron-right", "search"]
+      // proicons: ["chevron-left", "chevron-right", "search", "star"],
+      weui: ["back-outlined", "search-filled", "star-outlined", "star-filled"]
     }
   })],
 

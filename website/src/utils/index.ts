@@ -21,3 +21,24 @@ export function formatSize(bytes: number, si = false, dp = 1) {
 
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entries({
+    "c1m4_atrium": "c1_dead_center",
+    "c2m5_concert": "c2_dark_carnival",
+    "c3m4_plantation": "c3_swamp_fever",
+    "c4m5_milltown_escape": "c4_hard_rain",
+    "c5m5_bridge": "c5_the_parish",
+    "c6m3_port": "c6_the_passing",
+    "c7m3_port": "c7_the_sacrifice",
+    "c8m5_rooftop": "c8_no_mercy",
+    "c9m2_lots": "c9_crash_course",
+    "c10m5_houseboat": "c10_death_toll",
+    "c11m5_runway": "c11_dead_air",
+    "c12m5_cornfield": "c12_blood_harvest",
+    "c13m4_cutthroatcreek": "c13_cold_stream",
+    "c14m2_lighthouse": "c14_last_stand",
+}));
+
+export function getMapPoster(mapId: string): Promise<any> | null {
+  return IMAGE_MAP[mapId] ? import(`../assets/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : import('../assets/background.svg')
+}

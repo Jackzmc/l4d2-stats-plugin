@@ -1,5 +1,4 @@
 ---
-import { assert } from "console";
 import type { ColorType } from "../../types/bulma.ts";
 
 interface BaseTableColumn {
@@ -95,7 +94,7 @@ const { columns, data, type, bordered, striped, narrow, hoverable, fullwidth } =
                                         return <td class={col.class}>{ date.toLocaleString() }</td>
                                     }
                                 }
-
+                                
                                 return <td class={col.class}>{ value }</td>
                             })}
                         </tr>

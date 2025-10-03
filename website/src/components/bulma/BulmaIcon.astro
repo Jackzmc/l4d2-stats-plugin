@@ -1,0 +1,21 @@
+---
+import { Icon } from 'astro-icon/components'
+interface Props {
+    name: string,
+    iconProps?: Record<string, any>,
+    textLeft?: string,
+    textRight?: string
+    rotate?: number
+}
+const { name, iconProps, rotate = 0, textLeft, textRight } = Astro.props
+const style = {
+    rotate: `${rotate}deg`
+}
+---
+<span class="icon-text">
+    {textLeft && <span>{textLeft}</span>}
+    <span class="icon">
+        <Icon name={name} {...iconProps} style={style}/>
+    </span>
+    {textRight && <span>{textRight}</span>}
+</span>

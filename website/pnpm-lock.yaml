@@ -11,12 +11,12 @@ importers:
       '@astrojs/node':
         specifier: ^9.4.4
         version: 9.4.4(astro@5.14.1(@types/node@24.6.2)(rollup@4.52.3)(typescript@5.9.3)(yaml@2.8.1))
-      '@codemint/astro-meta':
-        specifier: ^3.1.4
-        version: 3.1.4(astro@5.14.1(@types/node@24.6.2)(rollup@4.52.3)(typescript@5.9.3)(yaml@2.8.1))
       '@iconify-json/proicons':
         specifier: ^1.2.17
         version: 1.2.17
+      '@iconify-json/weui':
+        specifier: ^1.2.4
+        version: 1.2.4
       astro:
         specifier: ^5.14.1
         version: 5.14.1(@types/node@24.6.2)(rollup@4.52.3)(typescript@5.9.3)(yaml@2.8.1)
@@ -26,6 +26,9 @@ importers:
       astro-seo:
         specifier: ^0.8.4
         version: 0.8.4(typescript@5.9.3)
+      astro-tooltips:
+        specifier: ^0.6.2
+        version: 0.6.2
       bulma:
         specifier: ^1.0.4
         version: 1.0.4
@@ -128,11 +131,6 @@ packages:
 
   '@capsizecss/unpack@2.4.0':
     resolution: {integrity: sha512-GrSU71meACqcmIUxPYOJvGKF0yryjN/L1aCuE9DViCTJI7bfkjgYDPD1zbNDcINJwSSP6UaBZY9GAbYDO7re0Q==}
-
-  '@codemint/astro-meta@3.1.4':
-    resolution: {integrity: sha512-ew+HmgYGm5nnSUb4V2pw9WA9RmnRKLFnbARtj2lCE8IveRlg2DlUKJKqZn3pEaIKY237Q+Tug2wkQMJQryuJjg==}
-    peerDependencies:
-      astro: ^5.4.0
 
   '@emmetio/abbreviation@2.3.3':
     resolution: {integrity: sha512-mgv58UrU3rh4YgbE/TzgLQwJ3pFsHHhCLqY20aJq+9comytTXUDNGG/SMtSeMJdkpxgXSXunBGLD8Boka3JyVA==}
@@ -371,6 +369,9 @@ packages:
   '@iconify-json/proicons@1.2.17':
     resolution: {integrity: sha512-FYnIsbhj91Epr62+QuyVXkljizcqWBHWrK3KGMdKwYxan3PxDZQiOOfKQepLR02Y9PJ4/4N8N22P5F6XS8eCFw==}
 
+  '@iconify-json/weui@1.2.4':
+    resolution: {integrity: sha512-11WOzuH81FokN34N2WYg/bRQ+5ewrIrzVfN4RhWxj3Xr37/eYmqb5SeC6EXpmH8yi+d8tLBdmPxbF41bIhrdxg==}
+
   '@iconify/tools@4.1.4':
     resolution: {integrity: sha512-s6BcNUcCxQ3S6cvhlsoWzOuBt8qKXdVyXB9rT57uSJ/ARHD7dVM43+5ERBWn3tmkMWXeJ/s9DPVc3dUasayzeA==}
 
@@ -527,6 +528,9 @@ packages:
   '@pkgr/core@0.2.9':
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
+
+  '@popperjs/core@2.11.8':
+    resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
   '@rmp135/sql-ts@2.2.0':
     resolution: {integrity: sha512-OnZJ0KtNMfR8J81rRXllClkX1ECZNNiREHCjDjrY5Ri6sedma7X61UuAAsTwm/bLX/QI5DHJNT+gXPJl8fK6hw==}
@@ -862,6 +866,9 @@ packages:
 
   astro-seo@0.8.4:
     resolution: {integrity: sha512-Ou1vzQSXAxa0K8rtNtXNvSpYqOGEgMhh0immMxJeXmbVZac3UKCNWAoXWyOQDFYsZvBugCRSg0N1phBqPMVgCw==}
+
+  astro-tooltips@0.6.2:
+    resolution: {integrity: sha512-I9uXbchctnRqbc0mnxKcBRfweMuql/U+619+MzNvq3kANc7xthOXj6cMNgAkTaXoHJLdFMKL3Fx6vB5cyiiRXg==}
 
   astro@5.14.1:
     resolution: {integrity: sha512-gPa8NY7/lP8j8g81iy8UwANF3+aukKRWS68IlthZQNgykpg80ne6lbHOp6FErYycxQ1TUhgEfkXVDQZAoJx8Bg==}
@@ -2404,6 +2411,9 @@ packages:
     resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
     engines: {node: '>=12.0.0'}
 
+  tippy.js@6.3.7:
+    resolution: {integrity: sha512-E1d3oP2emgJ9dRQZdf3Kkn0qJgI6ZLpyS5z6ZkY1DF3kaQaBsGZsndEpHwx+eC+tYM41HaSNvNtLx8tU57FzTQ==}
+
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
@@ -3029,10 +3039,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@codemint/astro-meta@3.1.4(astro@5.14.1(@types/node@24.6.2)(rollup@4.52.3)(typescript@5.9.3)(yaml@2.8.1))':
-    dependencies:
-      astro: 5.14.1(@types/node@24.6.2)(rollup@4.52.3)(typescript@5.9.3)(yaml@2.8.1)
-
   '@emmetio/abbreviation@2.3.3':
     dependencies:
       '@emmetio/scanner': 1.0.4
@@ -3198,6 +3204,10 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
+  '@iconify-json/weui@1.2.4':
+    dependencies:
+      '@iconify/types': 2.0.0
+
   '@iconify/tools@4.1.4':
     dependencies:
       '@iconify/types': 2.0.0
@@ -3336,6 +3346,8 @@ snapshots:
   '@oslojs/encoding@1.1.0': {}
 
   '@pkgr/core@0.2.9': {}
+
+  '@popperjs/core@2.11.8': {}
 
   '@rmp135/sql-ts@2.2.0(mysql2@3.15.1)':
     dependencies:
@@ -3693,6 +3705,10 @@ snapshots:
       - prettier
       - prettier-plugin-astro
       - typescript
+
+  astro-tooltips@0.6.2:
+    dependencies:
+      tippy.js: 6.3.7
 
   astro@5.14.1(@types/node@24.6.2)(rollup@4.52.3)(typescript@5.9.3)(yaml@2.8.1):
     dependencies:
@@ -5627,6 +5643,10 @@ snapshots:
     dependencies:
       fdir: 6.5.0(picomatch@4.0.3)
       picomatch: 4.0.3
+
+  tippy.js@6.3.7:
+    dependencies:
+      '@popperjs/core': 2.11.8
 
   to-regex-range@5.0.1:
     dependencies:

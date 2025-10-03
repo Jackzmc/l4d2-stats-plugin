@@ -1,7 +1,6 @@
 ---
 import Bulma from "bulma/css/bulma.min.css?url";
-
-import { MetaTags } from "@codemint/astro-meta";
+import { Tooltips } from 'astro-tooltips'
 import { SEO } from "astro-seo";
 
 export interface Props {
@@ -32,4 +31,5 @@ const description = pageDescription;
         noindex={noIndex}
         nofollow={noFollow}
     />
+    <Tooltips interactive={false} placement="top" delay={[0, 0]} animation={false} />
 </head>

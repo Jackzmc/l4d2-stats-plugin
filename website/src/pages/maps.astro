@@ -1,0 +1,93 @@
+---
+import Layout, { type PageInfo } from "../layouts/Layout.astro";
+import Table, { type TableColumn } from "../components/bulma/Table.astro";
+import { Icon } from 'astro-icon/components'
+import { Image } from "astro:assets";
+const meta: PageInfo = {
+	title: "Campaigns",
+	description: "View stats about total number of games or minutes played and rating for all campaign maps"
+}
+
+import { getMapPoster } from '../utils/index.ts'
+import { getMapPlayCount, getMapRatings } from "../models/Map.ts";
+import { Picture } from "astro:assets";
+
+const topMaps = await getMapPlayCount(false, 3)
+const mapRatings = await getMapRatings()
+
+const COLUMNS: TableColumn[] = [
+    { name: "Map", formatFunction: (row) => `` },
+    { name: "Games Played", formatFunction: (row) => row['count'].toLocaleString() },
+    { name: "Average Duration", formatFunction: (row) => "n/a" },
+    { name: "Rating", formatFunction: (row) => `<Icon name="proicons:star" />`},
+    { name: "# of Ratings", formatFunction: (row) => "n/a" },
+]
+
+export const prerender = true
+Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
+---
+
+<Layout meta={meta}>
+	<div class="container">
+        <p class="title is-6">Top Maps</p>
+        <nav class="level">
+            {topMaps.map(map => {
+                return <div class="level-item has-text-centered">
+                    <div class="topmap">
+                        <figure class="image">
+                            <Picture width={200} height={300} src={getMapPoster(map.map)} alt={`Poster for ${map.name}`}/>
+                        </figure>
+                        <p class="title is-4">{map.name}</p>
+                        <div class="subtitle is-6">{map.count.toLocaleString()} games played</div>
+                    </div>
+                </div>
+            })}
+        </nav>
+        
+        <hr>
+
+        <p class="title is-6">Map Ratings</p>
+        <table class="table is-fullwidth is-striped">
+            <thead>
+                <tr>
+                    <th>Map</th>
+                    <th>Games Played</th>
+                    <th>Average Duration</th>
+                    <th>Rating</th>
+                    <th># of Ratings</th>
+                </tr>
+            </thead>
+            <tbody>
+                {mapRatings.map(row => (
+                    <tr>
+                        <td><b title={row.map} class="py-2"><a href={`/maps/${row.map}`}>{row.name}</a></b></td>
+                        <td>{row.gamesPlayed.toLocaleString()}</td>
+                        <td>{row.avgMinutesPlayed.toLocaleString(undefined, { maximumFractionDigits: 0 })} minutes</td>
+                        <td>
+                            {Array(5).fill(undefined).map((_,i) => 
+                                <Icon name={Math.floor(row.avgRating) > i ? "weui:star-filled" : "weui:star-outlined"} />
+                            )}
+                            {row.avgRating.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
+                        </td>
+                        <td>{row.ratings}</td>
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+	</div>
+</Layout>
+
+<style>
+.level-item {
+    /* border: 2px solid royalblue; */
+    border-radius: 8px;
+    padding: 15px;
+}
+.level-item > div {
+    padding: 15px;
+    border: 1px solid black;
+}
+.level-item figure {
+    height: 300px;
+}
+</style>

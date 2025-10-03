@@ -1,0 +1,58 @@
+---
+import UserSearch from '../UserSearch.astro';
+
+export interface Props {
+    siteTitle?: string;
+}
+const { siteTitle } = Astro.props;
+
+interface PageRecord {
+    title: string;
+    href: string;
+}
+const PAGES: PageRecord[] = [
+    { title: "Leaderboards", href: "/leaderboards" },
+    { title: "Summary", href: "/summary" },
+    { title: "Maps", href: "/maps" },
+    { title: "Game Summaries", href: "/games" },
+];
+---
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+    <div class="navbar-brand">
+        <a class="navbar-item" href="/">
+            <b>{siteTitle}</b>
+        </a>
+
+        <a
+            role="button"
+            class="navbar-burger"
+            aria-label="menu"
+            aria-expanded="false"
+            data-target="navbarBasicExample"
+        >
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+    </div>
+
+    <div class="navbar-menu">
+        <div class="navbar-start">
+            {
+                PAGES.map((page) => (
+                    <a class="navbar-item" href={page.href}>
+                        {page.title}
+                    </a>
+                ))
+            }
+        </div>
+
+        <div class="navbar-end">
+            <div class="navbar-item">
+                <UserSearch />
+            </div>
+        </div>
+    </div>
+</nav>

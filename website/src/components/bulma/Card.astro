@@ -1,0 +1,42 @@
+---
+interface Props {
+    title: string,
+    collapsed?: boolean
+}
+const { title, collapsed } = Astro.props
+---
+
+
+<div class="card">
+  <header class="card-header">
+    <p class="card-header-title">{ title }</p>
+    <button class="card-header-icon" aria-label="toggle card">
+        <span class="icon">
+            <i class="fas fa-angle-down" aria-hidden="true"></i>
+        </span>
+    </button>
+  </header>
+  <div class="card-content" style="display: none">
+    <slot />
+  </div>
+</div>
+
+<script>
+const cards = document.querySelectorAll('div.card');
+
+cards.forEach((card) => {
+    const button = card.querySelector("header.card-header button.card-header-icon")
+    const content = card.querySelector<HTMLElement>("div.card-content")
+    if(!button || !content) return
+    const isHidden = content.style.display === "none"
+    button.textContent = isHidden ? "Show" : "Hide"
+
+
+    button.addEventListener("click", () => {
+        const isHidden = content.style.display === "none"
+        content.style.display = isHidden ? "block" : "none"
+
+        button.textContent = isHidden ? "Show" : "Hide"
+    })
+  });
+</script>

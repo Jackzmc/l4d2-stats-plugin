@@ -1,0 +1,61 @@
+---
+import Hero from "../components/bulma/Hero.astro";
+import HTMLHead from "../components/layout/HTMLHead.astro";
+import NavBar from "../components/layout/NavBar.astro";
+
+export interface Props {
+    meta: PageInfo
+}
+
+export interface PageInfo { 
+    /** The title of the page such as "Summary" */
+    title: string,
+    /** Description of the page, shown in og:description and default for heros */
+    description: string,
+
+    /** Determines the hero, enabled by default. set to null to turn off, undefined for default (on) */
+    hero?: {
+        /** Title to use for hero, defaults to page title */
+        title?: string,
+        /** Subtitle to use for hero, defaults to page description */
+        subtitle?: string
+    } | undefined | null
+}
+const siteTitle = import.meta.env.SITE_TITLE || "L4D2 Stats"
+const { meta } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+    <HTMLHead pageTitle={meta.title} pageDescription={meta.description} siteTitle={siteTitle} />
+    <body>
+        <NavBar siteTitle={siteTitle} />
+        <Hero type="is-dark" centered
+            title={meta.hero?.title ?? meta.title} 
+            subtitle={meta.hero?.subtitle ?? meta.description} 
+        />
+        <slot />
+    </body>
+</html>
+
+<style>
+    #app {
+        font-family: Avenir, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        color: #2c3e50;
+    }
+
+    #nav {
+        padding: 30px;
+    }
+
+    #nav a {
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    #nav a.router-link-exact-active {
+        color: #42b983;
+    }
+</style>

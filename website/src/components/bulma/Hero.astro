@@ -1,0 +1,19 @@
+---
+interface Props {
+    title: string,
+    subtitle?: string,
+    
+    type?: string
+    size?: "is-small" | "is-medium" | "is-large" | "is-half-height" | "is-fullheight",
+    centered?: boolean
+}
+const { title, subtitle, type, size, centered } = Astro.props
+---
+
+<section class:list={["hero", type, size, { 'has-text-centered': centered } ]}>
+    <div class="hero-body">
+        <p class="title">{title}</p>
+        <p class="subtitle">{subtitle}</p>
+    </div>
+</section>
+<br>

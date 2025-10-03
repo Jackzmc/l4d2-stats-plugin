@@ -1,0 +1,19 @@
+---
+import Layout, { type PageInfo } from "../layouts/Layout.astro";
+const meta: PageInfo = {
+	title: "Player Leaderboards",
+	description: "Leaderboard of the best players in-game",
+	hero: { subtitle: "" }
+}
+
+import { getLeaderboard } from '../models/User.ts'
+const leaderboard = await getLeaderboard(0)
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
+---
+
+<Layout meta={meta}>
+	<div class="container content">
+		{JSON.stringify(leaderboard)}
+	</div>
+</Layout>

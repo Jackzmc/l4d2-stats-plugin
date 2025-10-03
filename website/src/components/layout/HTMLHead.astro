@@ -1,0 +1,32 @@
+---
+import Bulma from "bulma/css/bulma.min.css?url";
+
+import { MetaTags } from "@codemint/astro-meta";
+
+export interface Props {
+    pageTitle?: string;
+    pageDescription?: string;
+
+    siteTitle: string;
+}
+const { pageTitle, pageDescription, siteTitle } = Astro.props;
+
+const title = pageTitle ? `${pageTitle} | ${siteTitle}` : siteTitle;
+const description = pageDescription;
+---
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <link rel="icon" type="image/svg+xml" href="/favicon.svg" /> -->
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <link rel="stylesheet" href={Bulma} />
+    <link rel="stylesheet" href="/css/main.css" />
+
+    <MetaTags
+        title={title}
+        description={description}
+        canonicalUrl={Astro.url.href}
+    />
+</head>

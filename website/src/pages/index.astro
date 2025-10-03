@@ -1,0 +1,58 @@
+---
+import Layout, { type PageInfo } from "../layouts/Layout.astro";
+import Card from '../components/bulma/Card.astro'
+const meta: PageInfo = {
+	title: "L4D2 Stats",
+	description: "View all in-game statistics for Left 4 Dead 2, with a leaderboard, game overviews and user statistics",
+	hero: { subtitle: "" }
+}
+
+export const prerender = true
+---
+
+<Layout meta={meta}>
+	<div class="container content">
+		<div class="block is-size-4">
+			<h4>Left 4 Dead 2 Statistics</h4>
+			<p>Welcome to the L4D2 stats website. Here you can view statistics about any played games, view the map ratings, see the player leaderboards, and view player's stats.</p>
+			<p>This site shows recorded statistics for servers using the <a href="https://github.com/jackzmc/l4d2-stats-plugin">L4D2 Stats Plugin</a> in-game.</p>
+		</div>
+		<hr>
+		<h4>FAQ</h4>
+		<div class="block ml-2">
+			<h5>Campaign MVP</h5>
+			<p>Campaign MVP is determined by the following fields:</p>
+			<ol>
+				<li>Special Infected Killed <em>(highest number)</em></li>
+				<li>Survivor FF Count <em>(lowest number)</em></li>
+				<li>Zombie Kills <em>(highest number)</em></li>
+				<li>Damage Taken <em>(lowest number)</em></li>
+			</ol>
+			<p>When a campaign is fetched, the list of sessions for that campaign are sorted in the order listed above. The first player in the list will be assigned the MVP.</p>
+		</div>
+		<div class="block ml-2">
+			<!-- <Card title="Points Breakdown"> -->
+			 <h4>Points Breakdown</h4>
+					<p>Points are gained or lost from certain actions in a game a player performs. Below is the list of actions and the points added/removed for it:</p>
+
+					<ul>
+						<li><span class="has-text-success">+1</span> per common killed (any damage type)</li>
+						<li><span class="has-text-success">+2</span> per common headshot</li>
+						<li><span class="has-text-success">+6</span> per special kill</li>
+						<li><span class="has-text-success">+100</span> per tank kill</li>
+						<li><span class="has-text-success">+20</span> per tank kill solo (in addition to tank kill)</li>
+						<li><span class="has-text-success">+50</span> per tank kill melee (in addition to tank kill))</li>
+						<li><span class="has-text-success">+50</span> per witch kill</li>
+						<li><span class="has-text-success">+10</span> per heal teammate</li>
+						<li><span class="has-text-success">+5</span> per revive teammate</li>
+						<li><span class="has-text-success">+7</span> per teammate defibbed</li>
+						<li><span class="has-text-success">+2</span> per ammo pack deploy</li>
+						<li><span class="has-text-success">+200</span> per finale win</li>
+						<br>
+						<li><span class="has-text-danger">-100</span> for teammate kill</li>
+						<li><span class="has-text-danger">-10</span> per teammate dmg</li>
+					</ul>
+			<!-- </Card> -->
+		</div>
+	</div>
+</Layout>

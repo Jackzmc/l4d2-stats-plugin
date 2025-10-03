@@ -1,23 +1,46 @@
-# Getting Started with [Fastify-CLI](https://www.npmjs.com/package/fastify-cli)
-This project was bootstrapped with Fastify-CLI.
+# Astro Starter Kit: Basics
 
-## Available Scripts
+```sh
+pnpm create astro@latest -- --template basics
+```
 
-In the project directory, you can run:
+> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
 
-### `npm run dev`
+## 🚀 Project Structure
 
-To start the app in dev mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Inside of your Astro project, you'll see the following folders and files:
 
-### `npm start`
+```text
+/
+├── public/
+│   └── favicon.svg
+├── src
+│   ├── assets
+│   │   └── astro.svg
+│   ├── components
+│   │   └── Welcome.astro
+│   ├── layouts
+│   │   └── Layout.astro
+│   └── pages
+│       └── index.astro
+└── package.json
+```
 
-For production mode
+To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
 
-### `npm run test`
+## 🧞 Commands
 
-Run the test cases.
+All commands are run from the root of the project, from a terminal:
 
-## Learn More
+| Command                   | Action                                           |
+| :------------------------ | :----------------------------------------------- |
+| `pnpm install`             | Installs dependencies                            |
+| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
+| `pnpm build`           | Build your production site to `./dist/`          |
+| `pnpm preview`         | Preview your build locally, before deploying     |
+| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
+| `pnpm astro -- --help` | Get help using the Astro CLI                     |
 
-To learn Fastify, check out the [Fastify documentation](https://fastify.dev/docs/latest/).
+## 👀 Want to learn more?
+
+Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).

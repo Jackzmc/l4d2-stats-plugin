@@ -1,9 +1,6 @@
 ---
-function formatNumber(number: number) {
-    return Number(number).toLocaleString(undefined, {
-        maximumFractionDigits: 0
-    })
-}
+import CountUp from '../CountUp.astro'
+
 interface Props {
     values: Record<string, number>
 }
@@ -15,37 +12,37 @@ const { values } = Astro.props
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Boomers Killed</p>
-            <p class="title"><span class="countup">{formatNumber(values.boomer_kills)}</span></p>
+            <p class="title"><CountUp number={values.boomer_kills} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Jockeys Killed</p>
-            <p class="title"><span class="countup">{formatNumber(values.jockey_kills)}</span></p>
+            <p class="title"><CountUp number={values.jockey_kills} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Smokers Killed</p>
-            <p class="title"><span class="countup">{formatNumber(values.smoker_kills)}</span></p>
+            <p class="title"><CountUp number={values.smoker_kills} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Spitters Killed</p>
-            <p class="title"><span class="countup">{formatNumber(values.spitter_kills)}</span></p>
+            <p class="title"><CountUp number={values.spitter_kills} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Hunters Killed</p>
-            <p class="title"><span class="countup">{formatNumber(values.hunter_kills)}</span></p>
+            <p class="title"><CountUp number={values.hunter_kills} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Chargers Killed</p>
-            <p class="title"><span class="countup">{formatNumber(values.charger_kills)}</span></p>
+            <p class="title"><CountUp number={values.charger_kills} /></p>
             </div>
         </div>
     </nav>
@@ -53,25 +50,25 @@ const { values } = Astro.props
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Pills Used</p>
-            <p class="title"><span class="countup">{formatNumber(values.PillsUsed)}</span></p>
+            <p class="title"><CountUp number={values.PillsUsed} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Adrenalines Used</p>
-            <p class="title"><span class="countup">{formatNumber(values.AdrenalinesUsed)}</span></p>
+            <p class="title"><CountUp number={values.AdrenalinesUsed} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Kits Used (Self)</p>
-            <p class="title"><span class="countup">{formatNumber(values.MedkitsUsed - values.FirstAidShared)}</span></p>
+            <p class="title"><CountUp number={values.MedkitsUsed - values.FirstAidShared} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Kits Used (Shared)</p>
-            <p class="title"><span class="countup">{formatNumber(values.FirstAidShared)}</span></p>
+            <p class="title"><CountUp number={values.FirstAidShared} /></p>
             </div>
         </div>
     </nav>
@@ -79,19 +76,19 @@ const { values } = Astro.props
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Incaps</p>
-            <p class="title"><span class="countup">{formatNumber(values.Incaps)}</span></p>
+            <p class="title"><CountUp number={values.Incaps} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Deaths</p>
-            <p class="title"><span class="countup">{formatNumber(values.Deaths)}</span></p>
+            <p class="title"><CountUp number={values.Deaths} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Revives (Others)</p>
-            <p class="title"><span class="countup">{formatNumber(values.ReviveOtherCount)}</span></p>
+            <p class="title"><CountUp number={values.ReviveOtherCount} /></p>
             </div>
         </div>
     </nav>

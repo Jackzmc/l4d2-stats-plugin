@@ -1,0 +1,23 @@
+---
+interface Props {
+    number: number
+}
+function formatNumber(number: number) {
+    return Number(number).toLocaleString(undefined, {
+        maximumFractionDigits: 0
+    })
+}
+const { number } = Astro.props
+---
+
+<span data-count={number}>{formatNumber(number)}</span>
+
+<script>
+import { CountUp }  from "countup.js";
+
+const countersElems = document.querySelectorAll<HTMLElement>("span[data-count]")
+for(const counterElem of countersElems) {
+    const counter = new CountUp(counterElem, Number(counterElem.dataset.count))
+    counter.start()
+}
+</script>

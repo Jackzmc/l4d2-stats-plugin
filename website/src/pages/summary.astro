@@ -7,12 +7,7 @@ const meta: PageInfo = {
 }
 import * as GameSummary from '../models/GameSummary.ts'
 import { Image } from "astro:assets";
-
-function formatNumber(number: number) {
-    return Number(number).toLocaleString(undefined, {
-        maximumFractionDigits: 0
-    })
-}
+import CountUp from "../components/CountUp.astro";
 
 const [totals, averages, [worstMap, bestMap]] = await Promise.all([
     GameSummary.getSummaryTotals(),  
@@ -51,31 +46,31 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Games Played</p>
-                    <p class="title"><span class="countup">{formatNumber(totals.total_games)}</span></p>
+                    <p class="title"><CountUp number={(totals.total_games)} /></p>
                     </div>
                 </div>
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Total Playtime</p>
-                    <p class="title"><span class="countup">{formatNumber((totals.game_duration / 60 / 60))}</span> hours</p>
+                    <p class="title"><CountUp number={(totals.game_duration / 60 / 60)} /> hours</p>
                     </div>
                 </div>
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Total FF Damage</p>
-                    <p class="title"><span class="countup">{formatNumber(totals.survivor_ff)}</span> HP</p>
+                    <p class="title"><CountUp number={totals.survivor_ff} /> HP</p>
                     </div>
                 </div>
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Zombies Killed</p>
-                    <p class="title"><span class="countup">{formatNumber(totals.zombie_kills)}</span></p>
+                    <p class="title"><CountUp number={totals.zombie_kills} /></p>
                     </div>
                 </div>
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Unique Players</p>
-                    <p class="title"><span class="countup">{formatNumber(totals.total_users)}</span></p>
+                    <p class="title"><CountUp number={totals.total_users} /></p>
                     </div>
                 </div>
             </nav>
@@ -87,31 +82,31 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Average Game Duration</p>
-                    <p class="title"><span class="countup">{formatNumber((averages.game_duration / 60))}</span> min</p>
+                    <p class="title"><CountUp number={(averages.game_duration / 60)} /> min</p>
                     </div>
                 </div>
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Average Zombies Killed</p>
-                    <p class="title"><span class="countup">{formatNumber(averages.zombie_kills)}</span></p>
+                    <p class="title"><CountUp number={averages.zombie_kills} /></p>
                     </div>
                 </div>
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Players per Game</p>
-                    <p class="title"><span class="countup">{formatNumber(averages.avgPlayers)}</span></p>
+                    <p class="title"><CountUp number={averages.avgPlayers} /></p>
                     </div>
                 </div>
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Average FF Damage</p>
-                    <p class="title"><span class="countup">{formatNumber(averages.survivor_ff)}</span> HP</p>
+                    <p class="title"><CountUp number={averages.survivor_ff} /> HP</p>
                     </div>
                 </div>
                 <div class="level-item has-text-centered">
                     <div>
                     <p class="heading">Average Ping</p>
-                    <p class="title"><span class="countup">{formatNumber(averages.ping)}</span> ms</p>
+                    <p class="title"><CountUp number={averages.ping} /> ms</p>
                     </div>
                 </div>
             </nav>

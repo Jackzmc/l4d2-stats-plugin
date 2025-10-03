@@ -4,6 +4,7 @@ import Layout, { type PageInfo } from "../layouts/Layout.astro";
 const meta: PageInfo = {
 	title: "L4D2 Stats",
 	hero: { title: "Page Not Found", subtitle: `No page matching ${Astro.url.pathname} exists`, type: "is-warning" },
+    noIndex: true
 }
 
 export const prerender = true

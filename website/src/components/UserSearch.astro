@@ -1,4 +1,9 @@
-<!-- TODO: add icons -->
+---
+import { Icon } from 'astro-icon/components'
+import Field from './bulma/Field.astro'
+---
 <form method="post" action="/search">
-    <input class="input" type="text" placeholder="Search users" />
+    <Field iconLeft="proicons:search" iconLeftProps={{class: "has-text-black"}}>
+        <input class="input" type="text" placeholder="Search users" />
+    </Field>
 </form>

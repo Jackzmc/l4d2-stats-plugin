@@ -1,0 +1,28 @@
+---
+import { Icon } from 'astro-icon/components'
+
+interface Props {
+    iconLeft?: string
+    iconLeftProps?: Record<string, any>,
+    iconRight?: string,
+    iconRightProps?: Record<string, any>,
+}
+const { iconLeft, iconLeftProps, iconRight, iconRightProps } = Astro.props
+---
+
+<div class="field">
+  <p class:list={["control",{'has-icons-left': !!iconLeft, 'has-icons-right': !!iconRight }]}>
+    <slot />
+    {iconLeft && <span class="icon is-small is-left">
+        <slot name="icon-left">
+            <Icon name={iconLeft} {...iconLeftProps} />
+        </slot>
+    </span>}
+    
+    {iconRight && <span class="icon is-small is-right">
+        <slot name="icon-right">
+            <Icon name={iconRight} {...iconRightProps} />
+        </slot>
+    </span>}
+  </p>
+</div>

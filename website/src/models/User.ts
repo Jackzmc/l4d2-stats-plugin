@@ -20,11 +20,11 @@ export async function getTotalPlayers(): Promise<number> {
 
 /**
  * Fetches list of players sorted descendingly by points.
- * @param page page offset, default 0
+ * @param page the current page - default 1
  * @param itemsPerPage number of items to return, default 30
  */
-export async function getLeaderboards(page: number = 0, itemsPerPage = 30): Promise<LeaderboardEntry[]> {
-    const offset = page * itemsPerPage;
+export async function getLeaderboards(page: number = 1, itemsPerPage = 30): Promise<LeaderboardEntry[]> {
+    const offset = (page - 1) * itemsPerPage;
     const [entries] = await db.query<(LeaderboardEntry & RowDataPacket)[]>(`select
         steamid,last_alias,minutes_played,last_join_date,
         points as points_old,

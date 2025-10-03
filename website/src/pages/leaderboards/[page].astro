@@ -1,8 +1,15 @@
 ---
+// Elements import
+import Table, { type TableColumn } from "../../components/bulma/Table.astro";
+import Layout, { type PageInfo } from "../../layouts/Layout.astro";
+import UserSearch from "../../components/UserSearch.astro";
+import Pagination from "../../components/bulma/Pagination.astro";
+
+let { page = 0 } = Astro.params
+page = parseInt(page as string)
+if(isNaN(page)) return new Response(null, { status: 404 })
+
 // Setup meta data
-import Table, { type TableColumn } from "../components/bulma/Table.astro";
-import Layout, { type PageInfo } from "../layouts/Layout.astro";
-import UserSearch from "../components/UserSearch.astro";
 const meta: PageInfo = {
 	title: "Player Leaderboards",
 	description: "Leaderboard of the best players in-game",
@@ -10,7 +17,7 @@ const meta: PageInfo = {
 }
 
 // Setup table 
-import { formatRelUnixDate, unixDateToDuration } from '../utils/date.ts'
+import { formatRelUnixDate, unixDateToDuration } from '../../utils/date.ts'
 const COLUMNS: TableColumn[] = [
 	{ name: "Player Name", key: "last_alias", formatFunction: (row) => (
 		`<b><a href="/user/${row['steamid']}">${row['last_alias']}</a></b>`
@@ -24,12 +31,11 @@ const COLUMNS: TableColumn[] = [
 		)}
 ]
 
-const ITEMS_PER_PAGE = 15
-
 // Load data
-import * as User from '../models/User.ts'
+const ITEMS_PER_PAGE = 15
+import * as User from '../../models/User.ts'
 const totalPlayers = await User.getTotalPlayers()
-const leaderboard = await User.getLeaderboards(0, ITEMS_PER_PAGE)
+const leaderboard = await User.getLeaderboards(page, ITEMS_PER_PAGE)
 
 meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <b>${totalPlayers.toLocaleString()} players</b>`
 
@@ -41,6 +47,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
 		<div class="columns">
 			<div class="column is-8">
 				<Table columns={COLUMNS} data={leaderboard} striped fullwidth />
+				<Pagination currentPage={page} itemsPerPage={ITEMS_PER_PAGE} totalItems={totalPlayers}  />
 			</div>
 			<div class="column is-4">
 				<div class="box">

@@ -3,11 +3,19 @@ import db from "../db/pool.ts";
 import type { StatsUsersEntity } from "../db/types.ts";
 
 export interface LeaderboardEntry {
-    user_steamid: string,
-    user_name: string,
+    steamid: string,
+    last_alias: string,
     minutes_played: number,
     last_join_date: number,
     points: number
+}
+
+/**
+ * Returns the number of players in the users table
+ */
+export async function getTotalPlayers(): Promise<number> {
+    const [countRow] = await db.query<RowDataPacket[]>("SELECT COUNT(*) count FROM stats_users")
+    return countRow[0].count
 }
 
 /**
@@ -15,10 +23,9 @@ export interface LeaderboardEntry {
  * @param page page offset, default 0
  * @param itemsPerPage number of items to return, default 30
  */
-export async function getLeaderboard(page: number = 0, itemsPerPage = 30): Promise<LeaderboardEntry[]> {
+export async function getLeaderboards(page: number = 0, itemsPerPage = 30): Promise<LeaderboardEntry[]> {
     const offset = page * itemsPerPage;
-
-    const [rows] = await db.query<(LeaderboardEntry & RowDataPacket)[]>(`select
+    const [entries] = await db.query<(LeaderboardEntry & RowDataPacket)[]>(`select
         steamid,last_alias,minutes_played,last_join_date,
         points as points_old,
         (
@@ -40,5 +47,5 @@ export async function getLeaderboard(page: number = 0, itemsPerPage = 30): Promi
         limit ?,?`, 
         [offset, itemsPerPage]
     )
-    return rows
+    return entries
 }

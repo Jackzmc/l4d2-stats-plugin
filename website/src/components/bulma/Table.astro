@@ -1,0 +1,115 @@
+---
+import { assert } from "console";
+import type { ColorType } from "../../types/bulma.ts";
+
+interface BaseTableColumn {
+    /** Name to show for the column */
+    name: string;
+
+    class?: string
+}
+interface FormatNumber {
+    /** The precision to truncate value to */
+    precision?: number,
+    /** if .tolocaleString() should be used for value */
+    formatToLocale: boolean
+}
+interface FormatDate {
+    showTime?: boolean,
+    showDay?: boolean
+}
+type KeyFormat = { number: FormatNumber } | { date: FormatDate }
+interface TableColumnKey extends BaseTableColumn {
+    /** The key to the column's data. 1D only */
+    key: string;
+
+    format?: KeyFormat
+}
+interface TableColumnFormatted extends BaseTableColumn {
+    /**
+     * Formats the value to a raw HTML string
+     * @param row the raw row object
+     */
+    formatFunction: (row: Record<string, any>) => string
+}
+export type TableColumn = TableColumnKey | TableColumnFormatted
+interface Props {
+    columns: TableColumn[];
+    data: Record<string, any>[];
+
+    type?: ColorType;
+    bordered?: boolean;
+    striped?: boolean;
+    narrow?: boolean;
+    hoverable?: boolean;
+    fullwidth?: boolean;
+}
+const { columns, data, type, bordered, striped, narrow, hoverable, fullwidth } = Astro.props;
+---
+
+<table
+    class:list={[
+        "table",
+        type,
+        {
+            "is-bordered": bordered,
+            "is-striped": striped,
+            "is-narrow": narrow,
+            "is-hoverable": hoverable,
+            "is-fullwidth": fullwidth,
+        },
+    ]}
+>
+    <thead>
+        <slot name="head">
+            <tr>
+                {
+                    columns.map((col) => (
+                        <th>{col.name}</th>
+                    ))
+                }
+            </tr>
+        </slot>
+    </thead>
+
+    <tbody>
+        <slot name="body">
+            {
+                data.map((row) => {
+                    return (
+                        <tr>
+                            {columns.map((col) => {
+                                if("formatFunction" in col) {
+                                    let value = col.formatFunction(row)
+                                    return <td class={col.class} set:html={value} /> 
+                                }
+                                let value = row[col.key]
+                                if(value != undefined && col.format != undefined) {
+                                    if('number' in col.format) {
+                                        let val: number|string = parseInt(value)
+                                        if(col.format.number.formatToLocale) val = val.toLocaleString()
+                                        else if(col.format.number.precision) val = val.toFixed(col.format.number.precision)
+                                        return <td class={col.class}>{ val }</td>
+                                    } else if('date' in col.format) {
+                                        const date = new Date(value)
+                                        return <td class={col.class}>{ date.toLocaleString() }</td>
+                                    }
+                                }
+
+                                return <td class={col.class}>{ value }</td>
+                            })}
+                        </tr>
+                    );
+                })
+            }
+        </slot>
+    </tbody>
+
+    {
+        Astro.slots.has("foot") && (
+            <tfoot>
+                <slot name="foot"></slot>
+            </tfoot>
+        )
+    }
+</table>

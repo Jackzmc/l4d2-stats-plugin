@@ -1,0 +1,12 @@
+export type ColorType = "is-primary"
+    | "is-link"
+    | "is-info"
+    | "is-success"
+    | "is-warning"
+    | "is-danger"
+    | "is-black"
+    | "is-dark"
+    | "is-light"
+    | "is-white"
+
+export type Size = "is-small" | "is-medium" | "is-large"

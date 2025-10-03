@@ -1,19 +1,58 @@
 ---
+// Setup meta data
+import Table, { type TableColumn } from "../components/bulma/Table.astro";
 import Layout, { type PageInfo } from "../layouts/Layout.astro";
+import UserSearch from "../components/UserSearch.astro";
 const meta: PageInfo = {
 	title: "Player Leaderboards",
 	description: "Leaderboard of the best players in-game",
 	hero: { subtitle: "" }
 }
 
-import { getLeaderboard } from '../models/User.ts'
-const leaderboard = await getLeaderboard(0)
+// Setup table 
+import { formatRelUnixDate, unixDateToDuration } from '../utils/date.ts'
+const COLUMNS: TableColumn[] = [
+	{ name: "Player Name", key: "last_alias", formatFunction: (row) => (
+		`<b><a href="/user/${row['steamid']}">${row['last_alias']}</a></b>`
+	)},
+	{ name: "Points", key: "points", format: { number: { formatToLocale: true } }, class: "has-text-link" },
+	{ name: "Last Played", formatFunction: (row) => formatRelUnixDate(row["last_join_date"]) },
+	{ name: "Total Playtime", 
+		formatFunction: (row) => unixDateToDuration(
+			row["minutes_played"], 
+			{ format: ["days", "hours", "minutes"], delimiter: ", "}
+		)}
+]
+
+const ITEMS_PER_PAGE = 15
+
+// Load data
+import * as User from '../models/User.ts'
+const totalPlayers = await User.getTotalPlayers()
+const leaderboard = await User.getLeaderboards(0, ITEMS_PER_PAGE)
+
+meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <b>${totalPlayers.toLocaleString()} players</b>`
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
 ---
 
 <Layout meta={meta}>
 	<div class="container content">
-		{JSON.stringify(leaderboard)}
+		<div class="columns">
+			<div class="column is-8">
+				<Table columns={COLUMNS} data={leaderboard} striped fullwidth />
+			</div>
+			<div class="column is-4">
+				<div class="box">
+					<UserSearch />
+				</div>
+				<div class="box">
+					<!-- TODO: top stat summary -->
+				</div>
+				<div class="box">
+					<!-- TODO: random player of day -->
+				</div>
+			</div>
+		</div>
 	</div>
 </Layout>

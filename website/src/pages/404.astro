@@ -3,7 +3,7 @@ import Button from "../components/bulma/Button.astro";
 import Layout, { type PageInfo } from "../layouts/Layout.astro";
 const meta: PageInfo = {
 	title: "L4D2 Stats",
-	hero: { title: "Page Not Found", subtitle: `No page matching ${Astro.url.pathname} exists` },
+	hero: { title: "Page Not Found", subtitle: `No page matching ${Astro.url.pathname} exists`, type: "is-warning" },
 }
 
 export const prerender = true

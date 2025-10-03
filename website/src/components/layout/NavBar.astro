@@ -42,7 +42,8 @@ const PAGES: PageRecord[] = [
         <div class="navbar-start">
             {
                 PAGES.map((page) => {
-                    const isActive = Astro.url.pathname.startsWith(page.href)
+                    const isActive = Astro.url.pathname.startsWith(page.href) 
+                        && Astro.response.status === 200 // don't mark is-active when on 404 / 500 pages
                     return <a class:list={["navbar-item", {'has-background-link-light': isActive }]} href={page.href}>
                         {page.title}
                     </a>

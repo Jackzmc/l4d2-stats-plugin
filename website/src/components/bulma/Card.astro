@@ -15,7 +15,7 @@ const { title, collapsed = true } = Astro.props
     <p class="card-header-title mb-0">{ title }</p>
     <!-- hide button by default, until JS kicks in. If user has JS disabled, card will be shown -->
     <button class="card-header-icon" aria-label="toggle card" style="display:none">
-      <BulmaIcon name="weui:back-outlined" />
+      <BulmaIcon name="iconoir:nav-arrow-down" size={32} />
     </button>
   </header>
   <div class="card-content">
@@ -36,13 +36,13 @@ cards.forEach((card) => {
     const startCollapsed = card.dataset.collapsed === "true"
     button.style.display = "block"
     content.style.display = startCollapsed ? "none" : "block"
-    button.style.rotate = startCollapsed ? "-90deg" : "90deg"
+    button.style.rotate = startCollapsed ? "0deg" : "180deg"
 
     function onClick() {
       const isHidden = content!.style.display === "none"
       content!.style.display = isHidden ? "block" : "none"
 
-      button!.style.rotate = isHidden ? "90deg" : "-90deg"
+      button!.style.rotate = isHidden ? "180deg" : "0deg"
     }
 
     cardHeader.addEventListener("click", onClick)

@@ -6,10 +6,12 @@ interface Props {
     textLeft?: string,
     textRight?: string
     rotate?: number
+    size?: number
 }
-const { name, iconProps, rotate = 0, textLeft, textRight } = Astro.props
+const { name, iconProps, rotate = 0, textLeft, textRight, size } = Astro.props
 const style = {
-    rotate: `${rotate}deg`
+    rotate: `${rotate}deg`,
+    "font-size": size && `${size}px`
 }
 ---
 <span class="icon-text">

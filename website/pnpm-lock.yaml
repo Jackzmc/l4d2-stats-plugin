@@ -11,12 +11,9 @@ importers:
       '@astrojs/node':
         specifier: ^9.4.4
         version: 9.4.4(astro@5.14.1(@types/node@24.6.2)(rollup@4.52.3)(typescript@5.9.3)(yaml@2.8.1))
-      '@iconify-json/proicons':
-        specifier: ^1.2.17
-        version: 1.2.17
-      '@iconify-json/weui':
-        specifier: ^1.2.4
-        version: 1.2.4
+      '@iconify-json/iconoir':
+        specifier: ^1.2.9
+        version: 1.2.9
       astro:
         specifier: ^5.14.1
         version: 5.14.1(@types/node@24.6.2)(rollup@4.52.3)(typescript@5.9.3)(yaml@2.8.1)
@@ -366,11 +363,8 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@iconify-json/proicons@1.2.17':
-    resolution: {integrity: sha512-FYnIsbhj91Epr62+QuyVXkljizcqWBHWrK3KGMdKwYxan3PxDZQiOOfKQepLR02Y9PJ4/4N8N22P5F6XS8eCFw==}
-
-  '@iconify-json/weui@1.2.4':
-    resolution: {integrity: sha512-11WOzuH81FokN34N2WYg/bRQ+5ewrIrzVfN4RhWxj3Xr37/eYmqb5SeC6EXpmH8yi+d8tLBdmPxbF41bIhrdxg==}
+  '@iconify-json/iconoir@1.2.9':
+    resolution: {integrity: sha512-TXcx8mnxuZ0Weq104HwXZFPI0mlJzKjoy4nE20B803+Jrt7g2u4uc2iCGyHKpdqXVws3KaMTMDmY4yExy9Z+Qw==}
 
   '@iconify/tools@4.1.4':
     resolution: {integrity: sha512-s6BcNUcCxQ3S6cvhlsoWzOuBt8qKXdVyXB9rT57uSJ/ARHD7dVM43+5ERBWn3tmkMWXeJ/s9DPVc3dUasayzeA==}
@@ -3200,11 +3194,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@iconify-json/proicons@1.2.17':
-    dependencies:
-      '@iconify/types': 2.0.0
-
-  '@iconify-json/weui@1.2.4':
+  '@iconify-json/iconoir@1.2.9':
     dependencies:
       '@iconify/types': 2.0.0
 

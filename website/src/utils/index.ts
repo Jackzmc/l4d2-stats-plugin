@@ -39,6 +39,15 @@ const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entries({
     "c14m2_lighthouse": "c14_last_stand",
 }));
 
-export function getMapPoster(mapId: string): Promise<any> | null {
+export function getMapPoster(mapId: string): Promise<any> {
   return IMAGE_MAP[mapId] ? import(`../assets/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : import('../assets/background.svg')
+}
+
+export function requireParam<T>(params: URLSearchParams, key: string, validValues: string[]): T {
+  const value = params.get(key)
+  if(value && validValues.includes(value)) {
+    return value as T
+  } else {
+    throw new Error(`Provided parameter "${key}" must have value be one of ${validValues}`)
+  }
 }

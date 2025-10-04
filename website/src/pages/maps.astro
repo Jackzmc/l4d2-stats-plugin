@@ -9,12 +9,43 @@ const meta: PageInfo = {
 import { getMapPoster } from '../utils/index.ts'
 import { getMapPlayCount, getMapRatings } from "../models/Map.ts";
 import { Picture } from "astro:assets";
+import BulmaIcon from "../components/bulma/BulmaIcon.astro";
 
 const topMaps = await getMapPlayCount(false, 3)
-const mapRatings = await getMapRatings()
+const sortBy = Astro.url.searchParams.get("sortBy") ?? "avgRating"
+const dir = (Astro.url.searchParams.get("dir") ?? "DESC").toLowerCase()
+const mapRatings = await getMapRatings(sortBy, dir !== "desc")
 
-export const prerender = true
-Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
+const SORT_ICONS = ["iconoir:sort", "iconoir:arrow-up", "iconoir:arrow-down"]
+const COLUMNS = [
+    { id: "map", label: "Map" },
+    { id: "gamesPlayed", label: "Games Played" },
+    { id: "avgMinutesPlayed", label: "Average Minutes Played" },
+    { id: "avgRating", label: "Rating" },
+    { id: "ratings", label: "# of Ratings" }
+].map(col => {
+    const params = new URLSearchParams(Astro.url.searchParams)
+    let iconIndex = 0
+    params.set("sortBy", col.id)
+    if(sortBy === col.id) {
+        iconIndex = (dir === "asc") ? 1 : 2
+        params.set("dir", dir === "asc" ? "desc" : "asc")
+    } else {
+        params.set("dir", "asc")
+    }
+    return {
+        ...col,
+        href: `?${params}#${col.id}`,
+        iconIndex
+    }
+})
+
+
+// Don't animate when sorting - don't want to constantly fade in every time the page reloads
+const shouldAnimate = !Astro.url.searchParams.has("sortBy") && !Astro.url.searchParams.has("dir")
+
+// Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
+export const prerender = false
 ---
 
 <Layout meta={meta}>
@@ -23,7 +54,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
         <nav class="level">
             {topMaps.map((map, i) => {
                 return <div class="level-item has-text-centered">
-                    <div class="topmap">
+                    <div class:list={["topmap",{'animate': shouldAnimate}]}>
                         <h3 class="title is-3 mb-2 l4d2-text">
                             #{i+1}
                         </h3>
@@ -40,14 +71,16 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
         <hr>
 
         <p class="title is-6">Map Ratings</p>
-        <table class="table is-fullwidth is-striped">
+        <table class="table is-fullwidth is-striped is-size-5">
             <thead>
                 <tr>
-                    <th>Map</th>
-                    <th>Games Played</th>
-                    <th>Average Duration</th>
-                    <th>Rating</th>
-                    <th># of Ratings</th>
+                    {COLUMNS.map(col => (
+                        <th id={col.id}>
+                            <a href={col.href} class="has-text-black">
+                                <BulmaIcon iconProps={{class:'has-text-link'}} name={SORT_ICONS[col.iconIndex]} textLeft={col.label} />
+                            </a>
+                        </th>
+                    ))}
                 </tr>
             </thead>
             <tbody>
@@ -58,7 +91,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
                         <td>{row.avgMinutesPlayed.toLocaleString(undefined, { maximumFractionDigits: 0 })} minutes</td>
                         <td>
                             {Array(5).fill(undefined).map((_,i) => 
-                                <Icon name={Math.floor(row.avgRating) > i ? "weui:star-filled" : "weui:star-outlined"} />
+                                <Icon name={Math.floor(row.avgRating) > i ? "iconoir:star-solid" : "iconoir:star"} />
                             )}
                             {row.avgRating.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
                         </td>
@@ -71,17 +104,35 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
 </Layout>
 
 <style>
-.level-item {
-    /* border: 2px solid royalblue; */
-    border-radius: 8px;
-    padding: 15px;
-}
+/** Border around top map posters */
 .level-item > div {
     padding: 20px;
     border: 2px solid black;
     box-shadow: 0.2em 0.2em;
 }
+/** Stretch out for spacing for text */
 .level-item figure {
     height: 300px;
+}
+.topmap.animate {
+	opacity: 0;
+	animation-name: fadeInOpacity;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-in;
+	animation-duration: 1s;
+    animation-delay: 300ms;
+    animation-fill-mode: forwards; 
+}
+nav.level .level-item:nth-child(2) .topmap.animate{
+    animation-delay: 600ms;
+}
+
+nav.level .level-item:nth-child(3) .topmap.animate {
+    animation-delay: 900ms;
+}
+
+@keyframes fadeInOpacity {
+	0% { opacity: 0; }
+	100% { opacity: 1; }
 }
 </style>

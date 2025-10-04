@@ -12,15 +12,15 @@ const { totalItems, itemsPerPage, currentPage = 0 } = Astro.props
 const numPages = Math.ceil(totalItems / itemsPerPage)
 
 function getUrl(page: number) {
-    return Astro.routePattern.replace(/\[page\]/, page)
+    return Astro.routePattern.replace(/\[page\]/, page.toString())
 }
 ---
 <nav class="pagination" role="navigation" aria-label="pagination">
     {currentPage > 1 && <a href={getUrl(currentPage - 1)} class="pagination-previous">
-        <BulmaIcon name="weui:back-outlined" textRight="Previous" />
+        <BulmaIcon name="iconoir:nav-arrow-left" textRight="Previous" size={32} />
     </a>}
     {currentPage < numPages && <a href={getUrl(currentPage + 1)} class="pagination-next">
-        <BulmaIcon name="weui:back-outlined" textLeft="Next" rotate={180} />
+        <BulmaIcon name="iconoir:nav-arrow-right" textLeft="Next" size={32} />
     </a>}
     <ul class="pagination-list">
         {currentPage > 2 &&

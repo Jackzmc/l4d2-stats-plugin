@@ -13,8 +13,6 @@ export const enum MapFlags {
     OfficialMap = 1
 }
 
-const OFFICIAL_MAP_REGEX = new RegExp(/c(\d+)m(\d+)\_/)
-
 export async function getMapInfo(mapId: string): Promise<MapInfo | null> {
     const [rows] = await db.query<RowDataPacket[]>("SELECT name, chapter_count, flags FROM map_info WHERE mapid = ?", [ mapId ])
     if(rows.length === 0) return null
@@ -79,16 +77,22 @@ export interface MapRatingEntry {
  * @param [officialMapsOnly=false] Only return official maps
  * @returns object, key being map id, value being count
  */
-export async function getMapRatings(): Promise<MapRatingEntry[]> {
+export async function getMapRatings(
+    sortBy: string = "avgRating", 
+    sortAscending: boolean = false
+): Promise<MapRatingEntry[]> {
+    sortBy = db.escapeId(sortBy)
+
     const [rows] = await db.query<RowDataPacket[]>(`
-        SELECT map_id map, map_info.name name, AVG(value) avgRating, COUNT(value) ratings, count gamesPlayed, duration avgDuration
+        SELECT map_id as map, map_info.name as name, AVG(value) avgRating, COUNT(value) ratings, count gamesPlayed, duration avgMinutesPlayed
         FROM map_ratings
         JOIN map_info ON map_info.mapid = map_id
         JOIN (SELECT map, COUNT(campaignID) count, AVG(duration) duration FROM stats_games GROUP BY map) as games
         WHERE games.map = map_id
         GROUP BY map_id
-        ORDER BY avgRating DESC
+        ORDER BY ${sortBy} ${sortAscending ? "ASC" : "DESC"}
     `)
+    
     return rows.map(row => {
         return {
             map: row.map,
@@ -96,7 +100,7 @@ export async function getMapRatings(): Promise<MapRatingEntry[]> {
             avgRating: Number(row.avgRating),
             ratings: Number(row.ratings),
             gamesPlayed: Number(row.gamesPlayed),
-            avgMinutesPlayed: Number(row.avgDuration)
+            avgMinutesPlayed: Number(row.avgMinutesPlayed)
         }
     })
 }

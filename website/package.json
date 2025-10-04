@@ -10,8 +10,7 @@
   },
   "dependencies": {
     "@astrojs/node": "^9.4.4",
-    "@iconify-json/proicons": "^1.2.17",
-    "@iconify-json/weui": "^1.2.4",
+    "@iconify-json/iconoir": "^1.2.9",
     "astro": "^5.14.1",
     "astro-icon": "^1.1.5",
     "astro-seo": "^0.8.4",

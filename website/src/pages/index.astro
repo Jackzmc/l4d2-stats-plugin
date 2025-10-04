@@ -1,6 +1,7 @@
 ---
 import Layout, { type PageInfo } from "../layouts/Layout.astro";
 import Card from '../components/bulma/Card.astro'
+import { Icon } from "astro-icon/components";
 const meta: PageInfo = {
 	hero: { title: "L4D2 Stats", subtitle: "" }
 }
@@ -9,13 +10,15 @@ export const prerender = true
 ---
 
 <Layout meta={meta}>
-	<div class="container content box">
+<div class="container">
+	<div class="content box">
 		<div class="block is-size-4">
 			<h4>Left 4 Dead 2 Statistics</h4>
 			<p>Welcome to the L4D2 stats website. Here you can view statistics about any played games, view the map ratings, see the player leaderboards, and view player's stats.</p>
 			<p>This site shows recorded statistics for servers using the <a href="https://github.com/jackzmc/l4d2-stats-plugin">L4D2 Stats Plugin</a> in-game.</p>
 		</div>
 		<hr>
+		
 		<h4>FAQ</h4>
 		<div class="block ml-2">
 			<Card type="has-background-primary-light" title="Campaign MVP" collapsed>
@@ -52,5 +55,26 @@ export const prerender = true
 				</ul>
 			</Card>
 		</div>
+		<br>
 	</div>
+	<footer>
+		<h6 class="has-text-centered title is-6 mt-6">Credits</h6>
+		<nav class="level">
+			<div class='level-item has-text-centered'>
+				<p>
+					<Icon name="iconoir:github" />
+					<b><a href="https://github.com/jackzmc/l4d2-stats-plugin">Jackzmc/l4d2-stats-plugin</a></b>
+				</p>
+			</div>
+			<div class='level-item has-text-centered'>
+				<p>Icon Set <b><a href="https://github.com/iconoir-icons/iconoir">Iconoir</a></b> by Luca Burgio</p></div>
+			<div class='level-item has-text-centered'>
+				<p>Built with <b><a href="https://astro.build">Astro</a></b></p>
+			</div>
+			<div class='level-item has-text-centered'>
+				<p>CSS Framework <b><a href="https://bulma.io">Bulma</a></b> used</p>
+			</div>
+		</nav>
+	</footer>
+</div>
 </Layout>

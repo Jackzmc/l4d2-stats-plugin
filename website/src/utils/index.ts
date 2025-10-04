@@ -39,8 +39,16 @@ const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entries({
     "c14m2_lighthouse": "c14_last_stand",
 }));
 
-export function getMapPoster(mapId: string): Promise<any> {
-  return IMAGE_MAP[mapId] ? import(`../assets/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : import('../assets/background.svg')
+import DefaultMapImage from '../assets/posters/default.png'
+import { GAMEMODES } from '../types/game.ts';
+export function getMapPoster(mapId: string): any {
+  return IMAGE_MAP[mapId] ? import(`../assets/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
+}
+
+export function getGamemode(gamemode: string) {
+  let val = GAMEMODES[gamemode]
+  if(val) return val
+  return val.charAt(0).toUpperCase() + val.slice(1)
 }
 
 export function requireParam<T>(params: URLSearchParams, key: string, validValues: string[]): T {

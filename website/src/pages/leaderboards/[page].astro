@@ -45,7 +45,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, s
 <Layout meta={meta}>
 	<div class="container content">
 		<div class="columns">
-			<div class="column is-8">
+			<div class="column is-8 box">
 				<Table columns={COLUMNS} data={leaderboard} striped fullwidth />
 				<Pagination currentPage={page} itemsPerPage={ITEMS_PER_PAGE} totalItems={totalPlayers}  />
 			</div>

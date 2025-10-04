@@ -14,7 +14,7 @@ export interface LeaderboardEntry {
  * Returns the number of players in the users table
  */
 export async function getTotalPlayers(): Promise<number> {
-    const [countRow] = await db.query<RowDataPacket[]>("SELECT COUNT(*) count FROM stats_users")
+    const [countRow] = await db.execute<RowDataPacket[]>("SELECT COUNT(*) count FROM stats_users")
     return countRow[0].count
 }
 
@@ -25,7 +25,7 @@ export async function getTotalPlayers(): Promise<number> {
  */
 export async function getLeaderboards(page: number = 1, itemsPerPage = 30): Promise<LeaderboardEntry[]> {
     const offset = (page - 1) * itemsPerPage;
-    const [entries] = await db.query<(LeaderboardEntry & RowDataPacket)[]>(`select
+    const [entries] = await db.execute<(LeaderboardEntry & RowDataPacket)[]>(`select
         steamid,last_alias,minutes_played,last_join_date,
         points as points_old,
         (

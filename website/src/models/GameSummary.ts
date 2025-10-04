@@ -1,6 +1,6 @@
 import type { RowDataPacket } from 'mysql2';
 import db from '../db/pool.ts'
-import { getMapInfo, getMapPlayCount, type MapCountEntry, type MapInfo } from './Map.ts';
+import { getMapPlayCount, type MapCountEntry } from './Map.ts';
 import assert from 'assert';
 
 export interface Summary {

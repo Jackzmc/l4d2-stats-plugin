@@ -1,30 +1,62 @@
 ---
+import { Picture } from 'astro:assets'
+import type { RecentGame } from '../../models/Game.ts'
+import { getMapPoster, getGamemode } from '../../utils/index.ts'
+import { Difficulty } from '../../types/game.ts'
+import Button from '../bulma/Button.astro'
+import BulmaIcon from '../bulma/BulmaIcon.astro'
+import { formatRelUnixDate } from '../../utils/date.ts'
+
 interface Props {
-    map: {
-        map: string,
-        name: string,
-        gamemode?: string,
-        duration?: number,
-    }
+    map: RecentGame
 }
+const difficultyClass = ["has-text-success","","has-text-link","has-text-danger"]
+const { map } = Astro.props
 ---
-<div class="box">
-    <!-- <img class="is-inline-block is-pulled-left image is-128x128" :src="getMapImage(campaign.map)" /> -->
-    <!-- <h6 class="title is-6">{{campaign.map_name || campaign.map}}</h6>
-    <p class="subtitle is-6"><span class="has-text-info">{{getGamemode(campaign.gamemode)}}</span> • <span class="has-text-info">{{formatDifficulty(campaign.difficulty)}}</span></p>
+<div class="box full-height ">
+    <Picture class="is-inline-block is-pulled-left image is-128x128" src={getMapPoster(map.map)} alt={`Poster for ${map.name||map.map}`} />
+    <span class="has-text-centered">
+        <h6 class="title is-6 l4d2-text">{ map.name }</h6>
+        <p class:list={["subtitle is-6 mb-0 mt-2", difficultyClass[map.difficulty]]} 
+            style="text-shadow:lightgray 0px 0px 5px"
+            title="Game difficulty level"
+        >
+            <em>{Difficulty[map.difficulty]}</em>
+        </p>
+        <p class="subtitle is-6" title="Game gamemode">
+            {getGamemode(map.gamemode)}
+        </p>
+    </span>
     <hr class="player-divider">
     <ul class="has-text-right">
-        <li><b>{{getGameDuration((campaign.date_end-campaign.date_start))}}</b> long</li>
-        <li><b>{{campaign.Deaths}}</b> deaths</li>
-        <li><b>{{campaign.CommonsKilled | formatNumber}}</b> commons killed</li>
-        <li><b>{{campaign.FF | formatNumber}}</b> friendly fire dealt</li>
+        <li><b>{map.deaths}</b> deaths</li>
+        <li><b>{map.durationMins}</b> minutes long</li>
+        <li><b>{map.commonsKilled}</b> commons killed</li>
+        <li><b>{map.friendlyDamage}</b> friendly fire dealt</li>
     </ul>
     <br>
-    <b-taglist v-if="campaign.server_tags">
-        <b-tag v-for="tag in parseTags(campaign.server_tags)" :key="tag" :type="getTagType(tag)">
-            {{tag}}
-        </b-tag>
-    </b-taglist>
-    <span v-else><br><br></span>
-    <b-button type="is-info" tag="router-link" :to="'/campaigns/' + campaign.campaignID" expanded>View Details</b-button> -->
+    <nav class="level">
+        <div class="level-left">
+            <div class="level-item">
+                <span class="tags">
+                    {map.tags.map(tag => {
+                        return <span class="tag has-background-primary-light">{tag}</span>
+                    })}
+                </span>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item" title="Game last played">
+                <BulmaIcon iconProps={{class: 'is-pulled-right is-inline'}} name="iconoir:clock" textRight={formatRelUnixDate(map.dateEnd)}/>
+            </div>
+        </div>
+    </nav>
+
+    <Button type="is-link" fullwidth>View Details</Button>
 </div>
+
+<style>
+.player-divider {
+    margin: 15px;
+}
+</style>

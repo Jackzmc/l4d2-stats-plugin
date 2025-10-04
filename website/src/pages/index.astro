@@ -9,7 +9,7 @@ export const prerender = true
 ---
 
 <Layout meta={meta}>
-	<div class="container content">
+	<div class="container content box">
 		<div class="block is-size-4">
 			<h4>Left 4 Dead 2 Statistics</h4>
 			<p>Welcome to the L4D2 stats website. Here you can view statistics about any played games, view the map ratings, see the player leaderboards, and view player's stats.</p>
@@ -18,7 +18,7 @@ export const prerender = true
 		<hr>
 		<h4>FAQ</h4>
 		<div class="block ml-2">
-			<Card title="Campaign MVP" collapsed>
+			<Card type="has-background-primary-light" title="Campaign MVP" collapsed>
 				<p>Campaign MVP is determined by the following fields:</p>
 				<ol>
 					<li>Special Infected Killed <em>(highest number)</em></li>
@@ -30,7 +30,7 @@ export const prerender = true
 			</Card>
 		</div>
 		<div class="block ml-2">
-			<Card title="Points Breakdown" collapsed>
+			<Card type="has-background-primary-light" title="Points Breakdown" collapsed>
 				<p>Points are gained or lost from certain actions in a game a player performs. Below is the list of actions and the points added/removed for it:</p>
 
 				<ul>

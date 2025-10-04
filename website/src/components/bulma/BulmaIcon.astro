@@ -1,4 +1,6 @@
 ---
+const DEFAULT_ICON_SET = "iconior"
+
 import { Icon } from 'astro-icon/components'
 interface Props {
     name: string,
@@ -9,6 +11,9 @@ interface Props {
     size?: number
 }
 const { name, iconProps, rotate = 0, textLeft, textRight, size } = Astro.props
+
+const autoName = name.includes(":") ? name : `${DEFAULT_ICON_SET}:${name}`
+
 const style = {
     rotate: `${rotate}deg`,
     "font-size": size && `${size}px`
@@ -17,7 +22,7 @@ const style = {
 <span class="icon-text">
     {textLeft && <span>{textLeft}</span>}
     <span class="icon">
-        <Icon name={name} {...iconProps} style={style}/>
+        <Icon name={autoName} {...iconProps} style={style}/>
     </span>
     {textRight && <span>{textRight}</span>}
 </span>

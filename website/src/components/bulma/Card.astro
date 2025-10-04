@@ -1,16 +1,18 @@
 ---
 import { Icon } from 'astro-icon/components'
 import BulmaIcon from './BulmaIcon.astro'
+import type { BackgroundColor } from '../../types/bulma.ts'
 interface Props {
     title: string,
+    type?: BackgroundColor
     /** Should element start collapsed (default true) */
     collapsed?: boolean
 }
-const { title, collapsed = true } = Astro.props
+const { title, type, collapsed = true } = Astro.props
 ---
 
 
-<div class="card" data-collapsed={collapsed ? "true" : "false"}>
+<div class="card" class:list={[type]} data-collapsed={collapsed ? "true" : "false"}>
   <header class="card-header is-clickable">
     <p class="card-header-title mb-0">{ title }</p>
     <!-- hide button by default, until JS kicks in. If user has JS disabled, card will be shown -->

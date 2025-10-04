@@ -24,7 +24,7 @@ const PAGES: PageRecord[] = [
             <b>{siteTitle}</b>
         </a>
 
-        <a
+        <!-- <a
             role="button"
             class="navbar-burger"
             aria-label="menu"
@@ -35,7 +35,7 @@ const PAGES: PageRecord[] = [
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
-        </a>
+        </a> -->
     </div>
 
     <div class="navbar-menu">
@@ -44,7 +44,7 @@ const PAGES: PageRecord[] = [
                 PAGES.map((page) => {
                     const isActive = Astro.url.pathname.startsWith(page.href) 
                         && Astro.response.status === 200 // don't mark is-active when on 404 / 500 pages
-                    return <a class:list={["navbar-item", {'has-background-link-light': isActive }]} href={page.href}>
+                    return <a class:list={["navbar-item", {'has-background-primary-light': isActive }]} href={page.href}>
                         {page.title}
                     </a>
                 })

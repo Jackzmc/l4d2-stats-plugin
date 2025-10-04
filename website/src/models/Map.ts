@@ -14,7 +14,7 @@ export const enum MapFlags {
 }
 
 export async function getMapInfo(mapId: string): Promise<MapInfo | null> {
-    const [rows] = await db.query<RowDataPacket[]>("SELECT name, chapter_count, flags FROM map_info WHERE mapid = ?", [ mapId ])
+    const [rows] = await db.execute<RowDataPacket[]>("SELECT name, chapter_count, flags FROM map_info WHERE mapid = ?", [ mapId ])
     if(rows.length === 0) return null
 
     return {
@@ -26,7 +26,7 @@ export async function getMapInfo(mapId: string): Promise<MapInfo | null> {
 }
 
 export async function getMaps(mapId: string): Promise<MapInfo[]> {
-    const [rows] = await db.query<RowDataPacket[]>("SELECT name, chapter_count, flags FROM map_info WHERE mapid = ?", [ mapId ])
+    const [rows] = await db.execute<RowDataPacket[]>("SELECT name, chapter_count, flags FROM map_info WHERE mapid = ?", [ mapId ])
     return rows.map(row => {
         return {
             id: mapId,
@@ -51,7 +51,7 @@ export interface MapCountEntry {
 export async function getMapPlayCount(officialMapsOnly: boolean = false, limit: number | null = null): Promise<MapCountEntry[]> {
     const officialMapCondition = officialMapsOnly ? `AND map_info.flags & ${MapFlags.OfficialMap}` : ''
     const limitClause = limit != null ? "LIMIT ?" : ""
-    const [rows] = await db.query<RowDataPacket[]>(`
+    const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT map, map_info.name, COUNT(map) count 
         FROM stats_games 
         RIGHT JOIN map_info ON map_info.mapid = stats_games.map ${officialMapCondition}
@@ -83,7 +83,7 @@ export async function getMapRatings(
 ): Promise<MapRatingEntry[]> {
     sortBy = db.escapeId(sortBy)
 
-    const [rows] = await db.query<RowDataPacket[]>(`
+    const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT map_id as map, map_info.name as name, AVG(value) avgRating, COUNT(value) ratings, count gamesPlayed, duration avgMinutesPlayed
         FROM map_ratings
         JOIN map_info ON map_info.mapid = map_id

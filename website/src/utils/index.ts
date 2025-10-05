@@ -22,7 +22,7 @@ export function formatSize(bytes: number, si = false, dp = 1) {
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entries({
+export const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entries({
     "c1m4_atrium": "c1_dead_center",
     "c2m5_concert": "c2_dark_carnival",
     "c3m4_plantation": "c3_swamp_fever",
@@ -39,10 +39,14 @@ const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entries({
     "c14m2_lighthouse": "c14_last_stand",
 }));
 
-import DefaultMapImage from '../assets/posters/default.png'
+import type { AstroGlobal, AstroInstance } from 'astro';
+import DefaultMapImage from '../assets/maps/posters/default.png'
 import { GAMEMODES, Survivor, SURVIVOR_DEFS } from '../types/game.ts';
 export function getMapPoster(mapId: string): any {
-  return IMAGE_MAP[mapId] ? import(`../assets/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
+  return IMAGE_MAP[mapId] ? import(`../assets/maps/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
+}
+export function getMapScreenshot(mapId: string): any {
+  return IMAGE_MAP[mapId] ? import(`../assets/maps/screenshots/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
 }
 
 export function getPortrait(survivorType: Survivor): any {
@@ -62,4 +66,22 @@ export function requireParam<T>(params: URLSearchParams, key: string, validValue
   } else {
     throw new Error(`Provided parameter "${key}" must have value be one of ${validValues}`)
   }
+}
+
+const ROUTE_PATTERN_REGEX = new RegExp(/\[([a-zA-Z0-9-_]+)\]*/g)
+
+/**
+ * Replace the parameters of current route. If a param is not defined, falls back to Astro.params or shows raw parameter if none
+ * @param astro the astro instance
+ * @param params params to override Astro.params with
+ * @returns new href
+ */
+export function replaceRoute(astro: AstroGlobal, params: Record<string, string | number>) {
+  let pattern = astro.routePattern
+  const match = astro.routePattern.matchAll(ROUTE_PATTERN_REGEX)
+  for(const [raw,param] of match) {
+    const value: string|number = params[param] || astro.params[param] || raw
+    pattern = pattern.replace(`[${param}]`, value.toString())
+  }
+  return pattern
 }

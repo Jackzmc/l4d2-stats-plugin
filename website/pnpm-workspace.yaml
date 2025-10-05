@@ -1,0 +1,6 @@
+ignoredBuiltDependencies:
+  - node-canvas
+
+onlyBuiltDependencies:
+  - canvas
+  - skia-canvas

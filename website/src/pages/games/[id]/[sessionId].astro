@@ -1,21 +1,19 @@
 ---
-import Layout, { type PageInfo } from "../../layouts/Layout.astro";
-import PlayerBox from '../../components/misc/PlayerBox.astro'
-let { id } = Astro.params;
-if(!id) return Astro.rewrite('/404')
+import Layout, { type PageInfo } from "../../../layouts/Layout.astro";
+import PlayerBox from '../../../components/misc/PlayerBox.astro'
+let { id: gameId, sessionId } = Astro.params;
+if(!gameId || !sessionId) return Astro.rewrite('/404')
 
-import { getGame, getSession } from '../../models/Game.ts'
-import { Difficulty } from "../../types/game.ts";
-import { formatUnixDate } from "../../utils/date.ts";
-import { getGamemode, getMapPoster, getMapScreenshot } from "../../utils/index.ts";
-import Level from "../../components/bulma/Level.astro";
-import LevelItem from "../../components/bulma/LevelItem.astro";
-import { Picture } from "astro:assets";
-import { Image } from "astro:assets";
+import { getSession, getSessionPlayers } from '../../../models/Game.ts'
+import { Difficulty } from "../../../types/game.ts";
+import { getGamemode, getMapPoster, getMapScreenshot, replaceRoute } from "../../../utils/index.ts";
+import Level from "../../../components/bulma/Level.astro";
+import LevelItem from "../../../components/bulma/LevelItem.astro";
 import { getImage } from "astro:assets";
 
-const session = await getSession(id)
+const session = await getSession(sessionId)
 if(!session) return Astro.rewrite('/404')
+const otherSessions = await getSessionPlayers(gameId)
 
 const meta: PageInfo = {
 	title: `${session.last_alias}'s Session #${session.id} - ${session.map_name}`,
@@ -34,8 +32,11 @@ export const prerender = false
             <!-- <Picture src={getMapPoster(session.map)} alt="map" /> -->
             <p class="title">{session.last_alias}'s Session #{session.id}</p>
             <p class="subtitle pt-2">Played on <b>{session.map_name}</b></p>
-            <hr>
-            <p class="subtitle pt-2">
+            <br>
+            
+        </div>
+        <div class="hero-footer">
+            <p class="subtitle mb-3">
                 {getGamemode(session.gamemode)} • {Difficulty[session.difficulty]} • {session.duration} minutes long
             </p>
         </div>
@@ -74,6 +75,7 @@ export const prerender = false
                                 <LevelItem class="has-text-white" title="Charger Kills" value={session.charger_kills} />
                             </Level>
                         </div>
+                        <p>Campaign ID <a href={`/games/${gameId}`}>{gameId}</a></p>
                     </div>
                     <div class="column">
                         <div class="box has-background-warning">
@@ -86,6 +88,16 @@ export const prerender = false
                                 <LevelItem title="Adrenaline Consumed" value={session.AdrenalinesUsed} />
                             </Level>
                         </div>
+                        <!-- <div class="box">
+                            <Level>
+                                <LevelItem title="Kits Used" value={session.honks} />
+                                <LevelItem title="Kits Shared" value={session.RocksHitBy} />
+                            </Level>
+                            <Level>
+                                <LevelItem title="Pills Consumed" value={session.minutes_idle} />
+                                <LevelItem title="Adrenaline Consumed" value={session.DamageToWitch} />
+                            </Level>
+                        </div> -->
                     </div>
                 </div>
             </div>
@@ -93,14 +105,14 @@ export const prerender = false
                 <div class="box">
                     <h4 class="title is-4 mb-2">Players</h4>
                     <ul>
-                        <li>
-                            <b><a href="#">Player #1</a></b>
-                            <a href="#" class="is-pulled-right">(view stats)</a>
-                        </li>
-                        <li>
-                            <b><a href="#" class="has-text-link">Player #2</a></b>
-                            <a href="#" class="is-pulled-right">(view stats)</a>
-                        </li>
+                        {otherSessions.map(sess => (
+                            <li>
+                                <b><a href={`/user/${sess.steamid}`}>{sess.playerName}</a></b>
+                                {sess.sessionId != session.id && 
+                                    <a href={replaceRoute(Astro, { sessionid: sess.sessionId })} class="is-pulled-right">(view stats)</a>
+                                }
+                            </li>
+                        ))}
                     </ul>
                 </div>
                 <div class="box content">
@@ -118,6 +130,10 @@ export const prerender = false
                     </div>
                     <strong>Most Used Weapon</strong>
                     <p>{session.top_weapon || "-"}</p>
+                    {session.honks > 0 && 
+                        <strong>Honks</strong>
+                        <p>{session.honks}</p>
+                    }
                     <strong>Server Tags</strong>
                     <span class="tags">
                         {session.server_tags.map(tag => <span class="tag">{tag}</span>)}

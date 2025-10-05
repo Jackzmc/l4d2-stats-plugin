@@ -2,7 +2,7 @@
 import Layout, { type PageInfo } from "../layouts/Layout.astro";
 import { Icon } from 'astro-icon/components'
 const meta: PageInfo = {
-	title: "Campaigns",
+	title: "Maps",
 	description: "View stats about total number of games, minutes played and ratings for all maps"
 }
 
@@ -121,15 +121,15 @@ export const prerender = false
 	animation-iteration-count: 1;
 	animation-timing-function: ease-in;
 	animation-duration: 1s;
-    animation-delay: 300ms;
+    animation-delay: 100ms;
     animation-fill-mode: forwards; 
 }
 nav.level .level-item:nth-child(2) .topmap.animate{
-    animation-delay: 600ms;
+    animation-delay: 400ms;
 }
 
 nav.level .level-item:nth-child(3) .topmap.animate {
-    animation-delay: 900ms;
+    animation-delay: 400ms;
 }
 
 @keyframes fadeInOpacity {

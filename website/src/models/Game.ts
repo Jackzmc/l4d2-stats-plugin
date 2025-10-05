@@ -151,7 +151,7 @@ export async function getSessions(id: string): Promise<GameSessionPartial[]> {
             g.honks
         FROM stats_games g
         INNER JOIN stats_users ON g.steamid = stats_users.steamid
-        WHERE left(g.campaignID, 8) = '2ae2b0cc'
+        WHERE left(g.campaignID, 8) = ?
         ORDER BY SpecialInfectedKills desc, SurvivorDamage asc, ZombieKills desc, DamageTaken asc
     `, [id.substring(0,8)]
     )
@@ -164,6 +164,7 @@ export interface GameSession extends GameSessionPartial {
     map_name: string,
     gamemode: string,
     difficulty: Difficulty,
+    server_tags: string[],
     join_time: number;
     ping: number;
     duration: number,
@@ -179,6 +180,7 @@ export interface GameSession extends GameSessionPartial {
     ReviveOtherCount: number;
     boomer_kills: number;
     smoker_kills: number;
+    charger_kills: number;
     jockey_kills: number;
     hunter_kills: number;
     spitter_kills: number;
@@ -199,12 +201,13 @@ export interface GameSession extends GameSessionPartial {
     CarAlarmsActivated: number;
 }
 
-export async function getSession(id: string): Promise<GameSession | null> {
+export async function getSession(id: number | string): Promise<GameSession | null> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT g.id,
             g.steamid,
             last_alias,
             points,
+            g.server_tags,
             g.map,
             i.name as map_name,
             g.gamemode,
@@ -234,12 +237,12 @@ export async function getSession(id: string): Promise<GameSession | null> {
             g.ReviveOtherCount,
             g.incaps,
             g.deaths,
-            g.boomer_kills,
             g.smoker_kills,
+            g.boomer_kills,
             g.jockey_kills,
             g.hunter_kills,
             g.spitter_kills,
-            g.smoker_kills,
+            g.charger_kills,
             g.SpecialInfectedKills,
             g.honks,
             g.top_weapon,
@@ -267,6 +270,24 @@ export async function getSession(id: string): Promise<GameSession | null> {
     if(rows.length === 0) return null
     return {
         ...rows[0],
+        server_tags: rows[0].server_tags.split(","),
         duration: Math.round(rows[0].duration),
     } as GameSession
+}
+
+export async function getSessionPlayers(id: string): Promise<{ sessionId: number, steamid: string, playerName: string}[]> {
+    const [rows] = await db.execute<RowDataPacket[]>(`
+        SELECT id sessionId, g.steamid, u.last_alias playerName
+        FROM stats_games g
+        INNER JOIN stats_users u ON u.steamid = g.steamid
+        WHERE left(campaignID, 8) = ?
+    `, [id.substring(0,8)])
+
+    return rows.map(row => {
+        return {
+            sessionId: row.sessionId,
+            steamid: row.steamid,
+            playerName: row.playerName
+        }
+    })
 }

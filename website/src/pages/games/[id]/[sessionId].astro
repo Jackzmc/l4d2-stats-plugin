@@ -105,11 +105,11 @@ export const prerender = false
                 <div class="box">
                     <h4 class="title is-4 mb-2">Players</h4>
                     <ul>
-                        {otherSessions.map(sess => (
+                        {otherSessions.map(player => (
                             <li>
-                                <b><a href={`/user/${sess.steamid}`}>{sess.playerName}</a></b>
-                                {sess.sessionId != session.id && 
-                                    <a href={replaceRoute(Astro, { sessionid: sess.sessionId })} class="is-pulled-right">(view stats)</a>
+                                <b><a href={`/user/${player.steamid}`}>{player.name}</a></b>
+                                {player.sessionId != session.id && 
+                                    <a href={replaceRoute(Astro, { sessionid: player.sessionId })} class="is-pulled-right">(view stats)</a>
                                 }
                             </li>
                         ))}

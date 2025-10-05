@@ -188,3 +188,9 @@ export interface StatsWeaponsUsageEntity {
   'totalDamage': string;
   'weapon': string;
 }
+
+
+export interface Player {
+  steamid: string,
+  name: string,
+}

@@ -1,6 +1,7 @@
 import type { RowDataPacket } from "mysql2";
 import db from "../db/pool.ts";
-import type { StatsUsersEntity } from "../db/types.ts";
+import type { Player, StatsUsersEntity } from "../db/types.ts";
+import assert from "assert";
 
 export interface LeaderboardEntry {
     steamid: string,
@@ -8,6 +9,31 @@ export interface LeaderboardEntry {
     minutes_played: number,
     last_join_date: number,
     points: number
+}
+
+export type PlayerWithPoints = Player & { points: number }
+let playerOfDay: { player: PlayerWithPoints, timestamp: Date } | null = null
+
+/**
+ * Selects a random player of the day. Response is cached. Only returns players with points
+ */
+export async function getPlayerOfDay(): Promise<PlayerWithPoints> {
+    const date = new Date()
+    if(!playerOfDay || playerOfDay.timestamp.getDate() != date.getDate()) {
+        const [rows] = await db.execute<RowDataPacket[]>(`
+            SELECT steamid, last_alias name, points 
+            FROM stats_users 
+            WHERE points > 0 
+            ORDER BY RAND() 
+            LIMIT 1`)
+        assert(rows.length > 0, "no players in table")
+        playerOfDay = {
+            player: rows[0] as PlayerWithPoints,
+            timestamp: date
+        }
+    }
+    
+    return playerOfDay.player
 }
 
 /**

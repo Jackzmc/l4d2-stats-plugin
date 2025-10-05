@@ -38,6 +38,7 @@ import * as User from '../../models/User.ts'
 import BulmaIcon from "../../components/bulma/BulmaIcon.astro";
 const totalPlayers = await User.getTotalPlayers()
 const leaderboard = await User.getLeaderboards(page, ITEMS_PER_PAGE)
+const playerOfDay = await User.getPlayerOfDay()
 
 meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <b>${totalPlayers.toLocaleString()} players</b>`
 
@@ -69,26 +70,21 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, s
 						</div>
 					</div>
 				</div>
-				<div class="box">
+				<div class="box has-text-centered">
 					<h5 class="title is-5">Find Player</h5>
 					<UserSearch />
 				</div>
-				<div class="box">
+				{/* <div class="box has-text-centered">
 					<h5 class="title is-5">Revived Most Players</h5>
 					<!-- TODO: top stat summary -->
-				</div>
-				<div class="box">
+				</div>*/}
+				<a href={`/user/${playerOfDay.steamid}`} class="box has-text-centered">
 					<h5 class="title is-5">Player of the Day</h5>
-					<h2 class="title has-text-centered l4d2-text box has-background-dark has-text-white">Disgruntled Pea</h2>
-					<p class="subtitle has-text-centered mt-4 mb-4">0 points</p>
-					<!-- TODO: random player of day -->
-				</div>
-				<div class="box">
-					<h5 class="title is-5">Player of the Day</h5>
-					<h2 class="title has-text-centered l4d2-text">Disgruntled Pea</h2>
-					<p class="subtitle has-text-centered mt-4 mb-4">0 points</p>
-					<!-- TODO: random player of day -->
-				</div>
+					<h2 class="titlel4d2-text">
+						<span>{playerOfDay.name}</span>
+					</h2>
+					<p class="subtitle mt-4 mb-4">{playerOfDay.points} points</p>
+				</a>
 			</div>
 		</div>
 	</div>

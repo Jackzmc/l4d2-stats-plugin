@@ -1,6 +1,7 @@
 import type { RowDataPacket } from 'mysql2';
 import db from '../db/pool.ts'
 import type { Difficulty, Survivor } from '../types/game.ts';
+import type { Player } from '../db/types.ts';
 
 export interface RecentGame {
   numPlayers: number;
@@ -275,7 +276,7 @@ export async function getSession(id: number | string): Promise<GameSession | nul
     } as GameSession
 }
 
-export async function getSessionPlayers(id: string): Promise<{ sessionId: number, steamid: string, playerName: string}[]> {
+export async function getSessionPlayers(id: string): Promise<(Player & { sessionId: number })[]> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT id sessionId, g.steamid, u.last_alias playerName
         FROM stats_games g
@@ -287,7 +288,7 @@ export async function getSessionPlayers(id: string): Promise<{ sessionId: number
         return {
             sessionId: row.sessionId,
             steamid: row.steamid,
-            playerName: row.playerName
+            name: row.playerName
         }
     })
 }

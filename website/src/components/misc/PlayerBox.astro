@@ -6,16 +6,21 @@ import { SURVIVOR_DEFS } from '../../types/game.ts'
 import Button from '../bulma/Button.astro'
 
 interface Props {
-    player: GameSession
+    player: GameSession,
+    mvp?: boolean,
+    honkMaster?: boolean
 }
-const { player } = Astro.props
+const { player, mvp = false, honkMaster = false } = Astro.props
 const survivor = SURVIVOR_DEFS[player.characterType]
+
 ---
 
 <div class="box full-height">
     <h6 class="title is-6 mb-3 has-text-centered">
         <a href={`/users/${player.steamid}`}>{ player.last_alias }</a>
     </h6>
+    {mvp && <div class="ribbon ribbon-top-left"><span>MVP</span></div>}
+    {!mvp && honkMaster && <div class="ribbon ribbon-top-left honk"><span>Honk Master</span></div>}
     <Picture class="is-inline-block is-pulled-left image is-64x64" src={getPortrait(player.characterType)} title={survivor.name} alt={`Character portrait of ${survivor.name}`} />
 
     <div class="subtitle is-6 has-text-centered mb-2">{player.points.toLocaleString()} points</div>
@@ -47,5 +52,76 @@ const survivor = SURVIVOR_DEFS[player.characterType]
 .player-divider {
     margin: 15px;
     margin-left: 80px;
+}
+.bg-mvp {
+  background-color: rgb(132, 218, 230) !important;
+}
+.ribbon.honk::before,
+.ribbon.honk::after {
+  border: 5px solid #a025d1;
+}
+.ribbon.honk span {
+  background-color: #a025d1;
+}
+
+.box {
+  position: relative;
+  border: 1px solid #BBB;
+}
+
+/* common */
+.ribbon {
+  width: 150px;
+  height: 150px;
+  overflow: hidden;
+  position: absolute;
+  pointer-events: none;
+}
+.ribbon::before,
+.ribbon::after {
+  position: absolute;
+  z-index: -1;
+  content: '';
+  display: block;
+  border: 5px solid #2980b9;
+}
+.ribbon span {
+  position: absolute;
+  display: block;
+  width: 225px;
+  padding: 8px 0;
+  background-color: #3498db;
+  box-shadow: 0 5px 10px rgba(0,0,0,.1);
+  color: #fff;
+  font: 700 14px/1 'Lato', sans-serif;
+  text-shadow: 0 1px 1px rgba(0,0,0,.2);
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* top left*/
+.ribbon-top-left {
+  top: -5px;
+  left: -5px;
+}
+.ribbon-top-left::before,
+.ribbon-top-left::after {
+  border-top-color: transparent;
+  border-left-color: transparent;
+}
+.ribbon-top-left::before {
+  top: 0;
+  right: 0;
+
+}
+.ribbon-top-left::after {
+  bottom: 0;
+  left: 0;
+}
+.ribbon-top-left span {
+  right: -15px;
+  top: 25px;
+  transform: rotate(-45deg);
+  z-index: 1;
 }
 </style>

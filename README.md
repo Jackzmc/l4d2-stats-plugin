@@ -5,10 +5,9 @@
 
 A sourcemod plugin for l4d2 that records statistics for all players on the server and a server that shows the statistics. This was designed for co-op, and so versus and other gamemodes may not track statistics correctly.
 
-This is a 3-part project:
+This is a multi-part project:
 
-* Frontend UI (Vue 2)
-* Backend API (Express.js server)
+* Web server (Astro) serving HTTP templates
 * Sourcemod Plugin
 
 Requires a MySQL/MariaDB server, see `stats_database.sql` for the tables.
@@ -22,7 +21,8 @@ Demo: https://stats.jackz.me
 The plugin can be downloaded from [plugins/l4d2_stats_recorder.smx](./plugins/l4d2_stats_recorder.smx)
 
 ## Env Variables
-```
+
+```env
 # Defaults
 
 MYSQL_HOST=localhost
@@ -46,7 +46,8 @@ An addition a [docker-compose.yml](./docker-compose.yml) file is included. It do
 `docker run jackzmc/l4d2-stats-server:latest`
 
 ## Manual
-```
+
+```bash
 # build ui
 cd website-ui; yarn && yarn build; cp dist/ /var/www/l4d2-stats
 
@@ -62,7 +63,7 @@ This serves static files in `/var/www/stats.jackz.me` through nginx, and all `/a
 
 The demo server does not use docker but has UI built and deployed to /var/www/stats.jackz.me and the *.js copied to server folder and uses the same config below.
 
-```
+```nginx
 server {
     listen 80;
 
@@ -82,8 +83,6 @@ server {
 }
 ```
 
-
-
 ## Building
 
 You can build the sourcemod plugin from the scripting/ folder.
@@ -91,7 +90,8 @@ You can build the sourcemod plugin from the scripting/ folder.
 The webserver is built using VueJS and you can just cd to the folder and run `<yarn/npm> install && <yarn/npm run> build`
 
 The api server, just install npm packages with yarn or npm, and run index.js. You do need to set the following environment variables to hook to mysql:
-```
+
+```env
 MYSQL_HOST=
 MYSQL_USER=l4d2
 MYSQL_DB=l4d2

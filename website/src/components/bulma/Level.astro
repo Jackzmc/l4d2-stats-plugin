@@ -1,0 +1,17 @@
+---
+import type { HTMLAttributes } from 'astro/types'
+import type { TextColor } from '../../types/bulma.ts'
+
+interface Props extends HTMLAttributes<"div"> {
+    nav?: boolean,
+    children: any,
+    color?: TextColor,
+    class?: any
+}
+const { nav = false, color = "", class: className, ...attrs } = Astro.props
+
+const Component = nav ? "nav" : "div"
+---
+<Component class:list={["level has-text-centered", className]} {...attrs}>
+    <slot />
+</Component>

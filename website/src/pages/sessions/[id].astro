@@ -1,0 +1,69 @@
+---
+import Layout, { type PageInfo } from "../../layouts/Layout.astro";
+import PlayerBox from '../../components/misc/PlayerBox.astro'
+let { id } = Astro.params;
+if(!id) return Astro.rewrite('/404')
+
+import { getGame, getSession } from '../../models/Game.ts'
+import { Difficulty } from "../../types/game.ts";
+import { formatUnixDate } from "../../utils/date.ts";
+import { getGamemode } from "../../utils/index.ts";
+import Level from "../../components/bulma/Level.astro";
+import LevelItem from "../../components/bulma/LevelItem.astro";
+
+const session = await getSession(id)
+if(!session) return Astro.rewrite('/404')
+
+const meta: PageInfo = {
+	title: `${session.last_alias}'s Session #${session.id} - ${session.map_name}`,
+	description: `View statistics for ${session.last_alias}'s game on ${session.map_name}`,
+    hero: {
+        title: session.map_name,
+    },
+}
+
+export const prerender = false
+---
+<Layout meta={meta}>
+    <section slot="hero" class="hero has-text-centered is-dark">
+        <div class="hero-body">
+            <p class="title">{session.last_alias}'s Session #{session.id}</p>
+            <p class="subtitle pt-2">Played on <b>{session.map_name}</b></p>
+            <hr>
+            <p class="subtitle pt-2">
+                {getGamemode(session.gamemode)} • {Difficulty[session.difficulty]} • {session.duration} minutes long
+            </p>
+        </div>
+    </section>
+    <br>
+    <div class="container">
+        <div class="columns">
+            <div class="column">
+                <Level>
+                    <LevelItem title="Zombie Kills" value={session.ZombieKills} />
+                    <LevelItem title="Melee Kills" value={session.MeleeKills} />
+                    <LevelItem title="Damage Dealt" value={session.MeleeKills} />
+                    <LevelItem title="Friendly Fires" value={session.SurvivorFFCount} />
+                    <LevelItem title="Friendly Damage" value={session.SurvivorDamage} suffix="HP" />
+                    <LevelItem title="Times Friendly Fired" value={session.SurvivorFFTakenCount} />
+                    <LevelItem title="Friendly Damage Taken" value={session.SurvivorFFTakenDamage} suffix="HP" />
+                </Level>
+            </div>
+            <div class="column is-3">
+                <div class="box">
+                    <h4 class="title is-4 mb-2">Players</h4>
+                    <ul>
+                        <li>
+                            <b><a href="#">Player #1</a></b>
+                            <a href="#" class="is-pulled-right">(view stats)</a>
+                        </li>
+                        <li>
+                            <b><a href="#" class="has-text-link">Player #2</a></b>
+                            <a href="#" class="is-pulled-right">(view stats)</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</Layout>

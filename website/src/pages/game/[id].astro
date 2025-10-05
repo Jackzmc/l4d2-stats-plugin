@@ -5,14 +5,16 @@ let { id } = Astro.params;
 if(!id) return Astro.rewrite('/404')
 id = id.substring(0, 8)
 
-import { getGame, getGameSessions } from '../../models/Game.ts'
+import { getGame, getSessions } from '../../models/Game.ts'
 import { Difficulty } from "../../types/game.ts";
 import { formatUnixDate } from "../../utils/date.ts";
 import { getGamemode } from "../../utils/index.ts";
+import Level from "../../components/bulma/Level.astro";
+import LevelItem from "../../components/bulma/LevelItem.astro";
 
 const game = await getGame(id)
 if(!game) return Astro.rewrite('/404')
-const sessions = await getGameSessions(id)
+const sessions = await getSessions(id)
 
 
 const meta: PageInfo = {
@@ -20,7 +22,7 @@ const meta: PageInfo = {
 	description: "",
     hero: {
         title: game.map_name,
-    }
+    },
 }
 const totalHonks = sessions.reduce((pv, cv) => pv + cv.honks, 0)
 const honkMasterPlayer = totalHonks && sessions.reduce((pv, cv) => {
@@ -49,32 +51,12 @@ export const prerender = false
 <section class="hero has-text-centered is-primary is-small has-text-white">
                 <div class="hero-body">
                     <div class="container">
-                            <div class="level has-text-centered">
-                                <div class="level-item">
-                                    <div>
-                                        <p class="heading">Zombies Killed</p>
-                                        <p class="title has-text-white">{game.commons_killed.toLocaleString()}</p>
-                                    </div>
-                                </div>
-                                <div class="level-item">
-                                    <div>
-                                        <p class="heading">Specials Killed</p>
-                                        <p class="title has-text-white">{game.specials_killed}</p>
-                                    </div>
-                                </div>
-                                <div class="level-item">
-                                    <div>
-                                        <p class="heading">Damage Taken</p>
-                                        <p class="title has-text-white">{game.damage_taken.toLocaleString()} HP</p>
-                                    </div>
-                                </div>
-                                {totalHonks > 0 && <div class="level-item">
-                                    <div>
-                                        <p class="heading">Total Honks</p>
-                                        <p class="title has-text-white">{totalHonks.toLocaleString()}</p>
-                                    </div>
-                                </div>}
-                            </div>
+                        <Level>
+                            <LevelItem class="has-text-white" title="Zombie Kills" value={game.commons_killed} />
+                            <LevelItem class="has-text-white" title="Specials Killed" value={game.specials_killed} />
+                            <LevelItem class="has-text-white" title="Damage Taken" value={game.damage_taken} />
+                            {totalHonks > 0 && <LevelItem class="has-text-white" title="Total Honks" value={totalHonks} />}
+                        </Level>
                     </div>
                 </div>
             </section>
@@ -98,60 +80,20 @@ export const prerender = false
         <div class="columns">
             <div class="column">
                 <div class="box has-background-danger has-text-white">
-                    <div class="level has-text-centered">
-                        <div class="level-item">
-                            <div>
-                                <p class="heading">Incaps</p>
-                                <p class="title has-text-white">{game.incaps}</p>
-                            </div>
-                        </div>
-                        <div class="level-item">
-                            <div>
-                                <p class="heading">Deaths Killed</p>
-                                <p class="title has-text-white">{game.deaths}</p>
-                            </div>
-                        </div>
-                        <div class="level-item">
-                            <div>
-                                <p class="heading">Kits Used</p>
-                                <p class="title has-text-white">{game.medkits_used}</p>
-                            </div>
-                        </div>
-                        <div class="level-item">
-                            <div>
-                                <p class="heading">Pills Used</p>
-                                <p class="title has-text-white">{game.pills_used}</p>
-                            </div>
-                        </div>
-                        <div class="level-item">
-                            <div>
-                                <p class="heading">Adrenalines Used</p>
-                                <p class="title has-text-white">{game.adrenalines_used}</p>
-                            </div>
-                        </div>
-                    </div>
+                    <Level>
+                        <LevelItem class="has-text-white" title="Incaps" value={game.incaps} />
+                        <LevelItem class="has-text-white" title="Deaths" value={game.deaths} />
+                        <LevelItem class="has-text-white" title="Kits Used" value={game.medkits_used} />
+                        <LevelItem class="has-text-white" title="Pills Used" value={game.pills_used} />
+                        <LevelItem class="has-text-white" title="Adrenalines Used" value={game.adrenalines_used} />
+                    </Level>
                 </div>
                 <div class="box has-background-link has-text-white">
-                    <div class="level has-text-centered">
-                        <div class="level-item">
-                            <div>
-                                <p class="heading">Biles Thrown</p>
-                                <p class="title has-text-white">{game.biles_used}</p>
-                            </div>
-                        </div>
-                        <div class="level-item">
-                            <div>
-                                <p class="heading">Pipes Thrown</p>
-                                <p class="title has-text-white">{game.pipes_used}</p>
-                            </div>
-                        </div>
-                        <div class="level-item">
-                            <div>
-                                <p class="heading">Molotovs Thrown</p>
-                                <p class="title has-text-white">{game.molotovs_used}</p>
-                            </div>
-                        </div>
-                    </div>
+                    <Level>
+                        <LevelItem class="has-text-white" title="Biles Thrown" value={game.biles_used} />
+                        <LevelItem class="has-text-white" title="Pipes Thrown" value={game.pipes_used} />
+                        <LevelItem class="has-text-white" title="Molotovs Thrown" value={game.molotovs_used} />
+                    </Level>
                 </div>
             </div>
             <div class="column is-2">

@@ -1,12 +1,12 @@
 ---
 import { Picture } from 'astro:assets'
-import type { GameSession } from '../../models/Game.ts'
+import type { GameSessionPartial } from '../../models/Game.ts'
 import { getPortrait } from '../../utils/index.ts'
 import { SURVIVOR_DEFS } from '../../types/game.ts'
 import Button from '../bulma/Button.astro'
 
 interface Props {
-    player: GameSession,
+    player: GameSessionPartial,
     mvp?: boolean,
     honkMaster?: boolean
 }
@@ -28,7 +28,7 @@ const survivor = SURVIVOR_DEFS[player.characterType]
     <ul class="has-text-right">
         <li><b>{player.ZombieKills}</b> commons killed</li>
         <li><b>{player.SpecialInfectedKills}</b> specials killed</li>
-        <li><b>{player.SurvivorFFTakenDamage}</b> friendly fire damage</li>
+        <li><b>{player.SurvivorDamage}</b> friendly fire damage</li>
     </ul>
     <br>
     <nav class="level mb-2">
@@ -56,6 +56,7 @@ const survivor = SURVIVOR_DEFS[player.characterType]
 .bg-mvp {
   background-color: rgb(132, 218, 230) !important;
 }
+/* Modified ribbon CSS from https://codepen.io/nxworld/pen/oLdoWb */
 .ribbon.honk::before,
 .ribbon.honk::after {
   border: 5px solid #a025d1;

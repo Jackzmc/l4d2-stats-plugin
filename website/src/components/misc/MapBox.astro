@@ -52,7 +52,7 @@ const { map } = Astro.props
         </div>
     </nav>
 
-    <Button href={`/games/${map.campaignId}`} type="is-link" fullwidth>View Details</Button>
+    <Button href={`/games/${map.campaignId.substring(0, 8)}`} type="is-link" fullwidth>View Details</Button>
 </div>
 
 <style>

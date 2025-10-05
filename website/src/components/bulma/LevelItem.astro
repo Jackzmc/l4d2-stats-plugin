@@ -1,0 +1,17 @@
+---
+interface Props  {
+    title: string,
+    value: number | string,
+
+    suffix?: string,
+    class?: any
+}
+const { title, class: className, value, suffix = "" } = Astro.props
+
+---
+<div class:list={["level-item", className]}>
+    <div>
+        <p class:list={["heading", className]}>{title}</p>
+        <p class:list={["title", className]}>{typeof value === "number" ? value.toLocaleString() : value} {suffix}</p>
+    </div>
+</div>

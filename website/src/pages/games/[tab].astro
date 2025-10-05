@@ -1,0 +1,50 @@
+---
+import Layout, { type PageInfo } from "../../layouts/Layout.astro";
+import { getTotals } from "../../models/GameSummary.ts";
+
+import RecentTab from '../../components/tabs/games/RecentTab.astro'
+import FindTab from '../../components/tabs/games/FindTab.astro'
+
+// export function getStaticPaths() {
+//   return [
+//     { params: { tab: "recent" }},
+//     { params: { tab: "find" }},
+
+//   ]
+// }
+
+const { tab } = Astro.params;
+
+if(tab !== "recent" && tab !== "find") {
+    return await Astro.rewrite(`/game/${tab}`)
+}
+
+const games = await getTotals()
+const meta: PageInfo = {
+	title: "Games",
+	description: "View recently played games or search through all played games",
+    hero: {
+        subtitle: `${games.totalGames.toLocaleString()} games played`
+    }
+}
+
+Astro.response.headers.set('Cache-Control', 'public, max-age=120');
+export const prerender = false
+---
+
+<Layout meta={meta}>
+	<div class="container mb-6">
+        <nav class="tabs is-centered">
+        <div class="container">
+            <ul>
+            <li class:list={{"is-active": tab === 'recent' }}><a href="/games/recent">Recent Games</a></li>
+            <li class:list={{"is-active": tab === 'find' }}><a href="/games/find">Find a game</a></li>
+            </ul>
+        </div>
+        </nav>
+
+        {tab === 'recent' && <RecentTab />}
+        {tab === 'find' && <FindTab />}
+        
+	</div>
+</Layout>

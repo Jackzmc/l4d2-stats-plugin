@@ -8,9 +8,11 @@ interface Props {
     type?: ColorType,
     size?: "is-small" | "is-medium" | "is-large" | "is-half-height" | "is-fullheight",
     class?: string,
-    centered?: boolean
+    centered?: boolean,
+
+    includeSpacing?: boolean
 }
-const { title, subtitle, type, size, centered, class: extraClasses } = Astro.props
+const { title, subtitle, type, size, centered, class: extraClasses, includeSpacing = true } = Astro.props
 ---
 
 <section class:list={["hero", extraClasses, type, size, { 'has-text-centered': centered } ]}>
@@ -19,4 +21,4 @@ const { title, subtitle, type, size, centered, class: extraClasses } = Astro.pro
         <p class="subtitle pt-2" set:html={subtitle} />
     </div>
 </section>
-<br>
+{includeSpacing && <br />}

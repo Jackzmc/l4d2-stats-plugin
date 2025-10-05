@@ -36,6 +36,10 @@ export default defineConfig({
     "/leaderboards": {
       status: 302,
       destination: "/leaderboards/1"
+    },
+    "/games": {
+      status: 302,
+      destination: "/games/recent"
     }
   }
 });

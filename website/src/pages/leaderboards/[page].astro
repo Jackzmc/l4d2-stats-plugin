@@ -20,7 +20,8 @@ const meta: PageInfo = {
 import { formatRelUnixDate, unixDateToDuration } from '../../utils/date.ts'
 const COLUMNS: TableColumn[] = [
 	{ name: "Player Name", key: "last_alias", formatFunction: (row) => (
-		`<b><a href="/user/${row['steamid']}">${row['last_alias']}</a></b>`
+		`<b><a href="/users
+		/${row['steamid']}">${row['last_alias']}</a></b>`
 	)},
 	{ name: "Points", key: "points", format: { number: { formatToLocale: true } }, class: "has-text-link" },
 	{ name: "Last Played", formatFunction: (row) => formatRelUnixDate(row["last_join_date"]) },
@@ -32,8 +33,9 @@ const COLUMNS: TableColumn[] = [
 ]
 
 // Load data
-const ITEMS_PER_PAGE = 15
+const ITEMS_PER_PAGE = 12
 import * as User from '../../models/User.ts'
+import BulmaIcon from "../../components/bulma/BulmaIcon.astro";
 const totalPlayers = await User.getTotalPlayers()
 const leaderboard = await User.getLeaderboards(page, ITEMS_PER_PAGE)
 
@@ -45,18 +47,46 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, s
 <Layout meta={meta}>
 	<div class="container content">
 		<div class="columns">
-			<div class="column is-8 box">
+			<div class="column is-8 box is-size-5">
 				<Table columns={COLUMNS} data={leaderboard} striped fullwidth />
 				<Pagination currentPage={page} itemsPerPage={ITEMS_PER_PAGE} totalItems={totalPlayers}  />
 			</div>
 			<div class="column is-4">
+				<div class="block">
+					<div class="level">
+						<div class="level-item">
+							<div class="button is-rounded">
+								<BulmaIcon name="iconoir:nav-arrow-left" textRight="Previous" size={32} />
+							</div>
+						</div>
+						<div class="level-item">
+							Page { page }
+						</div>
+						<div class="level-item">
+							<div class="button is-rounded is-pulled-right">
+								<BulmaIcon name="iconoir:nav-arrow-right" textLeft="Next" size={32} />
+							</div>
+						</div>
+					</div>
+				</div>
 				<div class="box">
+					<h5 class="title is-5">Find Player</h5>
 					<UserSearch />
 				</div>
 				<div class="box">
+					<h5 class="title is-5">Revived Most Players</h5>
 					<!-- TODO: top stat summary -->
 				</div>
 				<div class="box">
+					<h5 class="title is-5">Player of the Day</h5>
+					<h2 class="title has-text-centered l4d2-text box has-background-dark has-text-white">Disgruntled Pea</h2>
+					<p class="subtitle has-text-centered mt-4 mb-4">0 points</p>
+					<!-- TODO: random player of day -->
+				</div>
+				<div class="box">
+					<h5 class="title is-5">Player of the Day</h5>
+					<h2 class="title has-text-centered l4d2-text">Disgruntled Pea</h2>
+					<p class="subtitle has-text-centered mt-4 mb-4">0 points</p>
 					<!-- TODO: random player of day -->
 				</div>
 			</div>

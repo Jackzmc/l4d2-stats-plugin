@@ -40,9 +40,13 @@ const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entries({
 }));
 
 import DefaultMapImage from '../assets/posters/default.png'
-import { GAMEMODES } from '../types/game.ts';
+import { GAMEMODES, Survivor, SURVIVOR_DEFS } from '../types/game.ts';
 export function getMapPoster(mapId: string): any {
   return IMAGE_MAP[mapId] ? import(`../assets/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
+}
+
+export function getPortrait(survivorType: Survivor): any {
+  return SURVIVOR_DEFS[survivorType] ? import(`../assets/portraits/${SURVIVOR_DEFS[survivorType].model}.png`) : DefaultMapImage
 }
 
 export function getGamemode(gamemode: string) {

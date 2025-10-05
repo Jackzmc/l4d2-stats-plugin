@@ -1,0 +1,51 @@
+---
+import { Picture } from 'astro:assets'
+import type { GameSession } from '../../models/Game.ts'
+import { getPortrait } from '../../utils/index.ts'
+import { SURVIVOR_DEFS } from '../../types/game.ts'
+import Button from '../bulma/Button.astro'
+
+interface Props {
+    player: GameSession
+}
+const { player } = Astro.props
+const survivor = SURVIVOR_DEFS[player.characterType]
+---
+
+<div class="box full-height">
+    <h6 class="title is-6 mb-3 has-text-centered">
+        <a href={`/users/${player.steamid}`}>{ player.last_alias }</a>
+    </h6>
+    <Picture class="is-inline-block is-pulled-left image is-64x64" src={getPortrait(player.characterType)} title={survivor.name} alt={`Character portrait of ${survivor.name}`} />
+
+    <div class="subtitle is-6 has-text-centered mb-2">{player.points.toLocaleString()} points</div>
+    <hr class="player-divider">
+    <ul class="has-text-right">
+        <li><b>{player.ZombieKills}</b> commons killed</li>
+        <li><b>{player.SpecialInfectedKills}</b> specials killed</li>
+        <li><b>{player.SurvivorFFTakenDamage}</b> friendly fire damage</li>
+    </ul>
+    <br>
+    <nav class="level mb-2">
+        <div class="level-left">
+            <div class="level-item">
+                <span class="tags">
+                    
+                </span>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item" title="Game last played">
+            </div>
+        </div>
+    </nav>
+
+    <Button fullwidth type="is-link" href={`${Astro.url.pathname}/${player.id}`}>View Details</Button>
+</div>
+
+<style>
+.player-divider {
+    margin: 15px;
+    margin-left: 80px;
+}
+</style>

@@ -35,37 +35,17 @@ const { meta } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
     <HTMLHead pageTitle={meta.title} pageDescription={meta.description ?? siteDescription} siteTitle={siteTitle} noIndex={meta.noIndex} />
     <body>
         <NavBar siteTitle={siteTitle} />
-        <Hero type={meta.hero?.type || "is-dark"} centered class={meta.hero?.class}
-            title={meta.hero?.title ?? meta.title} 
-            subtitle={meta.hero?.subtitle ?? meta.description} 
-        />
+        <slot name="hero">
+            <Hero type={meta.hero?.type || "is-dark"} centered class={meta.hero?.class}
+                title={meta.hero?.title ?? meta.title} 
+                subtitle={meta.hero?.subtitle ?? meta.description} 
+            />
+        </slot>
         <slot />
         <br>
     </body>
 </html>
-
-<style>
-    #app {
-        font-family: Avenir, Helvetica, Arial, sans-serif;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        color: #2c3e50;
-    }
-
-    #nav {
-        padding: 30px;
-    }
-
-    #nav a {
-        font-weight: bold;
-        color: #2c3e50;
-    }
-
-    #nav a.router-link-exact-active {
-        color: #42b983;
-    }
-</style>

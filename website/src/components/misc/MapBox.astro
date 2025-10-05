@@ -13,7 +13,7 @@ interface Props {
 const difficultyClass = ["has-text-success","","has-text-link","has-text-danger"]
 const { map } = Astro.props
 ---
-<div class="box full-height ">
+<div class="box full-height">
     <h6 class="title is-6 l4d2-text has-text-centered">{ map.name }</h6>
     <Picture class="is-inline-block is-pulled-left image is-128x128" src={getMapPoster(map.map)} alt={`Poster for ${map.name||map.map}`} />
     <span class="has-text-centered">
@@ -52,7 +52,7 @@ const { map } = Astro.props
         </div>
     </nav>
 
-    <Button type="is-link" fullwidth>View Details</Button>
+    <Button href={`/games/${map.campaignId}`} type="is-link" fullwidth>View Details</Button>
 </div>
 
 <style>

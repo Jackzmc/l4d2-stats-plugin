@@ -17,7 +17,6 @@ const [totals, averages, [worstMap, bestMap]] = await Promise.all([
     GameSummary.getBestWorstOfficialMap()
 ])
 
-export const prerender = true
 Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
 ---
 

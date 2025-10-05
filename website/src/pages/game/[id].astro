@@ -1,0 +1,158 @@
+---
+import Layout, { type PageInfo } from "../../layouts/Layout.astro";
+import PlayerBox from '../../components/misc/PlayerBox.astro'
+let { id } = Astro.params;
+if(!id) return Astro.rewrite('/404')
+id = id.substring(0, 8)
+
+import { getGame, getGameSessions } from '../../models/Game.ts'
+import { Difficulty } from "../../types/game.ts";
+import { formatUnixDate } from "../../utils/date.ts";
+import { getGamemode } from "../../utils/index.ts";
+
+const game = await getGame(id)
+if(!game) return Astro.rewrite('/404')
+const sessions = await getGameSessions(id)
+
+
+const meta: PageInfo = {
+	title: `${game.map_name} - Game ${id}`,
+	description: "",
+    hero: {
+        title: game.map_name,
+    }
+}
+
+export const prerender = false
+---
+<Layout meta={meta}>
+    <section slot="hero" class="hero has-text-centered is-dark">
+        <div class="hero-body">
+            <p class="title">{meta.hero!.title}</p>
+            <p class="subtitle pt-2">
+                Played {formatUnixDate(game.date)}
+            </p>
+            <hr>
+            <p class="subtitle pt-2">
+                {getGamemode(game.gamemode)} • {Difficulty[game.difficulty]} • {game.duration} minutes long
+            </p>
+        </div>
+    </section>
+
+<section class="hero has-text-centered is-primary is-small has-text-white">
+                <div class="hero-body">
+                    <div class="container">
+                            <div class="level has-text-centered">
+                                <div class="level-item">
+                                    <div>
+                                        <p class="heading">Zombies Killed</p>
+                                        <p class="title has-text-white">{game.commons_killed.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                                <div class="level-item">
+                                    <div>
+                                        <p class="heading">Specials Killed</p>
+                                        <p class="title has-text-white">{game.specials_killed}</p>
+                                    </div>
+                                </div>
+                                <div class="level-item">
+                                    <div>
+                                        <p class="heading">Damage Taken</p>
+                                        <p class="title has-text-white">{game.damage_taken.toLocaleString()} HP</p>
+                                    </div>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            </section>
+    <br>
+    <section class="container">
+        <div class="fixed-grid has-5-cols">
+        <div class="grid">
+            {sessions.map(sess => 
+                <div class="cell">
+                    <PlayerBox player={sess} />
+                </div>
+            )}
+        </div>
+    </div>
+    </section>
+
+    <br>
+    <div class="container">
+        <div class="columns">
+            <div class="column">
+                <div class="box has-background-danger has-text-white">
+                    <div class="level has-text-centered">
+                        <div class="level-item">
+                            <div>
+                                <p class="heading">Incaps</p>
+                                <p class="title has-text-white">{game.incaps}</p>
+                            </div>
+                        </div>
+                        <div class="level-item">
+                            <div>
+                                <p class="heading">Deaths Killed</p>
+                                <p class="title has-text-white">{game.deaths}</p>
+                            </div>
+                        </div>
+                        <div class="level-item">
+                            <div>
+                                <p class="heading">Kits Used</p>
+                                <p class="title has-text-white">{game.medkits_used}</p>
+                            </div>
+                        </div>
+                        <div class="level-item">
+                            <div>
+                                <p class="heading">Pills Used</p>
+                                <p class="title has-text-white">{game.pills_used}</p>
+                            </div>
+                        </div>
+                        <div class="level-item">
+                            <div>
+                                <p class="heading">Adrenalines Used</p>
+                                <p class="title has-text-white">{game.adrenalines_used}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="box has-background-link has-text-white">
+                    <div class="level has-text-centered">
+                        <div class="level-item">
+                            <div>
+                                <p class="heading">Biles Thrown</p>
+                                <p class="title has-text-white">{game.biles_used}</p>
+                            </div>
+                        </div>
+                        <div class="level-item">
+                            <div>
+                                <p class="heading">Pipes Thrown</p>
+                                <p class="title has-text-white">{game.pipes_used}</p>
+                            </div>
+                        </div>
+                        <div class="level-item">
+                            <div>
+                                <p class="heading">Molotovs Thrown</p>
+                                <p class="title has-text-white">{game.molotovs_used}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-2">
+                <div class="box content">
+                    <h4>Map Id</h4>
+                    <p>{game.map}</p>
+                    <h4>Server Tags</h4>
+                    <span class="tags">
+                        {game.server_tags.map(tag => <span class="tag">{tag}</span>)}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="block">
+            Campaign ID {game.campaignID}
+        </div>
+    </div>
+
+</Layout>

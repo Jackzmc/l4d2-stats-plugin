@@ -9,7 +9,13 @@ const user = await getUser(steamid)
 if(!user) return new Response(null, { status: 404 })
 
 const meta: PageInfo = {
-    title: `${user.last_alias}`
+    title: `${user.last_alias}'s Profile`,
+    description: `View ${user.last_alias}'s profile and view their stats`,
+    hero: {
+        type: "is-link",
+        title: user.last_alias,
+        subtitle: `${user.points.toLocaleString()} points`
+    }
 }
 
 

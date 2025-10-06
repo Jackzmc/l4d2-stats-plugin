@@ -77,7 +77,7 @@ export async function getLeaderboards(page: number = 1, itemsPerPage = 30): Prom
 }
 
 export async function getUser(steamid: string): Promise<any | null> {
-    const [rows] = await db.execute<RowDataPacket[]>("SELECT * FROM stats_users WHERE SUBSTRING(steamid, 11) = ?", [steamid])
+    const [rows] = await db.execute<RowDataPacket[]>("SELECT * FROM stats_users WHERE SUBSTRING(steamid, 11) = SUBSTRING(?, 11)", [steamid])
     if(rows.length === 0) return null
     return rows[0] as any
 } 

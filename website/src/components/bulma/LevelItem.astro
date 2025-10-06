@@ -1,17 +1,22 @@
 ---
+import CountUp from '../CountUp.astro'
+
 interface Props  {
     title: string,
     value: number | string,
 
     suffix?: string,
-    class?: any
+    class?: any,
+
+    countup?: boolean
 }
-const { title, class: className, value, suffix = "" } = Astro.props
+const { title, class: className, value, suffix = "", countup = false } = Astro.props
 
 ---
 <div class:list={["level-item", className]}>
     <div>
         <p class:list={["heading", className]}>{title}</p>
-        <p class:list={["title", className]}>{typeof value === "number" ? value.toLocaleString() : value} {suffix}</p>
+        {countup && <CountUp  class:list={["title", className]} number={value as number} />}
+        {!countup && <p class:list={["title", className]}>{typeof value === "number" ? value.toLocaleString() : value} {suffix}</p>}
     </div>
 </div>

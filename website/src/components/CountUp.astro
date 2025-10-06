@@ -1,16 +1,17 @@
 ---
 interface Props {
-    number: number
+    number: number,
+    class?: any
 }
 function formatNumber(number: number) {
     return Number(number).toLocaleString(undefined, {
         maximumFractionDigits: 0
     })
 }
-const { number } = Astro.props
+const { number, class: className } = Astro.props
 ---
 
-<span data-count={number}>{formatNumber(number)}</span>
+<span data-count={number} class:list={[className]}>{formatNumber(number)}</span>
 
 <script>
 import { CountUp }  from "countup.js";

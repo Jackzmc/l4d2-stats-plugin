@@ -159,46 +159,40 @@ export async function getUser(steamid: string): Promise<PlayerFull | null> {
 
 interface TopStat {
     value: string,
-    count: number
+    id?: string
+    count: number,
 }
 export interface UserTopStats extends Player {
     top_weapon: TopStat,
     top_char: TopStat,
     top_map: TopStat,
     played_official: TopStat,
-    played_custom: TopStat
+    played_custom: TopStat,
+    played_any: TopStat
 }
 export async function getUserTopStats(steamid: string): Promise<UserTopStats | null> {
     const [rows] = await db.execute<RowDataPacket[]>(`
-        (SELECT 'top_weapon' name, top_weapon value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND top_weapon != '' GROUP BY top_weapon ORDER BY count DESC LIMIT 1)
+        (SELECT 'top_weapon' name, top_weapon id, w.name value, COUNT(*) count FROM stats_games g LEFT JOIN weapon_names w ON w.id = g.top_weapon WHERE steamid = :steamid AND top_weapon != '' GROUP BY top_weapon ORDER BY count DESC LIMIT 1)
         UNION ALL
-        (SELECT 'top_char' name, characterType value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND characterType IS NOT NULL GROUP BY characterType ORDER BY count DESC LIMIT 1)
+        (SELECT 'top_char' name, '' id, characterType value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND characterType IS NOT NULL GROUP BY characterType ORDER BY count DESC LIMIT 1)
         UNION ALL
-        (SELECT 'top_map' name, map value, COUNT(*) count FROM stats_games WHERE steamid = :steamid GROUP BY map ORDER BY count DESC LIMIT 1)
+        (SELECT 'top_map' name, map id, i.name value, COUNT(*) count FROM stats_games g LEFT JOIN map_info i ON i.mapid = g.map WHERE steamid = :steamid GROUP BY map ORDER BY count DESC LIMIT 1)
         UNION ALL
-        (SELECT 'played_official' name, '' value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND map LIKE 'c%m%_%' ORDER BY count DESC LIMIT 1)
+        (SELECT 'played_official' name, '' id, '' value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND map LIKE 'c%m%_%' ORDER BY count DESC LIMIT 1)
         UNION ALL
-        (SELECT 'played_custom' name, '' value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND map NOT LIKE 'c%m%_%' ORDER BY count DESC LIMIT 1)`,
+        (SELECT 'played_custom' name, '' id, '' value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND map NOT LIKE 'c%m%_%' ORDER BY count DESC LIMIT 1)
+        UNION ALL
+        (SELECT 'played_any' name, '' id, '' value, COUNT(*) count FROM stats_games WHERE steamid = :steamid LIMIT 1)`,
         { steamid }
     )
     if(rows.length === 0) return null
     const out: Record<string, TopStat> = {}
     for(const row of rows) {
         out[row.name] = {
+            id: row.id,
             value: row.value,
             count: row.count
         }
     }
     return out as unknown as UserTopStats
-}
-
-export async function getCounts(steamid: string): Promise<{ games_played: number } | null> {
-    const [rows] = await db.execute<RowDataPacket[]>(
-        `SELECT COUNT(*) games_played FROM stats_games WHERE SUBSTRING(steamid, 11) = SUBSTRING(?, 11)`, 
-        [steamid]
-    )
-    if(rows.length === 0) return null
-    return {
-        games_played: rows[0].games_played
-    }
 }

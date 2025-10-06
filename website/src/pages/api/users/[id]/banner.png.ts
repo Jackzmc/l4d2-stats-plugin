@@ -1,38 +1,83 @@
 import type { APIRoute } from "astro";
-import { getUser } from "@/models/User.ts";
+import { getUser, getUserTopStats } from "@/models/User.ts";
 import { api404 } from "@/utils/api.ts";
-import { Canvas, FontLibrary, loadImage } from 'skia-canvas';
+import { Canvas, FontLibrary, Image, loadImage, type CanvasRenderingContext2D } from 'skia-canvas';
 import path from "path";
-// import { Canvas, loadImage, registerFont } from "canvas";
+import { formatHumanDuration } from "@/utils/date.ts";
+import { Survivor, SURVIVOR_DEFS } from "@/types/game.ts";
+import { getMapScreenshotAssetPath } from "@/utils/index.ts";
 
-const WATERMARK_TEXT = "stats.jackz.me"
+const WATERMARK_TEXT = process.env.USER_WATERMARK_TEXT || "stats.jackz.me"
 const ROOT = path.join(import.meta.dirname, "../../../../../")
 
 FontLibrary.use("futurot", path.join(ROOT, "public/fonts/futurot.woff"))
 
+function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, opts: { font?: string, color?: string, filter?: string } = {}) {
+  ctx.save()
+  if(opts.filter) ctx.filter = opts.filter
+  if(opts.font) ctx.font = opts.font
+  if(opts.color) ctx.fillStyle = opts.color
+
+  ctx.fillText(text, x, y)
+
+  ctx.restore()
+}
+
+function drawBackgroundImage(ctx: CanvasRenderingContext2D, image: Image, color: [number, number, number, number] = [0,0,0,0.5]) {
+  if(color[3] > 1.0) throw new Error("Alpha must be between 0.0 and 1.0")
+  ctx.save()
+  ctx.filter = "blur(4px) brightness(25%) "
+  // ctx.filter = "blur(4px) brightness(80%) contrast(60%)"
+  ctx.drawImage(image, 0, 0, ctx.canvas.width, ctx.canvas.height)
+  // ctx.fillStyle = `rgba(${color.join(',')})`;
+  // ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+  ctx.restore()
+}
+
+const DARK_BG_COLOR: [number,number,number,number] = [ 0, 0, 0, 0.75 ]
+const LIGHT_BG_COLOR: [number,number,number,number]  = [ 255, 255, 255, 0.6 ]
+
 export const GET: APIRoute = async ({ params, request }) => {
   if(!params.id) return api404("MISSING_USER_ID", "A user ID is required")
+  const url = new URL(request.url)
+
+  // Allow overriding survivor type
+  let survivorOverride = url.searchParams.has("survivor") ? Number(url.searchParams.get("survivor")) : null
+  if(survivorOverride && (survivorOverride < 0 || survivorOverride > Survivor.Louis)) survivorOverride = null
+
   const user = await getUser(params.id)
   if(!user) return api404("USER_NOT_FOUND", "No user found")
+  const topStats = (await getUserTopStats(params.id))!
+
+  const survivor: Survivor = survivorOverride || Number(topStats.top_char.value)
+  const survivorDef = SURVIVOR_DEFS[survivor]
 
   const canvas = new Canvas(588, 194)
   const ctx = canvas.getContext('2d')
-  // if(req.query.gradient !== undefined) {
-  //     const bannerBase = await Canvas.loadImage(`assets/banner-base.png`)
-  //     ctx.drawImage(bannerBase, 0, 0, canvas.width, canvas.height)
-  // }
-  const survivorImg = await loadImage(path.join(ROOT, `src/assets/fullbody/zoey.png`))
-  ctx.drawImage(survivorImg, 0, 0, 120, 194)
-  ctx.save()
-  ctx.font = 'bold 20pt futurot'
-  ctx.fillStyle = '#ac0a4dff'
-  ctx.fillText(user.last_alias, 130, 40)
 
-  // setLine(ctx, 'Top Weapon: ', top.weapon.name || top.weapon.id, 120, 90)
-  // setLine(ctx, 'Top Map: ', top.map.name || top.map.id, 120, 111)
-  // ctx.fillText(`${maps.total.toLocaleString()} Games Played (${Math.round(maps.official/maps.total*100)}% official)`, 120, 132)
-  // ctx.fillText(`${stats.witchesCrowned.toLocaleString()} witches crowned`, 120, 153)
-  // ctx.fillText(`${stats.clownsHonked.toLocaleString()} clowns honked`, 120, 174)
+  const shouldDrawBg = url.searchParams.get("bg") != "f" && url.searchParams.get("bg") !== "0"
+  console.log(survivorDef)
+
+  if(shouldDrawBg) drawBackgroundImage(ctx, 
+    await loadImage('src/' + getMapScreenshotAssetPath(topStats.top_map.id!)), 
+    survivorDef.colorIsDark ? LIGHT_BG_COLOR : DARK_BG_COLOR
+  )
+
+  const survivorImg = await loadImage(path.join(ROOT, `src/assets/fullbody/${survivorDef.name.toLowerCase()}.png`))
+  ctx.drawImage(survivorImg, 0, 0, 120, 194)
+
+  // if(shouldDrawBg) ctx.fillStyle = survivorDef.colorIsDark ? 'black' : 'white' // default color for all text:
+  ctx.fillStyle = "white"
+  drawText(ctx, user.last_alias, 130, 40, { font: "bold 20pt futurot", color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)` })
+
+  drawText(ctx, `${topStats.played_any.count.toLocaleString()} games played`, 138, 65, { font: "20px sans-serif" })
+  drawText(ctx, `${formatHumanDuration(user.minutes_played, ", ", ["day", "hour", "minute"])} of playtime`, 134, 90, { font: "20px sans-serif" })
+  drawText(ctx, `Favorite map: ${topStats.top_map.value}`, 138, 115, { font: "20px sans-serif"})  
+  drawText(ctx, `Favorite weapon: ${topStats.top_weapon.value}`, 138, 140, { font: "20px sans-serif"})  
+
+  const playStyle = ""
+  drawText(ctx, playStyle, 138, 170, { font: "bold 24px sans-serif MT" })
+
   ctx.restore()
   ctx.font = 'light 6pt serif'
   ctx.fillStyle = '#737578'
@@ -43,7 +88,8 @@ export const GET: APIRoute = async ({ params, request }) => {
   const buf = await canvas.toBuffer("png")
   return new Response(buf as any, { 
     headers: {
-      'Content-Type': 'image/png'
+      'Content-Type': 'image/png',
+      'Cache-Control': 'public, max-age=86400, s-maxage=172800, stale-while-revalidate=604800, stale-if-error=604800'
     }
   })
 }

@@ -46,7 +46,10 @@ export function getMapPoster(mapId: string): any {
   return IMAGE_MAP[mapId] ? import(`../assets/maps/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
 }
 export function getMapScreenshot(mapId: string): any {
-  return IMAGE_MAP[mapId] ? import(`../assets/maps/screenshots/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
+  return import('../' + getMapScreenshotAssetPath(mapId))
+}
+export function getMapScreenshotAssetPath(mapId: string): any {
+  return IMAGE_MAP[mapId] ? `assets/maps/screenshots/${IMAGE_MAP[mapId]}.jpeg` : 'assets/maps/posters/default.png'
 }
 
 export function getPortrait(survivorType: Survivor): any {
@@ -54,7 +57,7 @@ export function getPortrait(survivorType: Survivor): any {
 }
 
 export function getWeaponImage(weaponId: string): any {
-  return import(`../assets/weapons/weapon_${weaponId}.jpg`) ?? import("../assets/astro.svg")
+  return import(`../assets/weapons/${weaponId}.jpg`) ?? import("../assets/astro.svg")
 }
 
 export function getGamemode(gamemode: string) {

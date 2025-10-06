@@ -17,9 +17,9 @@ import { getMapPoster, getPortrait, getWeaponImage } from '@/utils/index.ts'
 
 const user = await getUser(params.steamid)
 if(!user) return new Response(null, { status: 404 })
-const topStats = await getUserTopStats(params.steamid)
-const totalMaps = Number(topStats!.played_custom.count) + Number(topStats!.played_official.count)
-const mapPercents = [ Number(topStats!.played_official.count) / totalMaps * 100, Number(topStats!.played_custom.count) / totalMaps * 100 ]
+const topStats = (await getUserTopStats(params.steamid))!
+const totalMaps = topStats.played_any.count
+const mapPercents = [ Number(topStats.played_official.count) / totalMaps * 100, Number(topStats.played_custom.count) / totalMaps * 100 ]
 
 const meta: PageInfo = {
     title: `${user.last_alias}'s Profile`,
@@ -42,7 +42,7 @@ const steamid64 = steamid.getSteamID64()
         <div class="columns">
             <div class="column">
                 <h4 class="title is-4">Stats Overview</h4>
-                <Image width={588} height={194} class="has-background-white py-4 px-4" style="border: 2px solid #353434; border-radius: 8px" 
+                <Image width={588} height={194} class="has-background-black py-4 px-4" style="border: 2px solid #353434; border-radius: 8px" 
                     src={`/api/users/${user.steamid}/banner.png`} alt={`Profile banner for ${user.last_alias}`} 
                 />
 
@@ -245,91 +245,91 @@ const steamid64 = steamid.getSteamID64()
                     <h5 class="title is-5" id="throwables"><a href="#throwables"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Throwables</h5>
                     <table class="table is-bordered is-fullwidth">
                         <thead>
-                        <tr class="has-background-white-ter">
-                            <th>Throwable</th>
-                            <th align="center">Damage</th>
-                            <th align="center">Kills</th>
-                            <th align="center">Thrown</th>
-                        </tr>
+                            <tr class="has-background-white-ter">
+                                <th>Throwable</th>
+                                <th align="center">Damage</th>
+                                <th align="center">Kills</th>
+                                <th align="center">Thrown</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr>
-                            <td>Molotov</td>
-                            <td><CountUp number={user.damage_molotov} /></td>
-                            <td><CountUp number={user.kills_molotov} /></td>
-                            <td><CountUp number={user.throws_molotov } /></td>
-                        </tr>
-                        <tr>
-                            <td>Puke</td>
-                            <td class="has-text-centered">-</td>
-                            <td class="tvalue">-</td>
-                            <td><CountUp number={user.throws_puke} /></td>
-                        </tr>
-                        <tr>
-                            <td>Pipe</td>
-                            <td class="has-text-centered">-</td>
-                            <td><CountUp number={user.kills_pipe} /></td>
-                            <td><CountUp number={user.throws_pipe} /></td>
-                        </tr>
+                            <tr>
+                                <td>Molotov</td>
+                                <td align="center" class="tvalue"><CountUp number={user.damage_molotov} /></td>
+                                <td align="center" class="tvalue"><CountUp number={user.kills_molotov} /></td>
+                                <td align="center" class="tvalue"><CountUp number={user.throws_molotov } /></td>
+                            </tr>
+                            <tr>
+                                <td>Puke</td>
+                                <td align="center" >-</td>
+                                <td align="center" >-</td>
+                                <td align="center" class="tvalue"><CountUp number={user.throws_puke} /></td>
+                            </tr>
+                            <tr>
+                                <td>Pipe</td>
+                                <td align="center" >-</td>
+                                <td align="center" class="tvalue"><CountUp number={user.kills_pipe} /></td>
+                                <td align="center" class="tvalue"><CountUp number={user.throws_pipe} /></td>
+                            </tr>
                         </tbody>
                     </table>
                     
                     <h5 class="title is-5" id="averages"><a href="#averages"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Averages</h5>
-                    <!-- <table class="table is-bordered is-fullwidth">
+                    <table class="table is-bordered is-fullwidth">
                         <thead>
-                        <tr class="has-background-white-ter">
-                            <th>Statistic</th>
-                            <th align="center">Total</th>
-                            <th align="center">Per Session</th>
-                            <th align="center">Per Hour Played</th>
-                            <th align="center">Per {{averages.globalTotalSessions | formatNumber}} sessions</th>
-                        </tr>
+                            <tr class="has-background-white-ter">
+                                <th>Statistic</th>
+                                <th align="center">Total</th>
+                                <th align="center">Per Session</th>
+                                <th align="center">Per Hour Played</th>
+                                <!-- <th align="center">Per {{averages.globalTotalSessions}} sessions</th> -->
+                            </tr>
                         </thead>
                         <tbody>
-                        <tr>
-                            <td>Deaths</td>
-                            <td><CountUp number={averages.survivor_deaths} /></td>
-                            <td><CountUp number={(averages.survivor_deaths / averages.totalSessions).toFixed(2)} /></td>
-                            <td><CountUp number={(averages.survivor_deaths / hoursPlayed).toFixed(5)} /></td>
-                            <td><CountUp number={(averages.survivor_deaths / averages.globalTotalSessions).toFixed(2)} /></td>
-                        </tr>
-                        <tr>
-                            <td>Friendly Fire</td>
-                            <td><CountUp number={averages.survivor_ff} /></td>
-                            <td><CountUp number={(averages.survivor_ff / averages.totalSessions).toFixed(2)} /></td>
-                            <td><CountUp number={(averages.survivor_ff / averages.minutes_played).toFixed(5)} /></td>
-                            <td><CountUp number={(averages.survivor_ff / averages.globalTotalSessions).toFixed(2)} /></td>
-                        </tr>
-                        <tr>
-                            <td>Healing Others</td>
-                            <td><CountUp number={averages.heal_others} /></td>
-                            <td><CountUp number={(averages.heal_others / averages.totalSessions).toFixed(2)} /></td>
-                            <td><CountUp number={(averages.heal_others / hoursPlayed).toFixed(5)} /></td>
-                            <td><CountUp number={(averages.heal_others / averages.globalTotalSessions).toFixed(2)} /></td>
-                        </tr>
-                        <tr>
-                            <td>Revived Others</td>
-                            <td><CountUp number={averages.revived_others} /></td>
-                            <td><CountUp number={(averages.revived_others / averages.totalSessions).toFixed(2)} /></td>
-                            <td><CountUp number={(averages.revived_others / hoursPlayed).toFixed(5)} /></td>
-                            <td><CountUp number={(averages.revived_others / averages.globalTotalSessions).toFixed(2)} /></td>
-                        </tr>
-                        <tr>
-                            <td>Incaps</td>
-                            <td><CountUp number={averages.survivor_incaps} /></td>
-                            <td><CountUp number={(averages.survivor_incaps / averages.totalSessions).toFixed(2)} /></td>
-                            <td><CountUp number={(averages.survivor_incaps / hoursPlayed).toFixed(5)} /></td>
-                            <td><CountUp number={(averages.survivor_incaps / averages.globalTotalSessions).toFixed(2)} /></td>
-                        </tr>
-                        <tr>
-                            <td>Minutes Spent Idle</td>
-                            <td><CountUp number={averages.minutes_idle} /></td>
-                            <td><CountUp number={(averages.minutes_idle / averages.totalSessions).toFixed(2)} /></td>
-                            <td><CountUp number={(averages.minutes_idle / hoursPlayed).toFixed(5)} /></td>
-                            <td><CountUp number={(averages.minutes_idle / averages.globalTotalSessions).toFixed(2)} /></td>
-                        </tr>
+                            <tr>
+                                <td>Deaths</td>
+                                <td><CountUp number={user.survivor_deaths} /></td>
+                                <!-- <td><CountUp number={(user.survivor_deaths / averages.totalSessions).toFixed(2)} /></td> -->
+                                <!-- <td><CountUp number={(user.survivor_deaths / hoursPlayed).toFixed(5)} /></td> -->
+                                <!-- <td><CountUp number={(user.survivor_deaths / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                            </tr>
+                            <tr>
+                                <td>Friendly Fire</td>
+                                <td><CountUp number={user.survivor_ff} /></td>
+                                <!-- <td><CountUp number={(averages.survivor_ff / averages.totalSessions).toFixed(2)} /></td> -->
+                                <!-- <td><CountUp number={(averages.survivor_ff / averages.minutes_played).toFixed(5)} /></td> -->
+                                <!-- <td><CountUp number={(averages.survivor_ff / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                            </tr>
+                            <tr>
+                                <td>Healing Others</td>
+                                <td><CountUp number={user.heal_others} /></td>
+                                <!-- <td><CountUp number={(averages.heal_others / averages.totalSessions).toFixed(2)} /></td> -->
+                                <!-- <td><CountUp number={(averages.heal_others / hoursPlayed).toFixed(5)} /></td> -->
+                                <!-- <td><CountUp number={(averages.heal_others / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                            </tr>
+                            <tr>
+                                <td>Revived Others</td>
+                                <td><CountUp number={user.revived_others} /></td>
+                                <!-- <td><CountUp number={(averages.revived_others / averages.totalSessions).toFixed(2)} /></td> -->
+                                <!-- <td><CountUp number={(averages.revived_others / hoursPlayed).toFixed(5)} /></td> -->
+                                <!-- <td><CountUp number={(averages.revived_others / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                            </tr>
+                            <tr>
+                                <td>Incaps</td>
+                                <td><CountUp number={user.survivor_incaps} /></td>
+                                <!-- <td><CountUp number={(averages.survivor_incaps / averages.totalSessions).toFixed(2)} /></td> -->
+                                <!-- <td><CountUp number={(averages.survivor_incaps / hoursPlayed).toFixed(5)} /></td> -->
+                                <!-- <td><CountUp number={(averages.survivor_incaps / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                            </tr>
+                            <tr>
+                                <td>Minutes Spent Idle</td>
+                                <td><CountUp number={user.minutes_idle} /></td>
+                                <!-- <td><CountUp number={(averages.minutes_idle / averages.totalSessions).toFixed(2)} /></td> -->
+                                <!-- <td><CountUp number={(averages.minutes_idle / hoursPlayed).toFixed(5)} /></td> -->
+                                <!-- <td><CountUp number={(averages.minutes_idle / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                            </tr>
                         </tbody>
-                    </table> -->
+                    </table>
 
                     <h5 class="title is-5" id="misc"><a href="#misc"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Miscellaneous</h5>
                     <div class="box has-background-success-light">
@@ -337,7 +337,7 @@ const steamid64 = steamid.getSteamID64()
                             <LevelItem tooltip="Killed boomer getting someone boomed" countup title="Boomers Popped Others" value={user.boomer_mellos} />
                             <LevelItem tooltip="Killed boomer getting self boomed" countup title="Boomers Popped Self" value={user.boomer_mellos_self} />
                             <LevelItem countup title="Clown Honks" value={user.clowns_honked} />
-                            <LevelItem tooltip="" countup title="Kits fORGOTTEN" value={user.forgot_kit_count} />
+                            <LevelItem tooltip="Kits forgotten in saferoom" countup title="Kits Forgotten" value={user.forgot_kit_count} />
                         </Level>
                     </div>
                 </div>
@@ -363,8 +363,8 @@ const steamid64 = steamid.getSteamID64()
                 </div>
                 <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Most Played Map</h4>
-                    <Image src={getMapPoster(topStats!.top_map.value)} alt="map" style="border: 4px solid black" />
-                    <p class="subtitle is-5 has-text-white">{ topStats!.top_map.value }</p>
+                    <Image src={getMapPoster(topStats!.top_map.id!)} alt="map" style="border: 4px solid black" />
+                    <p class="subtitle is-5 has-text-white">{ topStats!.top_map.value ?? topStats.top_map.id }</p>
                 </div>
                 <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Maps Played</h4>
@@ -377,9 +377,9 @@ const steamid64 = steamid.getSteamID64()
                         <LevelItem class="has-text-white" title="Custom" value={mapPercents[1]} decimals={0} suffix="%"/>
                     </Level>
                 </div>
-                {topStats!.top_weapon?.value && <div class="box has-background-link has-text-white has-text-centered">
+                {topStats!.top_weapon.value && <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Most Used Weapon</h4>
-                    <Image src={getWeaponImage(topStats!.top_weapon.value)} alt="map" style="border: 4px solid black" />
+                    <Image src={getWeaponImage(topStats!.top_weapon.id!)} alt="map" style="border: 4px solid black" />
                     <p>{ topStats!.top_weapon.value }</p>
                 </div>}
             </div>

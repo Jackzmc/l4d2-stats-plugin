@@ -66,30 +66,31 @@ export function formatDurationFromMinutes(minutes: number) {
     }
 }
 
-/**
- * Given seconds, formats a duration of upto month, day, hour, minute and seconds
- * @param seconds 
- * @returns 
- */
-export function formatHumanDuration(seconds: number, delimiter = ", ") {
-  // https://stackoverflow.com/questions/7812742/converts-minutes-into-days-week-months-and-years
-  let value = seconds;
-
-  const units: Record<string, number> = {
+const UNIT_MAP: Record<string, number> = {
     "month": 24*60*60*30,
     "day": 24*60*60,
     "hour": 60*60,
     "minute": 60,
     "second": 1
-  }
+}
+/**
+ * Given seconds, formats a duration of upto month, day, hour, minute and seconds
+ * @param seconds 
+ * @returns 
+ */
+export function formatHumanDuration(seconds: number, delimiter = ", ", shownUnits: string[] = ["month", "day", "hour", "minute"]) {
+  // https://stackoverflow.com/questions/7812742/converts-minutes-into-days-week-months-and-years
+  let value = seconds;
 
   const result = []
 
-  for(const unit in units) {
-    const p =  Math.floor(value/units[unit]);
-    if(p == 1) result.push(` ${p} ${unit}`);
-    if(p >= 2) result.push(` ${p} ${unit}s`);
-    value %= units[unit]
+  for(const unitName of shownUnits) {
+    const unit = UNIT_MAP[unitName]
+    if(!unit) throw new Error("Unknown unit: " + unitName)
+    const p =  Math.floor(value/unit);
+    if(p == 1) result.push(` ${p} ${unitName}`);
+    if(p >= 2) result.push(` ${p} ${unitName}s`);
+    value %= unit
   }
 
   return result.join(delimiter);

@@ -9,6 +9,8 @@ interface Props {
     textRight?: string
     rotate?: number
     size?: number,
+    
+    [key: string]: any,
 }
 const { name, iconProps, rotate = 0, textLeft, textRight, size, ...any } = Astro.props
 

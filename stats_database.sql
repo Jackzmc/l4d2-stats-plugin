@@ -256,6 +256,62 @@ CREATE TABLE IF NOT EXISTS `map_info` (
   `flags` smallint(6) DEFAULT 0 COMMENT '1:official',
   PRIMARY KEY (`mapid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Table structure for table `weapon_names`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `weapon_names` (
+  `id` varchar(64) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  `melee` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `weapon_names`
+--
+
+INSERT INTO `weapon_names` VALUES ('baseball_bat','Baseball Bat',1);
+INSERT INTO `weapon_names` VALUES ('chainsaw','Chainsaw',1);
+INSERT INTO `weapon_names` VALUES ('cricket_bat','Cricket Bat',1);
+INSERT INTO `weapon_names` VALUES ('didgeridoo','Didgeridoo',1);
+INSERT INTO `weapon_names` VALUES ('electric_guitar','Guitar',1);
+INSERT INTO `weapon_names` VALUES ('fireaxe','Fire Axe',1);
+INSERT INTO `weapon_names` VALUES ('frying_pan','Frying Pan',1);
+INSERT INTO `weapon_names` VALUES ('katana','Katana',1);
+INSERT INTO `weapon_names` VALUES ('machete','Machete',1);
+INSERT INTO `weapon_names` VALUES ('tonfa','Nightstick',1);
+INSERT INTO `weapon_names` VALUES ('weapon_adrenaline','Adrenaline',0);
+INSERT INTO `weapon_names` VALUES ('weapon_autoshotgun','Automatic Shotgun',0);
+INSERT INTO `weapon_names` VALUES ('weapon_defibrilator','Defibrillator',0);
+INSERT INTO `weapon_names` VALUES ('weapon_first_aid_kit','First Aid Kit',0);
+INSERT INTO `weapon_names` VALUES ('weapon_grenade_launcher','Grenade Launcher',0);
+INSERT INTO `weapon_names` VALUES ('weapon_hunting_rifle','Hunting Rifle',0);
+INSERT INTO `weapon_names` VALUES ('weapon_molotov','Molotov Cocktail',0);
+INSERT INTO `weapon_names` VALUES ('weapon_pain_pills','Pain Pills',0);
+INSERT INTO `weapon_names` VALUES ('weapon_pipe_bomb','Pipe Bomb',0);
+INSERT INTO `weapon_names` VALUES ('weapon_pistol','Pistol',0);
+INSERT INTO `weapon_names` VALUES ('weapon_pistol_magnum','Magnum Pistol',0);
+INSERT INTO `weapon_names` VALUES ('weapon_pumpshotgun','Pump Shotgun',0);
+INSERT INTO `weapon_names` VALUES ('weapon_rifle','M16',0);
+INSERT INTO `weapon_names` VALUES ('weapon_rifle_ak47','AK-47',0);
+INSERT INTO `weapon_names` VALUES ('weapon_rifle_desert','Combat Rifle',0);
+INSERT INTO `weapon_names` VALUES ('weapon_rifle_m60','M60',0);
+INSERT INTO `weapon_names` VALUES ('weapon_rifle_sg552','SG552',0);
+INSERT INTO `weapon_names` VALUES ('weapon_shotgun_chrome','Chrome Shotgun',0);
+INSERT INTO `weapon_names` VALUES ('weapon_shotgun_spas','SPAS Shotgun',0);
+INSERT INTO `weapon_names` VALUES ('weapon_smg','SMG',0);
+INSERT INTO `weapon_names` VALUES ('weapon_smg_mp5','MP5',0);
+INSERT INTO `weapon_names` VALUES ('weapon_smg_silenced','SMG (Silenced)',0);
+INSERT INTO `weapon_names` VALUES ('weapon_sniper_awp','AWP',0);
+INSERT INTO `weapon_names` VALUES ('weapon_sniper_military','Military Sniper',0);
+INSERT INTO `weapon_names` VALUES ('weapon_sniper_scout','Scout Sniper',0);
+INSERT INTO `weapon_names` VALUES ('weapon_vomitjar','Boomer Bile',0);
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

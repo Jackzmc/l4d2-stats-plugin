@@ -312,6 +312,20 @@ INSERT INTO `weapon_names` VALUES ('weapon_sniper_military','Military Sniper',0)
 INSERT INTO `weapon_names` VALUES ('weapon_sniper_scout','Scout Sniper',0);
 INSERT INTO `weapon_names` VALUES ('weapon_vomitjar','Boomer Bile',0);
 
+--
+-- Cleanup old point data
+--
+
+create procedure if not exists stats_cleanup_points()
+begin
+    delete from stats_points WHERE timestamp < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 180 DAY));
+end;
+
+CREATE EVENT if not exists stats_cleanup
+ON SCHEDULE EVERY 1 month
+DO
+    CALL stats_cleanup_points();
+
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

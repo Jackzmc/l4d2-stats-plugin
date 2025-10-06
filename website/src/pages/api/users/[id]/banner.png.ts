@@ -37,6 +37,8 @@ function drawBackgroundImage(ctx: CanvasRenderingContext2D, image: Image, color:
 const DARK_BG_COLOR: [number,number,number,number] = [ 0, 0, 0, 0.75 ]
 const LIGHT_BG_COLOR: [number,number,number,number]  = [ 255, 255, 255, 0.6 ]
 
+const MARGIN_PX = 20
+
 export const GET: APIRoute = async ({ params, request }) => {
   if(!params.id) return api404("MISSING_USER_ID", "A user ID is required")
   const url = new URL(request.url)
@@ -52,7 +54,7 @@ export const GET: APIRoute = async ({ params, request }) => {
   const survivor: Survivor = survivorOverride != null ? survivorOverride : Number(topStats.top_char.value)
   const survivorDef = SURVIVOR_DEFS[survivor]
 
-  const canvas = new Canvas(588, 194)
+  const canvas = new Canvas(588 + MARGIN_PX, 194 + MARGIN_PX)
   const ctx = canvas.getContext('2d')
 
   const shouldDrawBg = url.searchParams.get("bg") != "f" && url.searchParams.get("bg") !== "0"
@@ -64,26 +66,26 @@ export const GET: APIRoute = async ({ params, request }) => {
   )
 
   const survivorImg = await loadImage(path.join(ROOT, `src/assets/fullbody/${survivorDef.name.toLowerCase()}.png`))
-  ctx.drawImage(survivorImg, 0, 0, survivorImg.width*(194/survivorImg.height), 194)
+  ctx.drawImage(survivorImg, MARGIN_PX, MARGIN_PX, survivorImg.width*((194-MARGIN_PX)/survivorImg.height) - MARGIN_PX, 194 - MARGIN_PX)
 
   // if(shouldDrawBg) ctx.fillStyle = survivorDef.colorIsDark ? 'black' : 'white' // default color for all text:
   if(shouldDrawBg) ctx.fillStyle = "white"
-  drawText(ctx, user.last_alias, 120, 40, { font: "bold 20pt futurot", color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)` })
+  drawText(ctx, user.last_alias, 120+MARGIN_PX, 40+MARGIN_PX, { font: "bold 20pt futurot", color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)` })
 
-  drawText(ctx, `${topStats.played_any.count.toLocaleString()} games played`, 128, 65, { font: "20px sans-serif" })
-  drawText(ctx, `${formatHumanDuration(user.minutes_played, ", ", ["day", "hour", "minute"])} of playtime`, 124, 90, { font: "20px sans-serif" })
-  drawText(ctx, `Favorite map: ${topStats.top_map.value}`, 128, 115, { font: "20px sans-serif"})  
-  drawText(ctx, `Favorite weapon: ${topStats.top_weapon.value}`, 128, 140, { font: "20px sans-serif"})  
+  drawText(ctx, `${topStats.played_any.count.toLocaleString()} games played`, 128+MARGIN_PX, 65+MARGIN_PX, { font: "20px sans-serif" })
+  drawText(ctx, `${formatHumanDuration(user.minutes_played, ", ", ["day", "hour", "minute"])} of playtime`, 124+MARGIN_PX, 90+MARGIN_PX, { font: "20px sans-serif" })
+  drawText(ctx, `Favorite map: ${topStats.top_map.value}`, 128+MARGIN_PX, 115+MARGIN_PX, { font: "20px sans-serif"})  
+  drawText(ctx, `Favorite weapon: ${topStats.top_weapon.value}`, 128+MARGIN_PX, 140+MARGIN_PX, { font: "20px sans-serif"})  
 
   const playStyle = ""
-  drawText(ctx, playStyle, 128, 170, { font: "bold 24px sans-serif MT" })
+  drawText(ctx, playStyle, 128+MARGIN_PX, 170+MARGIN_PX, { font: "bold 24px sans-serif MT" })
 
   ctx.restore()
   ctx.font = 'light 6pt serif'
   ctx.fillStyle = '#737578'
 
   const waterMarkDim = ctx.measureText(WATERMARK_TEXT)
-  ctx.fillText(WATERMARK_TEXT, canvas.width - waterMarkDim.actualBoundingBoxRight - 8, canvas.height - 8)
+  ctx.fillText(WATERMARK_TEXT, canvas.width - waterMarkDim.actualBoundingBoxRight - 8 - MARGIN_PX, canvas.height - 8 - MARGIN_PX)
 
   const buf = await canvas.toBuffer("png")
   return new Response(buf as any, { 

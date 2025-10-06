@@ -39,7 +39,7 @@ export const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entri
     "c14m2_lighthouse": "c14_last_stand",
 }));
 
-import type { AstroGlobal, AstroInstance } from 'astro';
+import type { AstroGlobal } from 'astro';
 import DefaultMapImage from '@assets/maps/posters/default.png'
 import { GAMEMODES, Survivor, SURVIVOR_DEFS } from '@/types/game.ts';
 export function getMapPoster(mapId: string): any {
@@ -51,6 +51,10 @@ export function getMapScreenshot(mapId: string): any {
 
 export function getPortrait(survivorType: Survivor): any {
   return SURVIVOR_DEFS[survivorType] ? import(`../assets/portraits/${SURVIVOR_DEFS[survivorType].model}.png`) : DefaultMapImage
+}
+
+export function getWeaponImage(weaponId: string): any {
+  return import(`../assets/weapons/weapon_${weaponId}.jpg`) ?? import("../assets/astro.svg")
 }
 
 export function getGamemode(gamemode: string) {

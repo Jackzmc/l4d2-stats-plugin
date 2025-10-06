@@ -47,6 +47,9 @@ importers:
       skia-canvas:
         specifier: ^3.0.8
         version: 3.0.8
+      steamid:
+        specifier: ^2.1.0
+        version: 2.1.0
     devDependencies:
       '@rmp135/sql-ts':
         specifier: ^2.2.0
@@ -2445,6 +2448,10 @@ packages:
   statuses@2.0.2:
     resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
     engines: {node: '>= 0.8'}
+
+  steamid@2.1.0:
+    resolution: {integrity: sha512-ndt1cvuuSC+i8fcxVsmeyRlgGsR1QsoAuIXz+eabj8/Y4GIWE2+mgHA7Hys61JDHOxttfWtXHtN2m5TNYTlORg==}
+    engines: {node: '>=12.0.0'}
 
   string-split-by@1.0.0:
     resolution: {integrity: sha512-KaJKY+hfpzNyet/emP81PJA9hTVSfxNLS9SFTWxdCnnW1/zOOwiV248+EfoX7IQFcBaOp4G5YE6xTJMF+pLg6A==}
@@ -5798,6 +5805,8 @@ snapshots:
   statuses@2.0.1: {}
 
   statuses@2.0.2: {}
+
+  steamid@2.1.0: {}
 
   string-split-by@1.0.0:
     dependencies:

@@ -48,3 +48,49 @@ export function unixDateToDuration(timestamp: number, formatOptions?: FormatDura
   })
   return formatDuration(duration, formatOptions)
 }
+
+export function formatDurationFromMinutes(minutes: number) {
+   let hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    minutes = minutes % 60;
+    const day_text = days == 1 ? 'day' : 'days'
+    const min_text = minutes == 1 ? 'minute' : 'minutes'
+    const hour_text = hours == 1 ? 'hour' : 'hours'
+    if(days >= 1) {
+        hours = hours % 24;
+        return `${days} ${day_text}, ${hours} ${hour_text}`
+    }else if(hours >= 1) {
+        return `${hours} ${hour_text}, ${minutes} ${min_text}`
+    }else{
+        return `${minutes} ${min_text}`
+    }
+}
+
+/**
+ * Given seconds, formats a duration of upto month, day, hour, minute and seconds
+ * @param seconds 
+ * @returns 
+ */
+export function formatHumanDuration(seconds: number, delimiter = ", ") {
+  // https://stackoverflow.com/questions/7812742/converts-minutes-into-days-week-months-and-years
+  let value = seconds;
+
+  const units: Record<string, number> = {
+    "month": 24*60*60*30,
+    "day": 24*60*60,
+    "hour": 60*60,
+    "minute": 60,
+    "second": 1
+  }
+
+  const result = []
+
+  for(const unit in units) {
+    const p =  Math.floor(value/units[unit]);
+    if(p == 1) result.push(` ${p} ${unit}`);
+    if(p >= 2) result.push(` ${p} ${unit}s`);
+    value %= units[unit]
+  }
+
+  return result.join(delimiter);
+}

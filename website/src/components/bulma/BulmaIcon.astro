@@ -8,9 +8,9 @@ interface Props {
     textLeft?: string,
     textRight?: string
     rotate?: number
-    size?: number
+    size?: number,
 }
-const { name, iconProps, rotate = 0, textLeft, textRight, size } = Astro.props
+const { name, iconProps, rotate = 0, textLeft, textRight, size, ...any } = Astro.props
 
 const autoName = name.includes(":") ? name : `${DEFAULT_ICON_SET}:${name}`
 
@@ -19,7 +19,7 @@ const style = {
     "font-size": size && `${size}px`
 }
 ---
-<span class="icon-text">
+<span class="icon-text" {...any}>
     {textLeft && <span>{textLeft}</span>}
     <span class="icon">
         <Icon name={autoName} {...iconProps} style={style}/>

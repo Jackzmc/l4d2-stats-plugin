@@ -7,6 +7,9 @@ if(!dbUrl) {
 }
 
 console.info("[Pool] Connecting to database")
-const pool = Mysql.createPool(dbUrl)
+const pool = Mysql.createPool({
+    namedPlaceholders: true,
+    uri: dbUrl
+})
 
 export default pool

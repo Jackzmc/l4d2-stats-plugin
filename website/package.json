@@ -21,7 +21,8 @@
     "countup.js": "^2.9.0",
     "date-fns": "^4.1.0",
     "mysql2": "^3.15.1",
-    "skia-canvas": "^3.0.8"
+    "skia-canvas": "^3.0.8",
+    "steamid": "^2.1.0"
   },
   "devDependencies": {
     "@rmp135/sql-ts": "^2.2.0",

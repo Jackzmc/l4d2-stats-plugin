@@ -10,12 +10,12 @@ interface Props {
     class?: string,
     centered?: boolean,
 
-    includeSpacing?: boolean
+    includeSpacing?: boolean,
 }
-const { title, subtitle, type, size, centered, class: extraClasses, includeSpacing = true } = Astro.props
+const { title, subtitle, type, size, centered, class: extraClasses, includeSpacing = true, ...any } = Astro.props
 ---
 
-<section class:list={["hero", extraClasses, type, size, { 'has-text-centered': centered } ]}>
+<section class:list={["hero", extraClasses, type, size, { 'has-text-centered': centered } ]} {...any}>
     <div class="hero-body">
         <p class="title">{title}</p>
         <p class="subtitle pt-2" set:html={subtitle} />

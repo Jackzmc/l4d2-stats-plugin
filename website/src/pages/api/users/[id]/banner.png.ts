@@ -6,7 +6,7 @@ import path from "path";
 // import { Canvas, loadImage, registerFont } from "canvas";
 
 const WATERMARK_TEXT = "stats.jackz.me"
-const ROOT = path.join(import.meta.dirname, "@/")
+const ROOT = path.join(import.meta.dirname, "../../../../../")
 
 FontLibrary.use("futurot", path.join(ROOT, "public/fonts/futurot.woff"))
 

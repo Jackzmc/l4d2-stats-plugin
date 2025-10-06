@@ -1,12 +1,23 @@
 ---
 import Layout, { type PageInfo } from '@/layouts/Layout.astro'
-const { steamid } = Astro.params
-if(!steamid) return new Response(null, { status: 404 })
+const params = Astro.params
+if(!params.steamid) return new Response(null, { status: 404 })
 
-import { getUser } from '@/models/User.ts'
+import SteamID from 'steamid'
+import { getUser, getUserTopStats } from '@/models/User.ts'
+import Button from '@/components/bulma/Button.astro'
+import BulmaIcon from '@/components/bulma/BulmaIcon.astro'
+import { formatRelUnixDate, formatUnixDate, formatDurationFromMinutes, formatHumanDuration } from '@/utils/date.ts'
+import { Image } from 'astro:assets'
+import Level from '@/components/bulma/Level.astro'
+import LevelItem from '@/components/bulma/LevelItem.astro'
+import CountUp from '@/components/CountUp.astro'
+import { Survivor } from '@/types/game.ts'
+import { getMapPoster, getPortrait, getWeaponImage } from '@/utils/index.ts'
 
-const user = await getUser(steamid)
+const user = await getUser(params.steamid)
 if(!user) return new Response(null, { status: 404 })
+const topStats = await getUserTopStats(params.steamid)
 
 const meta: PageInfo = {
     title: `${user.last_alias}'s Profile`,
@@ -14,14 +25,360 @@ const meta: PageInfo = {
     hero: {
         type: "is-link",
         title: user.last_alias,
-        subtitle: `${user.points.toLocaleString()} points`
+        subtitle: `${user.points.toLocaleString()} points`,
+        style: "background-image: linear-gradient(0deg,#008cff,#3a47d5)"
     }
 }
+const steamid = new SteamID(user.steamid)
+const steamid64 = steamid.getSteamID64()
 
+// TODO: split sections into components
 
 ---
 <Layout meta={meta}>
     <div class="container">
+        <div class="columns">
+            <div class="column">
+                <h4 class="title is-4">Stats Overview</h4>
+                <Image width={588} height={194} class="has-background-white py-4 px-4" style="border: 2px solid #353434; border-radius: 8px" 
+                    src={`/api/users/${user.steamid}/banner.png`} alt={`Profile banner for ${user.last_alias}`} 
+                />
+
+                <div class="block mt-6">
+                    <h5 class="title is-5" id="player-stats"><a href="#player-stats"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Player Information</h5>
+                    <table class="table is-bordered is-fullwidth">
+                        <tbody>
+                            <tr>
+                                <th style="vertical-align: middle">SteamID</th>
+                                <td style="vertical-align: middle">
+                                    {user.steamid}
+
+                                    <span class="is-pulled-right buttons">
+                                        <Button type="is-link" size="is-small" href={`https://steamdb.info/calculator/${steamid64}`}>
+                                            <BulmaIcon style="line-height: inherit" name="iconoir:arrow-up-right-square" textLeft="SteamDB" />
+                                        </Button>
+                                        <Button type="is-link" size="is-small"  href={`https://steamcommunity.com/profiles/${steamid64}`}>
+                                            <BulmaIcon style="line-height: inherit" name="iconoir:arrow-up-right-square" textLeft="Steam Profile" />
+                                        </Button>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>First Played</th>
+                                <td>
+                                    {formatUnixDate(user.created_date)}
+                                    <span class="is-pulled-right"><em>({formatRelUnixDate(user.created_date)})</em></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Last Played</th>
+                                <td>
+                                    {formatUnixDate(user.last_join_date)}
+                                    <span class="is-pulled-right"><em>({formatRelUnixDate(user.last_join_date)})</em></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Total Playtime</th>
+                                <td>
+                                    {formatHumanDuration(user.minutes_played * 60)} 
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Last Location</th>
+                                <td>
+                                    <!-- TODO: should show region? (if not, clear from server too) -->
+                                    {user.region}, {user.country}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h5 class="title is-5" id="kills"><a href="#kills"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Kills</h5>
+                    <div class="box has-background-primary-light">
+                        <Level>
+                            <LevelItem countup title="Smoker" value={user.kills_smoker} />
+                            <LevelItem countup title="Boomer" value={user.kills_boomer} />
+                            <LevelItem countup title="Hunter" value={user.kills_hunter} />
+                            <LevelItem countup title="Spitter" value={user.kills_spitter} />
+                            <LevelItem countup title="Jockey" value={user.kills_jockey} />
+                            <LevelItem countup title="Charger" value={user.kills_charger} />
+                        </Level>
+                    </div>
+                    <div class="box has-background-primary-light">
+                        <Level>
+                            <LevelItem countup title="Commons" value={user.common_kills} />
+                            <LevelItem countup title="With Minigun" value={user.kills_minigun} />
+                            <LevelItem countup title="With Melee" value={user.melee_kills} />
+                            <LevelItem countup title="Tank" value={user.tanks_killed} />
+                            <LevelItem countup title="Tank (Solo)" value={user.tanks_killed_solo} />
+                            <LevelItem countup title="Witch" value={user.witches_crowned} />
+                            <LevelItem countup title="Teammates :(" value={user.ff_kills} />
+                        </Level>
+                    </div>
+
+                    <h5 class="title is-5" id="survivor-stats"><a href="#survivor-stats"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Survivor Statistics</h5>
+                    <div class="block">
+                        <div class="columns">
+                            <div class="column">
+                                <h6 class="title is-6 has-text-centered">Damages</h6>
+                                <table class="table is-bordered is-fullwidth">
+                                    <thead>
+                                        <tr class="has-background-white-ter">
+                                            <th>Type</th>
+                                            <th align="center">Damage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Total Dealt</td>
+                                            <td class="tvalue"><CountUp number={user.survivor_damage_give} /></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Total Received</td>
+                                            <td class="tvalue"><CountUp number={user.survivor_damage_rec} /></td>
+                                        </tr>
+                                        <tr>
+                                            <td>To Tank</td>
+                                            <td class="tvalue"><CountUp number={user.damage_to_tank} /></td>
+                                        </tr>
+                                        <tr>
+                                            <td>To Witch</td>
+                                            <td class="tvalue"><CountUp number={user.damage_witch} /></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Friendly Fire</td>
+                                            <td class="tvalue"><CountUp number={user.survivor_ff} /></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Incaps</td>
+                                            <td class="tvalue"><CountUp number={user.survivor_incaps} /></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Deaths</td>
+                                            <td class="tvalue"><CountUp number={user.survivor_deaths } /></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="column">
+                                <h6 class="title is-6 has-text-centered">Item Uses</h6>
+                                <table class="table is-bordered is-fullwidth">
+                                    <thead>
+                                    <tr class="has-background-white-ter">
+                                        <th>Item</th>
+                                        <th align="center">Uses</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td>Pills</td>
+                                        <td class="tvalue"><CountUp number={user.pills_used} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Adrenaline</td>
+                                        <td class="tvalue"><CountUp number={user.adrenaline_used} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Defibs</td>
+                                        <td class="tvalue"><CountUp number={user.defibs_used} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ammo Packs</td>
+                                        <td class="tvalue"><CountUp number={user.packs_used} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Kits <em>(Self)</em></td>
+                                        <td class="tvalue"><CountUp number={user.heal_self} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Kits <em>(Others)</em></td>
+                                        <td class="tvalue"><CountUp number={user.heal_others} /></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="column">
+                                <h6 class="title is-6 has-text-centered">Miscellaneous</h6>
+                                <table class="table is-bordered is-fullwidth">
+                                    <thead>
+                                    <tr class="has-background-white-ter">
+                                        <th>Stat</th>
+                                        <th align="center">Value</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr>
+                                        <td>Doors Opened</td>
+                                        <td class="tvalue"><CountUp number={user.door_opens} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Finales Won</td>
+                                        <td class="tvalue"><CountUp number={user.finales_won} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Times Revived</td>
+                                        <td class="tvalue"><CountUp number={user.revived} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Revived Others</td>
+                                        <td class="tvalue"><CountUp number={user.revived_others} /></td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="title is-5" id="skills"><a href="#skills"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Skills</h5>
+                    <div class="box has-background-info-light">
+                        <Level>
+                            <LevelItem countup title="Witches Crowned" value={user.witches_crowned} />
+                            <LevelItem countup title="Smokers Self-cleared" value={user.smokers_selfcleared} />
+                            <LevelItem countup title="Hunters Deadstopped" value={user.hunters_deadstopped} />
+                            <LevelItem countup title="Helped Pinned teammate" value={user.cleared_pinned} />
+                            <LevelItem countup title="Hit By Rock" value={user.rocks_hitby} />
+                        </Level>
+                    </div>
+
+                    <h5 class="title is-5" id="throwables"><a href="#throwables"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Throwables</h5>
+                    <table class="table is-bordered is-fullwidth">
+                        <thead>
+                        <tr class="has-background-white-ter">
+                            <th>Throwable</th>
+                            <th align="center">Damage</th>
+                            <th align="center">Kills</th>
+                            <th align="center">Thrown</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Molotov</td>
+                            <td><CountUp number={user.damage_molotov} /></td>
+                            <td><CountUp number={user.kills_molotov} /></td>
+                            <td><CountUp number={user.throws_molotov } /></td>
+                        </tr>
+                        <tr>
+                            <td>Puke</td>
+                            <td class="has-text-centered">-</td>
+                            <td class="tvalue">-</td>
+                            <td><CountUp number={user.throws_puke} /></td>
+                        </tr>
+                        <tr>
+                            <td>Pipe</td>
+                            <td class="has-text-centered">-</td>
+                            <td><CountUp number={user.kills_pipe} /></td>
+                            <td><CountUp number={user.throws_pipe} /></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h5 class="title is-5" id="averages"><a href="#averages"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Averages</h5>
+                    <!-- <table class="table is-bordered is-fullwidth">
+                        <thead>
+                        <tr class="has-background-white-ter">
+                            <th>Statistic</th>
+                            <th align="center">Total</th>
+                            <th align="center">Per Session</th>
+                            <th align="center">Per Hour Played</th>
+                            <th align="center">Per {{averages.globalTotalSessions | formatNumber}} sessions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>Deaths</td>
+                            <td><CountUp number={averages.survivor_deaths} /></td>
+                            <td><CountUp number={(averages.survivor_deaths / averages.totalSessions).toFixed(2)} /></td>
+                            <td><CountUp number={(averages.survivor_deaths / hoursPlayed).toFixed(5)} /></td>
+                            <td><CountUp number={(averages.survivor_deaths / averages.globalTotalSessions).toFixed(2)} /></td>
+                        </tr>
+                        <tr>
+                            <td>Friendly Fire</td>
+                            <td><CountUp number={averages.survivor_ff} /></td>
+                            <td><CountUp number={(averages.survivor_ff / averages.totalSessions).toFixed(2)} /></td>
+                            <td><CountUp number={(averages.survivor_ff / averages.minutes_played).toFixed(5)} /></td>
+                            <td><CountUp number={(averages.survivor_ff / averages.globalTotalSessions).toFixed(2)} /></td>
+                        </tr>
+                        <tr>
+                            <td>Healing Others</td>
+                            <td><CountUp number={averages.heal_others} /></td>
+                            <td><CountUp number={(averages.heal_others / averages.totalSessions).toFixed(2)} /></td>
+                            <td><CountUp number={(averages.heal_others / hoursPlayed).toFixed(5)} /></td>
+                            <td><CountUp number={(averages.heal_others / averages.globalTotalSessions).toFixed(2)} /></td>
+                        </tr>
+                        <tr>
+                            <td>Revived Others</td>
+                            <td><CountUp number={averages.revived_others} /></td>
+                            <td><CountUp number={(averages.revived_others / averages.totalSessions).toFixed(2)} /></td>
+                            <td><CountUp number={(averages.revived_others / hoursPlayed).toFixed(5)} /></td>
+                            <td><CountUp number={(averages.revived_others / averages.globalTotalSessions).toFixed(2)} /></td>
+                        </tr>
+                        <tr>
+                            <td>Incaps</td>
+                            <td><CountUp number={averages.survivor_incaps} /></td>
+                            <td><CountUp number={(averages.survivor_incaps / averages.totalSessions).toFixed(2)} /></td>
+                            <td><CountUp number={(averages.survivor_incaps / hoursPlayed).toFixed(5)} /></td>
+                            <td><CountUp number={(averages.survivor_incaps / averages.globalTotalSessions).toFixed(2)} /></td>
+                        </tr>
+                        <tr>
+                            <td>Minutes Spent Idle</td>
+                            <td><CountUp number={averages.minutes_idle} /></td>
+                            <td><CountUp number={(averages.minutes_idle / averages.totalSessions).toFixed(2)} /></td>
+                            <td><CountUp number={(averages.minutes_idle / hoursPlayed).toFixed(5)} /></td>
+                            <td><CountUp number={(averages.minutes_idle / averages.globalTotalSessions).toFixed(2)} /></td>
+                        </tr>
+                        </tbody>
+                    </table> -->
+
+                    <h5 class="title is-5" id="misc"><a href="#misc"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Miscellaneous</h5>
+                    <div class="box has-background-success-light">
+                        <Level>
+                            <LevelItem tooltip="Killed boomer getting someone boomed" countup title="Boomers Popped Others" value={user.boomer_mellos} />
+                            <LevelItem tooltip="Killed boomer getting self boomed" countup title="Boomers Popped Self" value={user.boomer_mellos_self} />
+                            <LevelItem countup title="Clown Honks" value={user.clowns_honked} />
+                            <LevelItem tooltip="" countup title="Kits fORGOTTEN" value={user.forgot_kit_count} />
+                        </Level>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-3">
+                <div class="box">
+                    <h4 class="title is-4 mb-2">Sections</h4>
+                    <ul>
+                        <li><a href="#player-stats"><BulmaIcon name="iconoir:link"></BulmaIcon> Player Stats</a></li>
+                        <li><a href="#kills"><BulmaIcon name="iconoir:link"></BulmaIcon> Kills</a></li>
+                        <li><a href="#survivor-stats"><BulmaIcon name="iconoir:link"></BulmaIcon> Survivor Statistics</a></li>
+                        <li><a href="#skills"><BulmaIcon name="iconoir:link"></BulmaIcon> Skills</a></li>
+                        <li><a href="#throwables"><BulmaIcon name="iconoir:link"></BulmaIcon> Throwables</a></li>
+                        <li><a href="#averages"><BulmaIcon name="iconoir:link"></BulmaIcon>Averages</a></li>
+                    </ul>
+                </div>
+                <div class="box has-background-link has-text-white has-text-centered">
+                    <h4 class="title is-4 has-text-white">Most Played Survivor</h4>
+                    { /* @ts-expect-error ts(2322) */ }
+                    <Image src={getPortrait(topStats!.top_char.value)} alt={Survivor[topStats!.top_char.value]} style="border: 4px solid black" />
+                    { /* @ts-expect-error ts(2322) */ }
+                    <p class="subtitle is-5 has-text-white">{Survivor[topStats!.top_char.value]}</p>
+                </div>
+                <div class="box has-background-link has-text-white has-text-centered">
+                    <h4 class="title is-4 has-text-white">Most Played Map</h4>
+                    <Image src={getMapPoster(topStats!.top_map.value)} alt="map" style="border: 4px solid black" />
+                    <p class="subtitle is-5 has-text-white">{ topStats!.top_map.value }</p>
+                </div>
+                {topStats!.top_weapon?.value && <div class="box has-background-link has-text-white has-text-centered">
+                    <h4 class="title is-4 has-text-white">Most Used Weapon</h4>
+                    <Image src={getWeaponImage(topStats!.top_weapon.value)} alt="map" style="border: 4px solid black" />
+                    <p>{ topStats!.top_weapon.value }</p>
+                </div>}
+            </div>
+        </div>
 
     </div>
 </Layout>
+
+<style>
+.hero {
+}
+.tvalue {
+    color: blue;
+}
+</style>

@@ -23,7 +23,9 @@ export interface PageInfo {
         /** Overwrites the hero's type */
         type?: ColorType
         /** Adds to the hero's class */
-        class?: string
+        class?: string,
+
+        [key: string]: any
     } | undefined | null,
 
     /** Marks page to not be indexed */
@@ -43,6 +45,7 @@ const { meta } = Astro.props;
             <Hero type={meta.hero?.type || "is-dark"} centered class={meta.hero?.class}
                 title={meta.hero?.title ?? meta.title} 
                 subtitle={meta.hero?.subtitle ?? meta.description} 
+                {...meta.hero}
             />
         </slot>
         <slot />

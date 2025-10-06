@@ -1,0 +1,21 @@
+---
+import Layout, { type PageInfo } from '../../layouts/Layout.astro'
+const { steamid } = Astro.params
+if(!steamid) return new Response(null, { status: 404 })
+
+import { getUser } from '../../models/User.ts'
+
+const user = await getUser(steamid)
+if(!user) return new Response(null, { status: 404 })
+
+const meta: PageInfo = {
+    title: `${user.last_alias}`
+}
+
+
+---
+<Layout meta={meta}>
+    <div class="container">
+
+    </div>
+</Layout>

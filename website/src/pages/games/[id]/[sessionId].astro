@@ -2,7 +2,7 @@
 import Layout, { type PageInfo } from "../../../layouts/Layout.astro";
 import PlayerBox from '../../../components/misc/PlayerBox.astro'
 let { id: gameId, sessionId } = Astro.params;
-if(!gameId || !sessionId) return Astro.rewrite('/404')
+if(!gameId || !sessionId) return new Response(null, { status: 404 })
 
 import { getSession, getSessionPlayers } from '../../../models/Game.ts'
 import { Difficulty } from "../../../types/game.ts";
@@ -12,7 +12,7 @@ import LevelItem from "../../../components/bulma/LevelItem.astro";
 import { getImage } from "astro:assets";
 
 const session = await getSession(sessionId)
-if(!session) return Astro.rewrite('/404')
+if(!session) return new Response(null, { status: 404 })
 const otherSessions = await getSessionPlayers(gameId)
 
 const meta: PageInfo = {
@@ -107,7 +107,7 @@ export const prerender = false
                     <ul>
                         {otherSessions.map(player => (
                             <li>
-                                <b><a href={`/user/${player.steamid}`}>{player.name}</a></b>
+                                <b><a href={`/users/${player.steamid}`}>{player.name}</a></b>
                                 {player.sessionId != session.id && 
                                     <a href={replaceRoute(Astro, { sessionid: player.sessionId })} class="is-pulled-right">(view stats)</a>
                                 }

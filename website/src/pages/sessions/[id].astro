@@ -1,21 +1,17 @@
 ---
 import Layout, { type PageInfo } from "../../layouts/Layout.astro";
-import PlayerBox from '../../components/misc/PlayerBox.astro'
 let { id } = Astro.params;
-if(!id) return Astro.rewrite('/404')
+if(!id) return new Response(null, { status: 404 })
 
-import { getGame, getSession } from '../../models/Game.ts'
+import { getSession } from '../../models/Game.ts'
 import { Difficulty } from "../../types/game.ts";
-import { formatUnixDate } from "../../utils/date.ts";
-import { getGamemode, getMapPoster, getMapScreenshot } from "../../utils/index.ts";
+import { getGamemode, getMapScreenshot } from "../../utils/index.ts";
 import Level from "../../components/bulma/Level.astro";
 import LevelItem from "../../components/bulma/LevelItem.astro";
-import { Picture } from "astro:assets";
-import { Image } from "astro:assets";
 import { getImage } from "astro:assets";
 
 const session = await getSession(id)
-if(!session) return Astro.rewrite('/404')
+if(!session) return new Response(null, { status: 404 })
 
 const meta: PageInfo = {
 	title: `${session.last_alias}'s Session #${session.id} - ${session.map_name}`,

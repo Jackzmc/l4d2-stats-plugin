@@ -2,7 +2,7 @@
 import Layout, { type PageInfo } from "../../../layouts/Layout.astro";
 import PlayerBox from '../../../components/misc/PlayerBox.astro'
 let { id } = Astro.params;
-if(!id) return Astro.rewrite('/404')
+if(!id) return new Response(null, { status: 404 })
 id = id.substring(0, 8)
 
 import { getGame, getSessions } from '../../../models/Game.ts'
@@ -14,7 +14,7 @@ import LevelItem from "../../../components/bulma/LevelItem.astro";
 import { getImage } from "astro:assets";
 
 const game = await getGame(id)
-if(!game) return Astro.rewrite('/404')
+if(!game) return new Response(null, { status: 404 })
 const sessions = await getSessions(id)
 
 

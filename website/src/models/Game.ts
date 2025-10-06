@@ -94,11 +94,12 @@ export async function getGame(id: string): Promise<Game | null> {
             SUM(Deaths) deaths,
             SUM(DamageTaken) damage_taken
         FROM stats_games g
-        INNER JOIN map_info i ON i.mapid = g.map
+        JOIN map_info i ON i.mapid = g.map
         WHERE left(g.campaignID, 8) = ?
         LIMIT 1
     `, [id.substring(0, 8)])
-    if(rows.length === 0) return null
+    // row[0] will exist due to use of AVG(), check for null map:
+    if(rows.length === 0 || !rows[0].map) return null
     return {
         ...rows[0],
         duration: Math.round(rows[0].duration),

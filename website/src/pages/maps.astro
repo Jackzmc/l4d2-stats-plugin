@@ -1,15 +1,15 @@
 ---
-import Layout, { type PageInfo } from "../layouts/Layout.astro";
+import Layout, { type PageInfo } from "@/layouts/Layout.astro";
 import { Icon } from 'astro-icon/components'
 const meta: PageInfo = {
 	title: "Maps",
 	description: "View stats about total number of games, minutes played and ratings for all maps"
 }
 
-import { getMapPoster } from '../utils/index.ts'
-import { getMapPlayCount, getMapRatings } from "../models/Map.ts";
+import { getMapPoster } from '@/utils/index.ts'
+import { getMapPlayCount, getMapRatings } from "@/models/Map.ts";
 import { Picture } from "astro:assets";
-import BulmaIcon from "../components/bulma/BulmaIcon.astro";
+import BulmaIcon from "@/components/bulma/BulmaIcon.astro";
 
 const topMaps = await getMapPlayCount(false, 3)
 const sortBy = Astro.url.searchParams.get("sortBy") ?? "avgRating"

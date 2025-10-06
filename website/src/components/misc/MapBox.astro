@@ -1,11 +1,11 @@
 ---
 import { Picture } from 'astro:assets'
-import type { RecentGame } from '../../models/Game.ts'
-import { getMapPoster, getGamemode } from '../../utils/index.ts'
-import { Difficulty } from '../../types/game.ts'
-import Button from '../bulma/Button.astro'
-import BulmaIcon from '../bulma/BulmaIcon.astro'
-import { formatRelUnixDate } from '../../utils/date.ts'
+import type { RecentGame } from '@/models/Game.ts'
+import { getMapPoster, getGamemode } from '@/utils/index.ts'
+import { Difficulty } from '@/types/game.ts'
+import Button from '@/components/bulma/Button.astro'
+import BulmaIcon from '@/components/bulma/BulmaIcon.astro'
+import { formatRelUnixDate } from '@/utils/date.ts'
 
 interface Props {
     map: RecentGame

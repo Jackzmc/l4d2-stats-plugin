@@ -1,6 +1,6 @@
 import type { RowDataPacket } from "mysql2";
-import db from "../db/pool.ts";
-import type { Player, StatsUsersEntity } from "../db/types.ts";
+import db from "@/db/pool.ts";
+import type { Player, StatsUsersEntity } from "@/db/types.ts";
 import assert from "assert";
 
 export interface LeaderboardEntry {

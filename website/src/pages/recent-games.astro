@@ -1,8 +1,8 @@
 ---
-import Layout, { type PageInfo } from "../layouts/Layout.astro";
-import { getTotals } from "../models/GameSummary.ts";
+import Layout, { type PageInfo } from "@/layouts/Layout.astro";
+import { getTotals } from "@/models/GameSummary.ts";
 
-import RecentTab from '../components/tabs/games/RecentTab.astro'
+import RecentTab from '@/components/tabs/games/RecentTab.astro'
 
 const games = await getTotals()
 const meta: PageInfo = {

@@ -1,7 +1,7 @@
 import type { RowDataPacket } from 'mysql2';
-import db from '../db/pool.ts'
-import type { Difficulty, Survivor } from '../types/game.ts';
-import type { Player } from '../db/types.ts';
+import db from '@/db/pool.ts'
+import type { Difficulty, Survivor } from '@/types/game.ts';
+import type { Player } from '@/db/types.ts';
 
 export interface RecentGame {
   numPlayers: number;

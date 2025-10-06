@@ -1,16 +1,16 @@
 ---
-import Layout, { type PageInfo } from "../../../layouts/Layout.astro";
+import Layout, { type PageInfo } from "@/layouts/Layout.astro";
 import PlayerBox from '../../../components/misc/PlayerBox.astro'
 let { id } = Astro.params;
 if(!id) return new Response(null, { status: 404 })
 id = id.substring(0, 8)
 
 import { getGame, getSessions } from '../../../models/Game.ts'
-import { Difficulty } from "../../../types/game.ts";
-import { formatUnixDate } from "../../../utils/date.ts";
-import { getGamemode, getMapScreenshot } from "../../../utils/index.ts";
-import Level from "../../../components/bulma/Level.astro";
-import LevelItem from "../../../components/bulma/LevelItem.astro";
+import { Difficulty } from "@/types/game.ts";
+import { formatUnixDate } from "@/utils/date.ts";
+import { getGamemode, getMapScreenshot } from "@/utils/index.ts";
+import Level from "@/components/bulma/Level.astro";
+import LevelItem from "@/components/bulma/LevelItem.astro";
 import { getImage } from "astro:assets";
 
 const game = await getGame(id)

@@ -1,9 +1,9 @@
 ---
 import { Picture } from 'astro:assets'
-import type { GameSessionPartial } from '../../models/Game.ts'
-import { getPortrait } from '../../utils/index.ts'
-import { SURVIVOR_DEFS } from '../../types/game.ts'
-import Button from '../bulma/Button.astro'
+import type { GameSessionPartial } from '@/models/Game.ts'
+import { getPortrait } from '@/utils/index.ts'
+import { SURVIVOR_DEFS } from '@/types/game.ts'
+import Button from '@/components/bulma/Button.astro'
 
 interface Props {
     player: GameSessionPartial,

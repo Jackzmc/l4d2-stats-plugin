@@ -40,8 +40,8 @@ export const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entri
 }));
 
 import type { AstroGlobal, AstroInstance } from 'astro';
-import DefaultMapImage from '../assets/maps/posters/default.png'
-import { GAMEMODES, Survivor, SURVIVOR_DEFS } from '../types/game.ts';
+import DefaultMapImage from '@assets/maps/posters/default.png'
+import { GAMEMODES, Survivor, SURVIVOR_DEFS } from '@/types/game.ts';
 export function getMapPoster(mapId: string): any {
   return IMAGE_MAP[mapId] ? import(`../assets/maps/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
 }

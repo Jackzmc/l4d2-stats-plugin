@@ -1,5 +1,12 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*", "src/pages/api/sessions/[id]/chart/games/[id]/.png.ts"],
-  "exclude": ["dist"]
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "paths": {
+      "@public/*": ["./public/*"],
+      "@assets/*": ["./src/assets/*"],
+      "@/*": ["./src/*"],
+    }
+  }
 }

@@ -1,5 +1,5 @@
 import type { RowDataPacket } from 'mysql2';
-import db from '../db/pool.ts'
+import db from '@/db/pool.ts'
 
 export interface MapInfo {
     id: string,

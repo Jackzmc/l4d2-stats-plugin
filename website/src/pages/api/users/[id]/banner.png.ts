@@ -1,13 +1,14 @@
 import type { APIRoute } from "astro";
-import { getUser } from "../../../../models/User.ts";
-import { api404 } from "../../../../utils/api.ts";
+import { getUser } from "@/models/User.ts";
+import { api404 } from "@/utils/api.ts";
 import { Canvas, FontLibrary, loadImage } from 'skia-canvas';
 import path from "path";
 // import { Canvas, loadImage, registerFont } from "canvas";
 
 const WATERMARK_TEXT = "stats.jackz.me"
+const ROOT = path.join(import.meta.dirname, "@/")
 
-FontLibrary.use("futurot", path.join(import.meta.dirname, "../../../../../public/fonts/futurot.woff"))
+FontLibrary.use("futurot", path.join(ROOT, "public/fonts/futurot.woff"))
 
 export const GET: APIRoute = async ({ params, request }) => {
   if(!params.id) return api404("MISSING_USER_ID", "A user ID is required")
@@ -20,7 +21,7 @@ export const GET: APIRoute = async ({ params, request }) => {
   //     const bannerBase = await Canvas.loadImage(`assets/banner-base.png`)
   //     ctx.drawImage(bannerBase, 0, 0, canvas.width, canvas.height)
   // }
-  const survivorImg = await loadImage(path.join(import.meta.dirname, `../../../../assets/fullbody/zoey.png`))
+  const survivorImg = await loadImage(path.join(ROOT, `src/assets/fullbody/zoey.png`))
   ctx.drawImage(survivorImg, 0, 0, 120, 194)
   ctx.save()
   ctx.font = 'bold 20pt futurot'

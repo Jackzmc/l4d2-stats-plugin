@@ -1,9 +1,9 @@
 ---
 // Elements import
-import Table, { type TableColumn } from "../../components/bulma/Table.astro";
-import Layout, { type PageInfo } from "../../layouts/Layout.astro";
-import UserSearch from "../../components/UserSearch.astro";
-import Pagination from "../../components/bulma/Pagination.astro";
+import Table, { type TableColumn } from "@/components/bulma/Table.astro";
+import Layout, { type PageInfo } from "@/layouts/Layout.astro";
+import UserSearch from "@/components/UserSearch.astro";
+import Pagination from "@/components/bulma/Pagination.astro";
 
 let { page = 0 } = Astro.params
 page = parseInt(page as string)
@@ -35,7 +35,7 @@ const COLUMNS: TableColumn[] = [
 // Load data
 const ITEMS_PER_PAGE = 12
 import * as User from '../../models/User.ts'
-import BulmaIcon from "../../components/bulma/BulmaIcon.astro";
+import BulmaIcon from "@/components/bulma/BulmaIcon.astro";
 const totalPlayers = await User.getTotalPlayers()
 const leaderboard = await User.getLeaderboards(page, ITEMS_PER_PAGE)
 const playerOfDay = await User.getPlayerOfDay()

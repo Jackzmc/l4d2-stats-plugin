@@ -1,9 +1,9 @@
 ---
-import Layout, { type PageInfo } from '../../layouts/Layout.astro'
+import Layout, { type PageInfo } from '@/layouts/Layout.astro'
 const { steamid } = Astro.params
 if(!steamid) return new Response(null, { status: 404 })
 
-import { getUser } from '../../models/User.ts'
+import { getUser } from '@/models/User.ts'
 
 const user = await getUser(steamid)
 if(!user) return new Response(null, { status: 404 })

@@ -1,15 +1,14 @@
 ---
-import Layout, { type PageInfo } from "../layouts/Layout.astro";
-import SummaryExtra from "../components/misc/SummaryExtra.astro";
+import Layout, { type PageInfo } from "@/layouts/Layout.astro";
+import SummaryExtra from "@/components/misc/SummaryExtra.astro";
 const meta: PageInfo = {
 	title: "Summary",
     description:  "A summarization of all recorded sessions"
 }
-import * as GameSummary from '../models/GameSummary.ts'
-import { Image } from "astro:assets";
-import CountUp from "../components/CountUp.astro";
+import * as GameSummary from '@/models/GameSummary.ts'
+import CountUp from "@/components/CountUp.astro";
 import { Picture } from "astro:assets";
-import { getMapPoster } from "../utils/index.ts";
+import { getMapPoster } from "@/utils/index.ts";
 
 const [totals, averages, [worstMap, bestMap]] = await Promise.all([
     GameSummary.getSummaryTotals(),  

@@ -43,13 +43,13 @@ export const GET: APIRoute = async ({ params, request }) => {
 
   // Allow overriding survivor type
   let survivorOverride = url.searchParams.has("survivor") ? Number(url.searchParams.get("survivor")) : null
-  if(survivorOverride && (survivorOverride < 0 || survivorOverride > Survivor.Louis)) survivorOverride = null
+  if(survivorOverride != undefined && (survivorOverride < 0 || survivorOverride > Survivor.Louis)) survivorOverride = null
 
   const user = await getUser(params.id)
   if(!user) return api404("USER_NOT_FOUND", "No user found")
   const topStats = (await getUserTopStats(params.id))!
 
-  const survivor: Survivor = survivorOverride || Number(topStats.top_char.value)
+  const survivor: Survivor = survivorOverride != null ? survivorOverride : Number(topStats.top_char.value)
   const survivorDef = SURVIVOR_DEFS[survivor]
 
   const canvas = new Canvas(588, 194)
@@ -64,19 +64,19 @@ export const GET: APIRoute = async ({ params, request }) => {
   )
 
   const survivorImg = await loadImage(path.join(ROOT, `src/assets/fullbody/${survivorDef.name.toLowerCase()}.png`))
-  ctx.drawImage(survivorImg, 0, 0, 120, 194)
+  ctx.drawImage(survivorImg, 0, 0, survivorImg.width*(194/survivorImg.height), 194)
 
   // if(shouldDrawBg) ctx.fillStyle = survivorDef.colorIsDark ? 'black' : 'white' // default color for all text:
-  ctx.fillStyle = "white"
-  drawText(ctx, user.last_alias, 130, 40, { font: "bold 20pt futurot", color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)` })
+  if(shouldDrawBg) ctx.fillStyle = "white"
+  drawText(ctx, user.last_alias, 120, 40, { font: "bold 20pt futurot", color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)` })
 
-  drawText(ctx, `${topStats.played_any.count.toLocaleString()} games played`, 138, 65, { font: "20px sans-serif" })
-  drawText(ctx, `${formatHumanDuration(user.minutes_played, ", ", ["day", "hour", "minute"])} of playtime`, 134, 90, { font: "20px sans-serif" })
-  drawText(ctx, `Favorite map: ${topStats.top_map.value}`, 138, 115, { font: "20px sans-serif"})  
-  drawText(ctx, `Favorite weapon: ${topStats.top_weapon.value}`, 138, 140, { font: "20px sans-serif"})  
+  drawText(ctx, `${topStats.played_any.count.toLocaleString()} games played`, 128, 65, { font: "20px sans-serif" })
+  drawText(ctx, `${formatHumanDuration(user.minutes_played, ", ", ["day", "hour", "minute"])} of playtime`, 124, 90, { font: "20px sans-serif" })
+  drawText(ctx, `Favorite map: ${topStats.top_map.value}`, 128, 115, { font: "20px sans-serif"})  
+  drawText(ctx, `Favorite weapon: ${topStats.top_weapon.value}`, 128, 140, { font: "20px sans-serif"})  
 
   const playStyle = ""
-  drawText(ctx, playStyle, 138, 170, { font: "bold 24px sans-serif MT" })
+  drawText(ctx, playStyle, 128, 170, { font: "bold 24px sans-serif MT" })
 
   ctx.restore()
   ctx.font = 'light 6pt serif'

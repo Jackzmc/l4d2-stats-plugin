@@ -5,7 +5,7 @@ if(!gameId || !sessionId) return new Response(null, { status: 404 })
 
 import { getSession, getSessionPlayers } from '../../../models/Game.ts'
 import { Difficulty } from "@/types/game.ts";
-import { getGamemode, getMapPoster, getMapScreenshot, replaceRoute } from "@/utils/index.ts";
+import { getGamemode, getMapScreenshot, replaceRoute } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
 import { getImage } from "astro:assets";
@@ -26,13 +26,14 @@ const bgImage = await getImage({ src: getMapScreenshot(session.map) })
 export const prerender = false
 ---
 <Layout meta={meta}>
-    <section slot="hero" class="hero has-text-centered is-medium is-dark hero-bg" style={{'background-image': `url("${bgImage.src}")`}}>
+    <section slot="hero" class="hero has-text-centered is-medium is-dark hero-bg" style={{'background-image': `linear-gradient(
+      rgba(0, 0, 0, 0.5),
+      rgba(0, 0, 0, 0.5)
+    ), url("${bgImage.src}")`}}>
         <div class="hero-body">
             <!-- <Picture src={getMapPoster(session.map)} alt="map" /> -->
             <p class="title">{session.last_alias}'s Session #{session.id}</p>
             <p class="subtitle pt-2">Played on <b>{session.map_name}</b></p>
-            <br>
-            
         </div>
         <div class="hero-footer">
             <p class="subtitle mb-3">

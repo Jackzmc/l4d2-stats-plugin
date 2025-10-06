@@ -1,6 +1,6 @@
 ---
 import Layout, { type PageInfo } from "@/layouts/Layout.astro";
-import PlayerBox from '../../../components/misc/PlayerBox.astro'
+import PlayerBox from '@/components/misc/PlayerBox.astro'
 let { id } = Astro.params;
 if(!id) return new Response(null, { status: 404 })
 id = id.substring(0, 8)
@@ -38,13 +38,18 @@ const bgImage = await getImage({ src: getMapScreenshot(game.map) })
 export const prerender = false
 ---
 <Layout meta={meta}>
-    <section slot="hero" class="hero has-text-centered is-dark hero-bg" style={{'background-image': `url("${bgImage.src}")`}}>
+    <section slot="hero" class="hero has-text-centered is-dark hero-bg" style={{'background-image': `linear-gradient(
+      rgba(0, 0, 0, 0.5),
+      rgba(0, 0, 0, 0.5)
+    ), url("${bgImage.src}")`}}>
         <div class="hero-body">
             <p class="title">{meta.hero!.title}</p>
             <p class="subtitle pt-2">
                 Played {formatUnixDate(game.date)}
             </p>
-            <hr>
+        
+        </div>
+        <div class="hero-footer mb-3">
             <p class="subtitle pt-2">
                 {getGamemode(game.gamemode)} • {Difficulty[game.difficulty]} • {game.duration} minutes long
             </p>
@@ -120,5 +125,11 @@ export const prerender = false
 <style>
 .hero-bg {
     background-position: center;
+    background-blend-mode:
+    /* color: black; */
+}
+.hero-bg p {
+    /* color: black; */
+    text-shadow: 4px black;
 }
 </style>

@@ -1,0 +1,60 @@
+---
+import UserSearch from "@/components/UserSearch.astro"
+import Layout, { type PageInfo } from "@/layouts/Layout.astro"
+import type { PlayerSearchResult } from "@/models/User.ts"
+import { searchUsers } from "@/models/User.ts"
+import { formatHumanDuration, formatRelUnixDate } from "@/utils/date.ts"
+
+let query = Astro.url.searchParams.get("q")
+let users: PlayerSearchResult[]|null = null
+let meta: PageInfo
+if(query) {
+    query = query.toString().toLowerCase()
+    users = await searchUsers(query)
+    meta = {
+        title: `${query} - Search`,
+        hero: { subtitle: `${users.length} users found` },
+        noIndex: true,
+    }
+} else {
+    meta = {
+        title: `Search Users`,
+    }
+}
+
+---
+<Layout meta={meta} />
+    <div class="container">
+        {!users && <div class="has-text-centered"><UserSearch size="is-large" /></div>}
+        {users && <div class="columns is-multiline">
+            {users.map(user => 
+                <div class="column is-6">
+                    <div class="card">
+                        <header class="card-header">
+                            <p class="card-header-title"><a href={`/users/${user.steamid}`}>{user.name}</a></p>
+                        </header>
+                        <div class="card-content pt-4">
+                            <table class="table is-fullwidth">
+                                <tr>
+                                    <th>SteamID</th>
+                                    <td>{user.steamid}</td>
+                                </tr>
+                                <tr>
+                                    <th>Points</th>
+                                    <td>{user.points.toLocaleString()}</td>
+                                </tr><tr>
+                                    <th>Playtime</th>
+                                    <td>{user.minutes_played ? formatHumanDuration(user.minutes_played*60) : "-" }</td>
+                                </tr>
+                                <tr>
+                                    <th>Last Seen</th>
+                                    <td>{formatRelUnixDate(user.last_join_date)}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>}
+    </div>
+</Layout>

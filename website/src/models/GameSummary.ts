@@ -1,6 +1,6 @@
 import type { RowDataPacket } from 'mysql2';
 import db from '@/db/pool.ts'
-import { getMapPlayCount, type MapCountEntry } from './Map.ts';
+import { getMapsWithPlayCount, type MapCountEntry } from './Map.ts';
 import assert from 'assert';
 
 export interface Summary {
@@ -25,7 +25,7 @@ export async function getTotals(): Promise<Summary> {
  * @returns [ least map name, highest map name ]
  */
 export async function getBestWorstOfficialMap(): Promise<[MapCountEntry, MapCountEntry]> {
-    const sortedMaps = (await getMapPlayCount(true))
+    const sortedMaps = (await getMapsWithPlayCount(true))
         .sort((a, b) => a.count - b.count)
 
     assert(sortedMaps.length > 0)

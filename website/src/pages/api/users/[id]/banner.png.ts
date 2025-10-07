@@ -60,7 +60,7 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   console.log(survivorDef)
 
   if(shouldDrawBg) drawBackgroundImage(ctx, 
-    await loadImage('src/' + getMapScreenshotAssetPath(topStats.top_map.id!)), 
+    await loadImage(getMapScreenshotAssetPath(topStats.top_map.id!)), 
     survivorDef.colorIsDark ? LIGHT_BG_COLOR : DARK_BG_COLOR
   )
 

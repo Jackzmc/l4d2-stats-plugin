@@ -96,14 +96,14 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
             <div class="column">
                 <p class="title is-6">Most Played Official Map</p>
                 <figure class="image is-4by3">
-                    <Picture alt={`Poster for ${bestMap.name}`} src={getMapPoster(bestMap.map)} />
+                    <Picture alt={`Poster for ${bestMap.name}`} src={getMapPoster(bestMap.map) as any} />
                 </figure>
                 <p class="is-family-sans-serif is-size-4">{bestMap.name}</p>
             </div>
             <div class="column">
                 <p class="title is-6">Least Played Official Map</p>
                 <figure class="image is-4by3">
-                    <Picture alt={`Poster for ${worstMap.name}`} src={getMapPoster(worstMap.map)} />
+                    <Picture alt={`Poster for ${worstMap.name}`} src={getMapPoster(worstMap.map) as any} />
                 </figure>
                 <p class="is-family-sans-serif is-size-4">{worstMap.name}</p>
             </div>

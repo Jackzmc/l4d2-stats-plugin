@@ -1,0 +1,102 @@
+---
+import Layout, { type PageInfo } from "@/layouts/Layout.astro";
+const map = await getMapInfo(Astro.params.map!)
+if(!map) return new Response(null, { status: 404 })
+const meta: PageInfo = {
+	title: `${map.name ?? map.map} - Maps`,
+	description: "Information and ratings for " + map.map
+}
+
+import { getMapInfo, getRatings } from "@/models/Map.ts";
+import Level from "@/components/bulma/Level.astro";
+import LevelItem from "@/components/bulma/LevelItem.astro";
+import { getMapScreenshot } from "@/utils/index.ts";
+import { Icon } from "astro-icon/components";
+
+const bgImage = await getMapScreenshot(map.map + "1")
+const style = {
+    'background-image': bgImage ? `linear-gradient(
+      rgba(0, 0, 0, 0.5),
+      rgba(0, 0, 0, 0.5)
+    ), url("${bgImage.src}")` : undefined
+}
+
+const ratings = await getRatings(map.map)
+
+// Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
+export const prerender = false
+---
+
+<Layout meta={meta}>
+    <section slot="hero" class="hero has-text-centered is-medium is-dark hero-map-bg" style={style}>
+        <div class="hero-body">
+            <!-- <Picture src={getMapPoster(session.map)} alt="map" /> -->
+            <p class="title">{map.name ?? map.map}</p>
+            <p class="subtitle pt-2">{meta.description}</p>
+        </div>
+    </section>
+    <br>
+
+	<div class="container">
+        <div class="box">
+            <Level>
+                <LevelItem title="Games Played" value={map.gamesPlayed} />
+                <LevelItem title="Chapters" value={map.chapter_count} />
+                <LevelItem title="# Ratings" value={map.ratings} />
+                <LevelItem title="Rating" value={map.avgRating} decimals={1} />
+                <LevelItem title="Average Time Per Game" value={map.avgMinutesPlayed} suffix=" mins" decimals={0}  />
+            </Level>
+        </div>
+        <div class="">
+            <div class="grid">
+                {ratings.map(rating => 
+                    <div class="cell">
+                        <div class="card">
+                            <div class="card-content">
+                                {Array(5).fill(undefined).map((_,i) => 
+                                    <Icon name={Math.floor(rating.rating) > i ? "iconoir:star-solid" : "iconoir:star"} />
+                                )}
+                                {rating.rating.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+	</div>
+</Layout>
+
+<style>
+/** Border around top map posters */
+.level-item > div {
+    padding: 20px;
+    border: 2px solid black;
+    box-shadow: 0.2em 0.2em;
+    background-color: white;
+}
+/** Stretch out for spacing for text */
+.level-item figure {
+    height: 300px;
+}
+.topmap.animate {
+	opacity: 0;
+	animation-name: fadeInOpacity;
+	animation-iteration-count: 1;
+	animation-timing-function: ease-in;
+	animation-duration: 1s;
+    animation-delay: 100ms;
+    animation-fill-mode: forwards; 
+}
+nav.level .level-item:nth-child(2) .topmap.animate{
+    animation-delay: 400ms;
+}
+
+nav.level .level-item:nth-child(3) .topmap.animate {
+    animation-delay: 400ms;
+}
+
+@keyframes fadeInOpacity {
+	0% { opacity: 0; }
+	100% { opacity: 1; }
+}
+</style>

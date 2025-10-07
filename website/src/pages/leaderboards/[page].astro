@@ -13,7 +13,10 @@ if(isNaN(page)) return new Response(null, { status: 404 })
 const meta: PageInfo = {
 	title: "Player Leaderboards",
 	description: "Leaderboard of the best players in-game",
-	hero: { subtitle: "" }
+	hero: { subtitle: "" },
+	// No need to index all the other pages
+	noIndex: page > 1,
+	noFollow: page > 1,
 }
 
 // Setup table 

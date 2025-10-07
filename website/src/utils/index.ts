@@ -38,18 +38,43 @@ export const IMAGE_MAP: Record<string, string> = Object.fromEntries(Object.entri
     "c13m4_cutthroatcreek": "c13_cold_stream",
     "c14m2_lighthouse": "c14_last_stand",
 }));
+type ImageMap = Record<string, { image: () => Promise<{ default: ImageProperties }>, path: string}>
+type ImageProperties = {
+  src: string,
+  width: number,
+  height: number,
+  format: string
+}
+
+export const MAP_POSTERS: ImageMap = Object.fromEntries(Object.entries(import.meta.glob('@/assets/maps/posters/*.{png,jpg,jpeg,webp}'))
+  .map(([key, value]) => {
+    const mapId = key.split("/").pop()!.split(".").shift()
+    return [mapId, {
+      image: value,
+      path: key
+    }]
+  }))
+export const MAP_SCREENSHOTS: ImageMap = Object.fromEntries(Object.entries(import.meta.glob('@/assets/maps/screenshots/*.{png,jpg,jpeg,webp}'))
+  .map(([key, value]) => {
+    const mapId = key.split("/").pop()!.split(".").shift()
+    return [mapId, {
+      image: value,
+      path: key
+    }]
+  }))
 
 import type { AstroGlobal } from 'astro';
 import DefaultMapImage from '@assets/maps/posters/default.png'
 import { GAMEMODES, Survivor, SURVIVOR_DEFS } from '@/types/game.ts';
-export function getMapPoster(mapId: string): any {
-  return IMAGE_MAP[mapId] ? import(`../assets/maps/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
+export async function getMapPoster(mapId: string): Promise<ImageProperties> {
+  return MAP_POSTERS[mapId] != undefined ? (await (MAP_POSTERS[mapId].image())).default : DefaultMapImage
 }
-export function getMapScreenshot(mapId: string): any {
-  return IMAGE_MAP[mapId] ? import(`assets/maps/screenshots/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
+export async function getMapScreenshot(mapId: string): Promise<ImageProperties> {
+  return MAP_SCREENSHOTS[mapId] != undefined ? (await (MAP_SCREENSHOTS[mapId].image())).default : DefaultMapImage
 }
+/** Returns path to a map's screenshot, relative to src/assets/... */
 export function getMapScreenshotAssetPath(mapId: string): any {
-  return IMAGE_MAP[mapId] ? `../assets/maps/screenshots/${IMAGE_MAP[mapId]}.jpeg` : 'assets/maps/posters/default.png'
+    return MAP_SCREENSHOTS[mapId] != undefined ? (MAP_SCREENSHOTS[mapId].path) : 'src/assets/maps/posters/default.png'
 }
 
 export function getPortrait(survivorType: Survivor): any {

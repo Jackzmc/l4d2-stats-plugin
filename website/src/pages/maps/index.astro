@@ -7,14 +7,14 @@ const meta: PageInfo = {
 }
 
 import { getMapPoster } from '@/utils/index.ts'
-import { getMapPlayCount, getMapRatings } from "@/models/Map.ts";
+import { getMapsWithPlayCount, getMapsWithRatings } from "@/models/Map.ts";
 import { Picture } from "astro:assets";
 import BulmaIcon from "@/components/bulma/BulmaIcon.astro";
 
-const topMaps = await getMapPlayCount(false, 3)
+const topMaps = await getMapsWithPlayCount(false, 3)
 const sortBy = Astro.url.searchParams.get("sortBy") ?? "avgRating"
 const dir = (Astro.url.searchParams.get("dir") ?? "DESC").toLowerCase()
-const mapRatings = await getMapRatings(sortBy, dir !== "desc")
+const mapRatings = await getMapsWithRatings(sortBy, dir !== "desc")
 
 const SORT_ICONS = ["iconoir:sort", "iconoir:arrow-up", "iconoir:arrow-down"]
 const COLUMNS = [
@@ -54,16 +54,16 @@ export const prerender = false
         <nav class="level">
             {topMaps.map((map, i) => {
                 return <div class="level-item has-text-centered">
-                    <div class:list={["topmap",{'animate': shouldAnimate}]}>
+                    <a class:list={["topmap",{'animate': shouldAnimate}]} href={`/maps/${map.map}`}>
                         <h3 class="title is-3 mb-2 l4d2-text">
                             #{i+1}
                         </h3>
                         <figure class="image">
-                            <Picture width={200} height={300} src={getMapPoster(map.map)} alt={`Poster for ${map.name}`}/>
+                            <Picture width={200} height={300} src={getMapPoster(map.map) as any} alt={`Poster for ${map.name}`}/>
                         </figure>
                         <p class="title is-4 l4d2-text">{map.name}</p>
                         <div class="subtitle is-6">{map.count.toLocaleString()} games played</div>
-                    </div>
+                    </a>
                 </div>
             })}
         </nav>
@@ -105,11 +105,12 @@ export const prerender = false
 
 <style>
 /** Border around top map posters */
-.level-item > div {
+.level-item > .topmap {
     padding: 20px;
     border: 2px solid black;
     box-shadow: 0.2em 0.2em;
     background-color: white;
+    color: black;
 }
 /** Stretch out for spacing for text */
 .level-item figure {

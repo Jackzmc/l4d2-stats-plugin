@@ -33,12 +33,12 @@ const mvpPlayer = sessions.reduce((pv, cv) => {
     return (cv.SpecialInfectedKills > pv.SpecialInfectedKills) ? cv : pv
 }).steamid
 
-const bgImage = await getImage({ src: getMapScreenshot(game.map) })
+const bgImage = await getImage({ src: await getMapScreenshot(game.map) as any })
 
 export const prerender = false
 ---
 <Layout meta={meta}>
-    <section slot="hero" class="hero has-text-centered is-dark hero-bg" style={{'background-image': `linear-gradient(
+    <section slot="hero" class="hero has-text-centered is-dark hero-map-bg" style={{'background-image': `linear-gradient(
       rgba(0, 0, 0, 0.5),
       rgba(0, 0, 0, 0.5)
     ), url("${bgImage.src}")`}}>
@@ -123,12 +123,12 @@ export const prerender = false
 </Layout>
 
 <style>
-.hero-bg {
+.hero-map-bg {
     background-position: center;
     background-blend-mode:
     /* color: black; */
 }
-.hero-bg p {
+.hero-map-bg p {
     /* color: black; */
     text-shadow: 4px black;
 }

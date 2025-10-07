@@ -205,7 +205,7 @@ export async function getSession(id: number | string): Promise<GameSession | nul
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT g.id,
             g.steamid,
-            last_alias,
+            last_alias name,
             points,
             g.server_tags,
             g.map,

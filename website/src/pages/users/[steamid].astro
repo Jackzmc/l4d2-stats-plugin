@@ -358,14 +358,14 @@ const steamid64 = steamid.getSteamID64()
                 <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Most Played Survivor</h4>
                     { /* @ts-expect-error ts(2322) */ }
-                    <Image src={getPortrait(topStats.top_char.value) as any} alt={Survivor[topStats.top_char.value]} style="border: 4px solid black" />
+                    <Image src={getPortrait(topStats.top_char.value) as any} alt={Survivor[topStats.top_char.value] + " portrait"} style="border: 4px solid black" />
                     { /* @ts-expect-error ts(2322) */ }
                     <p class="subtitle is-5 has-text-white mb-1">{Survivor[topStats.top_char.value]}</p>
                     <p class="subtitle is-6 has-text-white">{topStats.top_char.count.toLocaleString()} times</p>
                 </div>
                 <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Most Played Map</h4>
-                    <Image src={getMapPoster(topStats!.top_map.id!) as any} alt="map" style="border: 4px solid black" />
+                    <Image src={getMapPoster(topStats.top_map.id!) as any} alt={`Map poster for ${topStats.top_map.id}`} style="border: 4px solid black" />
                     <p class="subtitle is-5 has-text-white mb-1">{ topStats!.top_map.value ?? topStats.top_map.id }</p>
                     <p class="subtitle is-6 has-text-white">{topStats.top_map.count.toLocaleString()} times</p>
                 </div>
@@ -382,7 +382,7 @@ const steamid64 = steamid.getSteamID64()
                 </div>
                 {topStats!.top_weapon.value && <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Most Used Weapon</h4>
-                    <Image src={getWeaponImage(topStats!.top_weapon.id!) as any} alt="map" style="border: 4px solid black" />
+                    <Image src={getWeaponImage(topStats.top_weapon.id!) as any} alt={`Weapon image for ${topStats.top_weapon.id}`} style="border: 4px solid black" />
                     <p>{ topStats!.top_weapon.value }</p>
                     <p class="subtitle is-6 has-text-white">{topStats.top_weapon.count.toLocaleString()} times</p>
                 </div>}

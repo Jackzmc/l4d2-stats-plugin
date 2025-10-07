@@ -107,10 +107,8 @@ export async function getGame(id: string): Promise<Game | null> {
     } as Game
 }
 
-export interface GameSessionPartial {
+export interface GameSessionPartial extends Player {
   id: number;
-  steamid: string;
-  last_alias: string;
   points: number;
   flags: number;
   characterType: Survivor;
@@ -134,7 +132,7 @@ export async function getSessions(id: string): Promise<GameSessionPartial[]> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT g.id,
             g.steamid,
-            last_alias,
+            last_alias name,
             points,
             g.flags,
             g.characterType,

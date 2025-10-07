@@ -64,7 +64,7 @@ export const MAP_SCREENSHOTS: ImageMap = Object.fromEntries(Object.entries(impor
   }))
 
 import type { AstroGlobal } from 'astro';
-import DefaultMapImage from '@assets/maps/posters/default.png'
+import DefaultMapImage from '@assets/maps/default.png'
 import { GAMEMODES, Survivor, SURVIVOR_DEFS } from '@/types/game.ts';
 export async function getMapPoster(mapId: string): Promise<ImageProperties> {
   return MAP_POSTERS[mapId] != undefined ? (await (MAP_POSTERS[mapId].image())).default : DefaultMapImage

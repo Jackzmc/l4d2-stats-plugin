@@ -1,0 +1,58 @@
+---
+import { topStats, TOP_STAT_NAMES } from "@/models/General.ts";
+
+const stats = await topStats() 
+Astro.response.headers.set("Cache-Control", "public, max-age=86400")
+---
+<div class="carousel">
+    {Object.entries(stats).map(([key, list]) => 
+        <div class="carousel-page">
+            <!-- @ts-ignore -->
+            <h4 class="title is-4 has-text-centered mb-4">{TOP_STAT_NAMES[key]}</h4>
+            <table class="table is-fullwidth is-narrow">
+                <!-- @ts-ignore -->
+                {list.map(entry => 
+                    <tr>
+                        <th><a href={`/users/${entry.steamid}`}>{entry.name}</a></th>
+                        <td>{entry.value.toLocaleString()} times</td>
+                    </tr>
+                )}
+            </table>
+        </div>
+    )}
+</div>
+
+<style>
+.carousel-page {
+    transition: height 2s, opacity 2s;
+    opacity: 0;
+    visibility: hidden;
+    height: 0;
+}
+.carousel-page.active {
+    opacity: 1;
+    visibility: visible;
+    height: auto;
+}
+</style>
+
+<script>
+const carouselPages = [...document.querySelectorAll<HTMLElement>("div.carousel .carousel-page")]
+let activePage = carouselPages[0]
+activePage.classList.add("active")
+let index = 0
+
+function changePage() {
+    activePage.classList.remove("active")
+
+    index++
+    if(index >= carouselPages.length) index = 0
+
+    const page = carouselPages[index]
+    page.classList.add("active")
+    activePage = page
+}
+
+setInterval(() => changePage(), 1000 * 10)
+changePage()
+</script>

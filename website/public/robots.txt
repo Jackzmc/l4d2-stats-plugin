@@ -1,4 +1,5 @@
 User-agent: *
-Disallow: /campaigns/*
-Disallow: /sessions/details/*
+Disallow: /404
+Disallow: /500
 Disallow: /api
+Disallow: /search

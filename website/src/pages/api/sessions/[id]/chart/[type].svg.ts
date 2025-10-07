@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { Chart, PieController, ArcElement, Legend, Colors } from 'chart.js';
+import { Chart, PieController, ArcElement, Legend } from 'chart.js';
 import { Canvas } from "skia-canvas";
 import { getSession } from "@/models/Game.ts";
 import { api404 } from "@/utils/api.ts";

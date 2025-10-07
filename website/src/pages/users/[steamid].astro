@@ -89,7 +89,7 @@ const steamid64 = steamid.getSteamID64()
                                 <th>Last Location</th>
                                 <td>
                                     <!-- TODO: should show region? (if not, clear from server too) -->
-                                    {user.region}, {user.country}
+                                    {user.region ? `${user.region}, ${user.country}` : user.country}
                                 </td>
                             </tr>
                         </tbody>

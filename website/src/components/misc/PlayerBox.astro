@@ -21,7 +21,7 @@ const survivor = SURVIVOR_DEFS[player.characterType]
     </h6>
     {mvp && <div class="ribbon ribbon-top-left"><span>MVP</span></div>}
     {!mvp && honkMaster && <div class="ribbon ribbon-top-left honk"><span>Honk Master</span></div>}
-    <Picture class="is-inline-block is-pulled-left image is-64x64" src={getPortrait(player.characterType)} title={survivor.name} alt={`Character portrait of ${survivor.name}`} />
+    <Picture class="is-inline-block is-pulled-left image is-64x64" src={getPortrait(player.characterType) as any} title={survivor.name} alt={`Character portrait of ${survivor.name}`} />
 
     <div class="subtitle is-6 has-text-centered mb-2">{player.points.toLocaleString()} points</div>
     <hr class="player-divider">

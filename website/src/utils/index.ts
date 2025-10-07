@@ -62,6 +62,23 @@ export const MAP_SCREENSHOTS: ImageMap = Object.fromEntries(Object.entries(impor
       path: key
     }]
   }))
+export const SURVIVOR_PORTRAITS: ImageMap = Object.fromEntries(Object.entries(import.meta.glob('@/assets/portraits/*.{png,jpg,jpeg,webp}'))
+  .map(([key, value]) => {
+    const mapId = key.split("/").pop()!.split(".").shift()
+    return [mapId, {
+      image: value,
+      path: key
+    }]
+  }))
+export const WEAPON_IMAGES: ImageMap = Object.fromEntries(Object.entries(import.meta.glob('@/assets/weapons/*.{png,jpg,jpeg,webp}'))
+  .map(([key, value]) => {
+    const mapId = key.split("/").pop()!.split(".").shift()
+    return [mapId, {
+      image: value,
+      path: key
+    }]
+  }))
+
 
 import type { AstroGlobal } from 'astro';
 import DefaultMapImage from '@assets/maps/default.png'
@@ -73,16 +90,17 @@ export async function getMapScreenshot(mapId: string): Promise<ImageProperties> 
   return MAP_SCREENSHOTS[mapId] != undefined ? (await (MAP_SCREENSHOTS[mapId].image())).default : DefaultMapImage
 }
 /** Returns path to a map's screenshot, relative to src/assets/... */
-export function getMapScreenshotAssetPath(mapId: string): any {
+export function getMapScreenshotAssetPath(mapId: string): string {
     return MAP_SCREENSHOTS[mapId] != undefined ? (MAP_SCREENSHOTS[mapId].path) : 'src/assets/maps/posters/default.png'
 }
 
-export function getPortrait(survivorType: Survivor): any {
-  return SURVIVOR_DEFS[survivorType] ? import(`../assets/portraits/${SURVIVOR_DEFS[survivorType].model}.png`) : DefaultMapImage
+export async function getPortrait(survivorType: Survivor): Promise<ImageProperties> {
+  return (await (SURVIVOR_PORTRAITS[SURVIVOR_DEFS[survivorType].model].image())).default
 }
 
-export function getWeaponImage(weaponId: string): any {
-  return import(`../assets/weapons/${weaponId}.jpg`) ?? import("../assets/astro.svg")
+export async function getWeaponImage(weaponId: string): Promise<ImageProperties | null> {
+  if(!WEAPON_IMAGES[weaponId]) throw new Error("Missing weapon image: " + weaponId)
+  return (await (WEAPON_IMAGES[weaponId].image())).default
 }
 
 export function getGamemode(gamemode: string) {

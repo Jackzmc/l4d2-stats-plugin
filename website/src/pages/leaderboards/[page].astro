@@ -36,11 +36,17 @@ const COLUMNS: TableColumn[] = [
 const ITEMS_PER_PAGE = 12
 import * as User from '../../models/User.ts'
 import BulmaIcon from "@/components/bulma/BulmaIcon.astro";
+import LeaderboardCarousel from "@/components/misc/LeaderboardCarousel.astro";
+import Button from "@/components/bulma/Button.astro";
+import { replaceRoute } from "@/utils/index.ts";
 const totalPlayers = await User.getTotalPlayers()
 const leaderboard = await User.getLeaderboards(page, ITEMS_PER_PAGE)
 const playerOfDay = await User.getPlayerOfDay()
 
 meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <b>${totalPlayers.toLocaleString()} players</b>`
+
+const canGoBack = page > 1
+const canGoNext = page < Math.ceil(totalPlayers / ITEMS_PER_PAGE)
 
 Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, stale-while-revalidate=3600, stale-if-error=86400');
 ---
@@ -56,17 +62,21 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, s
 				<div class="block">
 					<div class="level">
 						<div class="level-item">
-							<div class="button is-rounded">
+							<Button rounded 
+								href={canGoBack ? replaceRoute(Astro, {page: page - 1}) : undefined} disabled={!canGoBack}
+							>
 								<BulmaIcon name="iconoir:nav-arrow-left" textRight="Previous" size={32} />
-							</div>
+							</Button>
 						</div>
 						<div class="level-item">
 							Page { page }
 						</div>
 						<div class="level-item">
-							<div class="button is-rounded is-pulled-right">
+							<Button rounded class="is-pulled-right" 
+								href={canGoNext ? replaceRoute(Astro, {page: page + 1}) : undefined} disabled={!canGoNext}
+							>
 								<BulmaIcon name="iconoir:nav-arrow-right" textLeft="Next" size={32} />
-							</div>
+							</Button>
 						</div>
 					</div>
 				</div>
@@ -74,10 +84,14 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, s
 					<h5 class="title is-5">Find Player</h5>
 					<UserSearch />
 				</div>
-				{/* <div class="box has-text-centered">
-					<h5 class="title is-5">Revived Most Players</h5>
-					<!-- TODO: top stat summary -->
-				</div>*/}
+				<div class="box">
+					<LeaderboardCarousel server:defer>
+						<em slot="fallback">
+							<noscript>Javascript is required to see the stat carousel</noscript>
+							<h6 class="subtitle is-6 mt-3">Loading Stats...</h6>
+						</em>
+					</LeaderboardCarousel>
+				</div>
 				<a href={`/users/${playerOfDay.steamid}`} class="box has-text-centered">
 					<h5 class="title is-5">Player of the Day</h5>
 					<h2 class="titlel4d2-text">

@@ -10,6 +10,8 @@ import { getMapScreenshotAssetPath } from "@/utils/index.ts";
 const WATERMARK_TEXT = process.env.USER_WATERMARK_TEXT || "stats.jackz.me"
 const ROOT = path.join(import.meta.dirname, "../../../../../")
 
+console.log(import.meta.dirname, import.meta.filename, ROOT)
+
 FontLibrary.use("futurot", path.join(ROOT, "public/fonts/futurot.woff"))
 
 function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, opts: { font?: string, color?: string, filter?: string } = {}) {
@@ -59,7 +61,7 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   const shouldDrawBg = url.searchParams.get("bg") != "f" && url.searchParams.get("bg") !== "0"
 
   if(shouldDrawBg) drawBackgroundImage(ctx, 
-    await loadImage(getMapScreenshotAssetPath(topStats.top_map.id!)), 
+    await loadImage(path.join(ROOT, getMapScreenshotAssetPath(topStats.top_map.id!))), 
     survivorDef.colorIsDark ? LIGHT_BG_COLOR : DARK_BG_COLOR
   )
 

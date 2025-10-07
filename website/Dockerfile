@@ -13,9 +13,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm run build
 
 FROM base
-COPY --from=build /app/dist /app/dist
-COPY --from=base /app/public /app/dist/public
-COPY --from=prod-deps /app/node_modules /app/node_modules
+COPY --from=build /app/dist ./dist
+COPY --from=prod-deps /app/node_modules ./node_modules
 
 ENV HOST=0.0.0.0
 ENV PORT=4321

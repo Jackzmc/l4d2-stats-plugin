@@ -16,10 +16,12 @@ interface Props {
     dark?: boolean
 
     /** Button will turn into <a> */
-    href?: string
+    href?: string,
+
+    class?: string
 }
 
-const { type, size, href, fullwidth = false, light = false, dark = false, outlined = false, inverted = false, rounded = false, loading = false, disabled } = Astro.props
+const { class: className, type, size, href, fullwidth = false, light = false, dark = false, outlined = false, inverted = false, rounded = false, loading = false, disabled } = Astro.props
 const classObj = {
     'is-fullwidth': fullwidth, 
     'is-light': light, 
@@ -32,6 +34,6 @@ const classObj = {
 
 const Element = href ? "a" : "button"
 ---
-<Element disabled={disabled} class:list={["button", type, size, classObj ]} href={href}>
+<Element disabled={disabled || undefined} class:list={["button", className, type, size, classObj ]} href={href}>
     <slot />
 </Element>

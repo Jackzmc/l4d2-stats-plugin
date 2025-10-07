@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ params, request, site }) => {
     return new Response(xml, { 
         headers: {
             'Content-Type': 'application/xml',
-            'Cache-Control': 'public, max-age=86400, s-maxage=172800, stale-while-revalidate=604800, stale-if-error=604800'
+            'Cache-Control': import.meta.env.PROD ? 'public, max-age=86400, s-maxage=172800, stale-while-revalidate=604800, stale-if-error=604800' : 'no-cache'
         }
     })
 }

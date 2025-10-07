@@ -51,7 +51,7 @@ meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <
 const canGoBack = page > 1
 const canGoNext = page < Math.ceil(totalPlayers / ITEMS_PER_PAGE)
 
-Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, stale-while-revalidate=3600, stale-if-error=86400');
+if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, stale-while-revalidate=3600, stale-if-error=86400');
 ---
 
 <Layout meta={meta}>

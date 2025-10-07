@@ -2,7 +2,7 @@
 import { topStats, TOP_STAT_NAMES } from "@/models/General.ts";
 
 const stats = await topStats() 
-// Astro.response.headers.set("Cache-Control", "public, max-age=86400")
+if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, max-age=86400")
 ---
 <div class="carousel">
     {Object.entries(stats).map(([key, list]) => 

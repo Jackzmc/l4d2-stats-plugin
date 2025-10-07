@@ -44,7 +44,7 @@ const COLUMNS = [
 // Don't animate when sorting - don't want to constantly fade in every time the page reloads
 const shouldAnimate = !Astro.url.searchParams.has("sortBy") && !Astro.url.searchParams.has("dir")
 
-// Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
+if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
 export const prerender = false
 ---
 

@@ -16,7 +16,7 @@ const [totals, averages, [worstMap, bestMap]] = await Promise.all([
     GameSummary.getBestWorstOfficialMap()
 ])
 
-Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
+if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
 ---
 
 <Layout meta={meta}>

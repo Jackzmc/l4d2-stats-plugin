@@ -10,16 +10,16 @@ body,html {
   background-color: hsl(0, 0%, 96%);
 }
 
-@font-face {
+/* @font-face {
   font-family: 'Futurot';
   src: url('/fonts/futurot.woff') format('woff');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
-}
+} */
 
 .l4d2-text {
-  font-family: 'Futurot', 'Helvetica'
+  font-family: var(--font-futurot);
 }
 
 .full-height {

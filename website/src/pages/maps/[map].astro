@@ -23,7 +23,7 @@ const style = {
 
 const ratings = await getRatings(map.map)
 
-// Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
+if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, max-age=3600');
 export const prerender = false
 ---
 

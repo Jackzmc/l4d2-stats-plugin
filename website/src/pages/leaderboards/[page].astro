@@ -97,7 +97,7 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, s
 					<h2 class="titlel4d2-text">
 						<span>{playerOfDay.name}</span>
 					</h2>
-					<p class="subtitle mt-4 mb-4">{playerOfDay.points} points</p>
+					<p class="subtitle mt-4 mb-4">{playerOfDay.points.toLocaleString()} points</p>
 				</a>
 			</div>
 		</div>

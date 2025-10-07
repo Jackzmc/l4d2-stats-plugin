@@ -2,7 +2,7 @@
 import { topStats, TOP_STAT_NAMES } from "@/models/General.ts";
 
 const stats = await topStats() 
-Astro.response.headers.set("Cache-Control", "public, max-age=86400")
+// Astro.response.headers.set("Cache-Control", "public, max-age=86400")
 ---
 <div class="carousel">
     {Object.entries(stats).map(([key, list]) => 
@@ -20,6 +20,14 @@ Astro.response.headers.set("Cache-Control", "public, max-age=86400")
             </table>
         </div>
     )}
+    <div class="buttons">
+        {Object.keys(stats).map((key,i) => 
+            /* @ts-ignore */
+            <div class="button is-rounded" data-index={i} title={TOP_STAT_NAMES[key]}>
+                
+            </div>
+        )}
+    </div>
 </div>
 
 <style>
@@ -37,22 +45,35 @@ Astro.response.headers.set("Cache-Control", "public, max-age=86400")
 </style>
 
 <script>
+const SECONDS_PER_PAGE = 30
 const carouselPages = [...document.querySelectorAll<HTMLElement>("div.carousel .carousel-page")]
+const carouselButtons = document.querySelectorAll<HTMLElement>("div.carousel .buttons .button")
 let activePage = carouselPages[0]
 activePage.classList.add("active")
 let index = 0
 
 function changePage() {
-    activePage.classList.remove("active")
-
     index++
     if(index >= carouselPages.length) index = 0
 
+    setPage(index)
+}
+
+function setPage(index: number) {
     const page = carouselPages[index]
+    activePage.classList.remove("active")
     page.classList.add("active")
     activePage = page
 }
 
-setInterval(() => changePage(), 1000 * 10)
+// Setup button links
+for(const button of carouselButtons) {
+    const index = button.dataset.index
+    if(!index) continue
+    button.addEventListener("click", () => setPage(Number(index)))
+}
+
+// Setup change timer
+setInterval(() => changePage(), 1000 * SECONDS_PER_PAGE)
 changePage()
 </script>

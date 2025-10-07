@@ -46,10 +46,10 @@ export function getMapPoster(mapId: string): any {
   return IMAGE_MAP[mapId] ? import(`../assets/maps/posters/official/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
 }
 export function getMapScreenshot(mapId: string): any {
-  return import('../' + getMapScreenshotAssetPath(mapId))
+  return IMAGE_MAP[mapId] ? import(`assets/maps/screenshots/${IMAGE_MAP[mapId]}.jpeg`) : DefaultMapImage
 }
 export function getMapScreenshotAssetPath(mapId: string): any {
-  return IMAGE_MAP[mapId] ? `assets/maps/screenshots/${IMAGE_MAP[mapId]}.jpeg` : 'assets/maps/posters/default.png'
+  return IMAGE_MAP[mapId] ? `../assets/maps/screenshots/${IMAGE_MAP[mapId]}.jpeg` : 'assets/maps/posters/default.png'
 }
 
 export function getPortrait(survivorType: Survivor): any {

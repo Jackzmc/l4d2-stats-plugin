@@ -57,7 +57,6 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   const ctx = canvas.getContext('2d')
 
   const shouldDrawBg = url.searchParams.get("bg") != "f" && url.searchParams.get("bg") !== "0"
-  console.log(survivorDef)
 
   if(shouldDrawBg) drawBackgroundImage(ctx, 
     await loadImage(getMapScreenshotAssetPath(topStats.top_map.id!)), 

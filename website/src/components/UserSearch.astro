@@ -60,7 +60,6 @@ async function search(query: string, cb: (users: PlayerSearchResult[]) => void) 
     const response = await fetch(`/api/search?q=${query}`)
     if(response.ok) {
         const users: PlayerSearchResult[] = await response.json()
-        console.log(query, users)
         cb(users)
     } else {
         throw new Error(`${response.status} ${response.statusText}`)

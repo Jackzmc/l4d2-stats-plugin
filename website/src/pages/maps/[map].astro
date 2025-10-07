@@ -10,15 +10,13 @@ const meta: PageInfo = {
 import { getMapInfo, getRatings } from "@/models/Map.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
-import { getMapScreenshot } from "@/utils/index.ts";
 import { Icon } from "astro-icon/components";
 
-const bgImage = await getMapScreenshot(map.map)
 const style = {
-    'background-image': bgImage ? `linear-gradient(
+    'background-image': `linear-gradient(
       rgba(0, 0, 0, 0.5),
       rgba(0, 0, 0, 0.5)
-    ), url("${bgImage.src}")` : undefined
+    ), url("/img/maps/screenshots/${map.map}.jpeg"), url("/img/maps/default.png")`
 }
 
 const ratings = await getRatings(map.map)

@@ -1,18 +1,18 @@
 import type { APIRoute } from "astro";
 import { getUser, getUserTopStats } from "@/models/User.ts";
 import { api404 } from "@/utils/api.ts";
-import { Canvas, FontLibrary, Image, loadImage, type CanvasRenderingContext2D } from 'skia-canvas';
+import { Canvas, FontLibrary, Image, loadImage, loadImageData, type CanvasRenderingContext2D } from 'skia-canvas';
 import path from "path";
 import { formatHumanDuration } from "@/utils/date.ts";
 import { Survivor, SURVIVOR_DEFS } from "@/types/game.ts";
-import { getMapScreenshotAssetPath } from "@/utils/index.ts";
 
 const WATERMARK_TEXT = process.env.USER_WATERMARK_TEXT || "stats.jackz.me"
-const ROOT = path.join(import.meta.dirname, "../../../../../")
 
-console.log(import.meta.dirname, import.meta.filename, ROOT)
+const PUBLIC_ROOT = import.meta.env.PROD ? path.resolve('./dist/client') : path.resolve('./public')
+console.debug({ cwd: process.cwd(), dirname: import.meta.dirname, PUBLIC_ROOT, "maybe": path.resolve('./'), "maybe2": path.resolve(path.join(import.meta.dirname, '../../../../assets/'))})
 
-FontLibrary.use("futurot", path.join(ROOT, "public/fonts/futurot.woff"))
+const Futurot = path.join(PUBLIC_ROOT, "fonts/futurot.woff")
+FontLibrary.use("futurot", Futurot)
 
 function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, opts: { font?: string, color?: string, filter?: string } = {}) {
   ctx.save()
@@ -40,6 +40,7 @@ const DARK_BG_COLOR: [number,number,number,number] = [ 0, 0, 0, 0.75 ]
 const LIGHT_BG_COLOR: [number,number,number,number]  = [ 255, 255, 255, 0.6 ]
 
 const MARGIN_PX = 20
+const CANVAS_INNER_DIM = [588, 194]
 
 export const GET: APIRoute = async ({ params, request, url }) => {
   if(!params.id) return api404("MISSING_USER_ID", "A user ID is required")
@@ -55,18 +56,20 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   const survivor: Survivor = survivorOverride != null ? survivorOverride : Number(topStats.top_char.value)
   const survivorDef = SURVIVOR_DEFS[survivor]
 
-  const canvas = new Canvas(588 + MARGIN_PX, 194 + MARGIN_PX)
+  const canvas = new Canvas(CANVAS_INNER_DIM[0] + MARGIN_PX, CANVAS_INNER_DIM[1] + MARGIN_PX)
   const ctx = canvas.getContext('2d')
 
   const shouldDrawBg = url.searchParams.get("bg") != "f" && url.searchParams.get("bg") !== "0"
 
   if(shouldDrawBg) drawBackgroundImage(ctx, 
-    await loadImage(path.join(ROOT, getMapScreenshotAssetPath(topStats.top_map.id!))), 
+    await loadImage(path.join(PUBLIC_ROOT, `img/maps/screenshots/${topStats.top_map.id!}.jpeg`)),
     survivorDef.colorIsDark ? LIGHT_BG_COLOR : DARK_BG_COLOR
   )
 
-  const survivorImg = await loadImage(path.join(ROOT, `src/assets/fullbody/${survivorDef.name.toLowerCase()}.png`))
-  ctx.drawImage(survivorImg, MARGIN_PX, MARGIN_PX, survivorImg.width*((194-MARGIN_PX)/survivorImg.height) - MARGIN_PX, 194 - MARGIN_PX)
+  const survivorImg = await loadImage(path.join(PUBLIC_ROOT, `img/fullbody/${survivorDef.name.toLowerCase()}.png`))
+  const width = survivorImg.width * (CANVAS_INNER_DIM[1] / survivorImg.height)
+  // subtract another - 20 to prevent the feet being too far down for some reason
+  ctx.drawImage(survivorImg, MARGIN_PX, MARGIN_PX, width - 20, CANVAS_INNER_DIM[1] - 20)
 
   // if(shouldDrawBg) ctx.fillStyle = survivorDef.colorIsDark ? 'black' : 'white' // default color for all text:
   if(shouldDrawBg) ctx.fillStyle = "white"
@@ -91,7 +94,7 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   return new Response(buf as any, { 
     headers: {
       'Content-Type': 'image/png',
-      'Cache-Control': 'public, max-age=86400, s-maxage=172800, stale-while-revalidate=604800, stale-if-error=604800'
+      'Cache-Control': import.meta.env.PROD ? 'public, max-age=86400, s-maxage=172800, stale-while-revalidate=604800, stale-if-error=604800' : 'no-cache'
     }
   })
 }

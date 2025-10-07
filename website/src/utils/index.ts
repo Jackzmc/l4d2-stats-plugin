@@ -54,14 +54,6 @@ export const MAP_POSTERS: ImageMap = Object.fromEntries(Object.entries(import.me
       path: key
     }]
   }))
-export const MAP_SCREENSHOTS: ImageMap = Object.fromEntries(Object.entries(import.meta.glob('@/assets/maps/screenshots/*.{png,jpg,jpeg,webp}'))
-  .map(([key, value]) => {
-    const mapId = key.split("/").pop()!.split(".").shift()
-    return [mapId, {
-      image: value,
-      path: key
-    }]
-  }))
 export const SURVIVOR_PORTRAITS: ImageMap = Object.fromEntries(Object.entries(import.meta.glob('@/assets/portraits/*.{png,jpg,jpeg,webp}'))
   .map(([key, value]) => {
     const mapId = key.split("/").pop()!.split(".").shift()
@@ -90,18 +82,6 @@ export async function getMapPoster(mapId: string): Promise<ImageProperties> {
   }
   return (await (MAP_POSTERS[mapId].image())).default
 }
-export async function getMapScreenshot(mapId: string): Promise<ImageProperties> {
-  if(MAP_SCREENSHOTS[mapId] === undefined) {
-    console.warn("No map screenshot for", mapId)
-    return DefaultMapImage
-  }
-  return (await (MAP_SCREENSHOTS[mapId].image())).default
-}
-/** Returns path to a map's screenshot, relative to src/assets/... */
-export function getMapScreenshotAssetPath(mapId: string): string {
-    return MAP_SCREENSHOTS[mapId] != undefined ? (MAP_SCREENSHOTS[mapId].path) : 'src/assets/maps/posters/default.png'
-}
-
 export async function getPortrait(survivorType: Survivor): Promise<ImageProperties> {
   return (await (SURVIVOR_PORTRAITS[SURVIVOR_DEFS[survivorType].model].image())).default
 }

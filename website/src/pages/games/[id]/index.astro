@@ -8,7 +8,7 @@ id = id.substring(0, 8)
 import { getGame, getSessions } from '../../../models/Game.ts'
 import { Difficulty } from "@/types/game.ts";
 import { formatUnixDate } from "@/utils/date.ts";
-import { getGamemode, getMapScreenshot } from "@/utils/index.ts";
+import { getGamemode } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
 import { getImage } from "astro:assets";
@@ -33,15 +33,13 @@ const mvpPlayer = sessions.reduce((pv, cv) => {
     return (cv.SpecialInfectedKills > pv.SpecialInfectedKills) ? cv : pv
 }).steamid
 
-const bgImage = await getImage({ src: await getMapScreenshot(game.map) as any })
-
 export const prerender = false
 ---
 <Layout meta={meta}>
     <section slot="hero" class="hero has-text-centered is-dark hero-map-bg" style={{'background-image': `linear-gradient(
       rgba(0, 0, 0, 0.5),
       rgba(0, 0, 0, 0.5)
-    ), url("${bgImage.src}")`}}>
+    ), url("/img/maps/screenshots/${game.map}.jpeg"), url("/img/maps/default.png")`}}>
         <div class="hero-body">
             <p class="title">{meta.hero!.title}</p>
             <p class="subtitle pt-2">

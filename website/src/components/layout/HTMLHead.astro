@@ -1,5 +1,6 @@
 ---
 import Bulma from "bulma/css/bulma.min.css?url";
+import MainCss from '@/styles/main.css'
 import { Tooltips } from 'astro-tooltips'
 import { SEO } from "astro-seo";
 
@@ -24,7 +25,7 @@ const description = pageDescription;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <link rel="stylesheet" href={Bulma}  />
-    <link rel="stylesheet" href="/css/main.css" />
+    <link rel="stylesheet" href={MainCss}  />
     <SEO
         title={title}
         description={description}

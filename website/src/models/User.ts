@@ -1,9 +1,7 @@
 import type { RowDataPacket } from "mysql2";
 import db from "@/db/pool.ts";
-import type { Player, StatsUsersEntity } from "@/db/types.ts";
+import type { Player } from "@/db/types.ts";
 import assert from "assert";
-import type { Survivor } from "@/types/game.ts";
-import type { GameSessionPartial } from "./Game.ts";
 
 export interface LeaderboardEntry {
     steamid: string,
@@ -204,7 +202,7 @@ export type PlayerSearchResult = Player & { minutes_played: number, last_join_da
  * @param query steamid or name
  * @param limit number of users to return
  */
-export async function searchUsers(query: string, limit = 10): Promise<PlayerSearchResult[]> {
+export async function searchUsers(query: string, limit = 20): Promise<PlayerSearchResult[]> {
     query = `%${query}%`
     const [rows] = await db.execute<RowDataPacket[]>(
         "SELECT steamid, last_alias name, minutes_played, last_join_date, points FROM stats_users WHERE steamid LIKE :query OR last_alias LIKE :query ORDER BY points DESC LIMIT :limit",

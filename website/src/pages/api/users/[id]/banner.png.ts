@@ -39,9 +39,8 @@ const LIGHT_BG_COLOR: [number,number,number,number]  = [ 255, 255, 255, 0.6 ]
 
 const MARGIN_PX = 20
 
-export const GET: APIRoute = async ({ params, request }) => {
+export const GET: APIRoute = async ({ params, request, url }) => {
   if(!params.id) return api404("MISSING_USER_ID", "A user ID is required")
-  const url = new URL(request.url)
 
   // Allow overriding survivor type
   let survivorOverride = url.searchParams.has("survivor") ? Number(url.searchParams.get("survivor")) : null

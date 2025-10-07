@@ -5,7 +5,6 @@ import { loadEnv } from "vite";
 import icon from "astro-icon";
 import node from "@astrojs/node";
 
-
 const env = loadEnv(process.env.NODE_ENV ?? "production", process.cwd(), "");
 
 // https://astro.build/config

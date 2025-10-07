@@ -1,8 +1,116 @@
 ---
 import Field from './bulma/Field.astro'
 ---
-<form method="post" action="/search">
-    <Field iconLeft="iconoir:search" iconLeftProps={{class: "has-text-black"}}>
-        <input class="input" type="text" placeholder="Search users" />
-    </Field>
+<form autocomplete="off" method="post" action="/search">
+    <div class="search-autocomplete">
+        <Field iconLeft="iconoir:search" iconLeftProps={{class: "has-text-black"}}>
+            <input name="query" class="input search" type="text" placeholder="Search users" />
+        </Field>
+        <div class="search-items"></div>
+    </div>
 </form>
+
+<style is:global>
+.search-autocomplete {
+    position: relative;
+    display: inline-block;
+}
+.search-items div {
+    border: 1px solid black;
+
+}
+.search-items {
+    position: absolute;
+    z-index: 99;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+}
+.search-items div a:hover {
+    background-color: gray;
+    color: white;
+}
+</style>
+
+<script>
+import type { PlayerSearchResult } from "@/models/User.ts";
+
+const DEBOUNCE_TIME = 300
+
+// https://stackoverflow.com/a/75988895 Modified with TS types
+const debounce = (callback: (...args: any[]) => void, wait: number) => {
+  let timeoutId: number|undefined;
+  return (...args: any[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = window.setTimeout(() => {
+      callback(...args);
+    }, wait);
+  };
+}
+
+async function search(query: string, cb: (users: PlayerSearchResult[]) => void) {
+    const response = await fetch(`/api/search?q=${query}`)
+    if(response.ok) {
+        const users: PlayerSearchResult[] = await response.json()
+        console.log(query, users)
+        cb(users)
+    }
+}
+function updateAutocomplete(list: HTMLInputElement, items: PlayerSearchResult[]) {
+    // Remove old children
+    for(const child of list.childNodes)
+        list.removeChild(child)
+
+    for(const item of items) {
+        const div = document.createElement("div")
+        const a = document.createElement("a")
+        a.href = `/users/${item.steamid}`
+
+        const name = document.createElement("strong")
+        name.textContent = item.name
+        a.append(name)
+
+        const steamid = document.createElement("span")
+        steamid.classList = "is-inline has-text-right"
+        steamid.textContent = item.steamid
+        a.append(steamid)
+        div.append(a)
+
+        list.append(div)
+    }
+}
+const searchDebounced = debounce(search, DEBOUNCE_TIME)
+
+
+
+const searchInputs = document.querySelectorAll<HTMLInputElement>("input[name=query]")
+for(const input of searchInputs) {
+    input.addEventListener("input", onSearchInput)
+}
+
+let ignore = false
+
+async function onSearchInput(ev: Event) {
+    if(ignore) return
+
+    const input = ev.target as HTMLInputElement
+    const value = input.value
+    // Ignore too short queries
+    if(value.length < 3) return
+
+    // Update all other search inputs with same value
+    ignore = true
+    for(const input of searchInputs) {
+        input.value = value
+    }
+    ignore = false
+
+    searchDebounced(value, (users: PlayerSearchResult[]) => {
+        console.debug("Updating list")
+        const list = input.parentElement!.parentElement!.parentElement!.querySelector(".search-items") as HTMLInputElement
+        console.debug(list)
+        updateAutocomplete(list, users)
+    })
+}
+</script>

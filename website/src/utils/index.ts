@@ -84,10 +84,18 @@ import type { AstroGlobal } from 'astro';
 import DefaultMapImage from '@assets/maps/default.png'
 import { GAMEMODES, Survivor, SURVIVOR_DEFS } from '@/types/game.ts';
 export async function getMapPoster(mapId: string): Promise<ImageProperties> {
-  return MAP_POSTERS[mapId] != undefined ? (await (MAP_POSTERS[mapId].image())).default : DefaultMapImage
+  if(MAP_POSTERS[mapId] === undefined) {
+    console.warn("No map poster for", mapId)
+    return DefaultMapImage
+  }
+  return (await (MAP_POSTERS[mapId].image())).default
 }
 export async function getMapScreenshot(mapId: string): Promise<ImageProperties> {
-  return MAP_SCREENSHOTS[mapId] != undefined ? (await (MAP_SCREENSHOTS[mapId].image())).default : DefaultMapImage
+  if(MAP_SCREENSHOTS[mapId] === undefined) {
+    console.warn("No map screenshot for", mapId)
+    return DefaultMapImage
+  }
+  return (await (MAP_SCREENSHOTS[mapId].image())).default
 }
 /** Returns path to a map's screenshot, relative to src/assets/... */
 export function getMapScreenshotAssetPath(mapId: string): string {

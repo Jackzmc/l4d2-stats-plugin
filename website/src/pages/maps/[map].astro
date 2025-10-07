@@ -13,7 +13,7 @@ import LevelItem from "@/components/bulma/LevelItem.astro";
 import { getMapScreenshot } from "@/utils/index.ts";
 import { Icon } from "astro-icon/components";
 
-const bgImage = await getMapScreenshot(map.map + "1")
+const bgImage = await getMapScreenshot(map.map)
 const style = {
     'background-image': bgImage ? `linear-gradient(
       rgba(0, 0, 0, 0.5),

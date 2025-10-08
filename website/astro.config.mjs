@@ -29,8 +29,6 @@ export default defineConfig({
 
   server: {
     allowedHosts: true,
-    host: process.env.LISTEN_HOST,
-    port: process.env.LISTEN_PORT ? Number(process.env.LISTEN_PORT) : undefined
   },
 
   redirects: {

@@ -48,7 +48,7 @@ const steamid64 = steamid.getSteamID64()
             <div class="column">
                 <h4 class="title is-4">Stats Overview</h4>
                 <Image width={608} height={214} class="has-background-black" style="border-radius: 8px" 
-                    src={meta.openGraph!.image} alt={`Profile banner for ${user.last_alias}`} 
+                    src={`/api/users/${user.steamid}/banner.png`} alt={`Profile banner for ${user.last_alias}`} 
                 />
 
                 <div class="block mt-6">

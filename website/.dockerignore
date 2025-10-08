@@ -1,6 +1,6 @@
 node_modules
 dist
-.env
+*.local
 dev
 # Dev scripts:
 scripts 

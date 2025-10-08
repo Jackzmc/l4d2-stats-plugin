@@ -19,7 +19,7 @@ export interface Props {
         image: string
     }
 }
-const { pageTitle, description, siteTitle, noIndex, noFollow, openGraph } = Astro.props;
+const { pageTitle, description = "View all in-game statistics for Left 4 Dead 2, with a leaderboard, game overviews and user statistics", siteTitle, noIndex, noFollow, openGraph } = Astro.props;
 
 const og = openGraph ? { basic: openGraph } : undefined
 const titleTemplate = `%s | ${siteTitle}`
@@ -30,6 +30,7 @@ const titleTemplate = `%s | ${siteTitle}`
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="generator" content={Astro.generator} />
     <link rel="stylesheet" href={Bulma}  />
+    <link rel="sitemap" href="/sitemap.xml">
     <SEO
         title={pageTitle}
         titleTemplate={titleTemplate}

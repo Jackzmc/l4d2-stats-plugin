@@ -42,6 +42,8 @@ const LIGHT_BG_COLOR: [number,number,number,number]  = [ 255, 255, 255, 0.6 ]
 const MARGIN_PX = 20
 const CANVAS_INNER_DIM = [588, 194]
 
+export const BANNER_SIZE = [CANVAS_INNER_DIM[0] + MARGIN_PX, CANVAS_INNER_DIM[1] + MARGIN_PX]
+
 export const GET: APIRoute = async ({ params, request, url }) => {
   if(!params.id) return api404("MISSING_USER_ID", "A user ID is required")
 
@@ -56,7 +58,7 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   const survivor: Survivor = survivorOverride != null ? survivorOverride : Number(topStats.top_char.value)
   const survivorDef = SURVIVOR_DEFS[survivor]
 
-  const canvas = new Canvas(CANVAS_INNER_DIM[0] + MARGIN_PX, CANVAS_INNER_DIM[1] + MARGIN_PX)
+  const canvas = new Canvas(BANNER_SIZE[0], BANNER_SIZE[1])
   const ctx = canvas.getContext('2d')
 
   const shouldDrawBg = url.searchParams.get("bg") != "f" && url.searchParams.get("bg") !== "0"

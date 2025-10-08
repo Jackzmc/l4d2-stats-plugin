@@ -3,6 +3,7 @@ import Hero from "@/components/bulma/Hero.astro";
 import HTMLHead from "@/components/layout/HTMLHead.astro";
 import NavBar from "@/components/layout/NavBar.astro";
 import type { ColorType } from "@/types/bulma.ts";
+import type { Props as HeadProps} from '@/components/layout/HTMLHead.astro'
 
 export interface Props {
     meta: PageInfo
@@ -32,11 +33,7 @@ export interface PageInfo {
     noIndex?: boolean
     noFollow?: boolean,
 
-    openGraph?: {
-        title: string,
-        type: string,
-        image: string
-    }
+    openGraph?: HeadProps['openGraph']
 }
 const siteTitle = import.meta.env.PUBLIC_SITE_TITLE || "L4D2 Stats"
 const siteDescription = import.meta.env.PUBLIC_SITE_DESC

@@ -3,6 +3,7 @@ import Bulma from "bulma/css/bulma.min.css?url";
 import '@/styles/main.css'
 import { Tooltips } from 'astro-tooltips'
 import { SEO } from "astro-seo";
+import type { Props as SEOProps } from "astro-seo";
 
 export interface Props {
     pageTitle?: string;
@@ -13,15 +14,9 @@ export interface Props {
     noIndex?: boolean,
     noFollow?: boolean,
 
-    openGraph?: {
-        title: string,
-        type: string,
-        image: string
-    }
+    openGraph?: SEOProps['openGraph']
 }
 const { pageTitle, description = "View all in-game statistics for Left 4 Dead 2, with a leaderboard, game overviews and user statistics", siteTitle, noIndex, noFollow, openGraph } = Astro.props;
-
-const og = openGraph ? { basic: openGraph } : undefined
 const titleTemplate = `%s | ${siteTitle}`
 ---
 
@@ -38,7 +33,7 @@ const titleTemplate = `%s | ${siteTitle}`
         description={description}
         noindex={noIndex}
         nofollow={noFollow}
-        openGraph={og}
+        openGraph={openGraph}
     />
     <Tooltips interactive={false} placement="top" delay={[0, 0]} animation={false} />
 </head>

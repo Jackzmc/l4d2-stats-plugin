@@ -1,4 +1,6 @@
-
+export function api204(): Response {
+  return new Response(null, { status: 204 })
+}
 export function api404(error: string, message: string): Response {
   return apiError(404, error, message) 
 }

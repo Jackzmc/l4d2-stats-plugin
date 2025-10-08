@@ -14,6 +14,7 @@ import LevelItem from '@/components/bulma/LevelItem.astro'
 import CountUp from '@/components/CountUp.astro'
 import { Survivor } from '@/types/game.ts'
 import { getMapPoster, getPortrait, getWeaponImage } from '@/utils/index.ts'
+import { BANNER_SIZE } from '@/pages/api/users/[id]/banner.png.ts' 
 
 const user = await getUser(params.steamid)
 if(!user) return new Response(null, { status: 404 })
@@ -31,9 +32,17 @@ const meta: PageInfo = {
         style: "background-image: linear-gradient(0deg,#008cff,#3a47d5)"
     },
     openGraph: {
-        title: `${user.last_alias}'s Profile`,
-        type: "website",
-        image: `${import.meta.env.SITE}/api/users/${user.steamid}/banner.png`
+        basic: {
+            title: `${user.last_alias}'s Profile`,
+            type: "website",
+            image: `${Astro.url.origin}${import.meta.env.BASE_URL}api/users/${user.steamid}/banner.png`,
+        },
+        image: {
+            url: `${Astro.url.origin}${import.meta.env.BASE_URL}api/users/${user.steamid}/banner.png`,
+            width: BANNER_SIZE[0],
+            height: BANNER_SIZE[1],
+            type: "image/png"
+        }
     }
 }
 const steamid = new SteamID(user.steamid)

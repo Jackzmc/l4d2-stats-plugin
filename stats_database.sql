@@ -131,15 +131,17 @@ CREATE TABLE IF NOT EXISTS `stats_points` (
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE IF NOT EXISTS `stats_users` (
+CREATE TABLE `stats_users` (
   `steamid` varchar(20) NOT NULL,
-  `last_alias` varchar(32) NOT NULL,
+  `last_alias` varchar(32) NOT NULL COMMENT 'last known name',
   `last_join_date` bigint(11) NOT NULL,
   `created_date` bigint(11) NOT NULL,
-  `connections` int(11) unsigned NOT NULL DEFAULT 1,
+  `connections` int(11) unsigned NOT NULL DEFAULT 1 COMMENT 'times joined server',
   `country` varchar(60) NOT NULL,
   `region` varchar(60) DEFAULT NULL,
-  `points` int(10) unsigned NOT NULL DEFAULT 0,
+  `points` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'current points earned',
+  `points_start_time` int unsigned  default unix_timestamp() not null comment 'unix timestamp when current points had reset',
+  `points_cuml` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'total points earned',
   `survivor_deaths` int(11) unsigned NOT NULL DEFAULT 0,
   `infected_deaths` int(11) unsigned NOT NULL DEFAULT 0,
   `survivor_damage_rec` bigint(11) unsigned NOT NULL DEFAULT 0,
@@ -197,9 +199,9 @@ CREATE TABLE IF NOT EXISTS `stats_users` (
   `times_pinned` int(10) unsigned NOT NULL DEFAULT 0,
   `clowns_honked` smallint(5) unsigned NOT NULL DEFAULT 0,
   `minutes_idle` mediumint(8) unsigned NOT NULL DEFAULT 0,
-  `boomer_mellos` int(11) DEFAULT 0,
-  `boomer_mellos_self` smallint(6) DEFAULT 0,
-  `forgot_kit_count` smallint(5) unsigned NOT NULL DEFAULT 0,
+  `boomer_mellos` int(11) DEFAULT 0 COMMENT 'popped boomer and got someone boomed',
+  `boomer_mellos_self` smallint(6) DEFAULT 0 COMMENT 'popped boomer and got self boomed',
+  `forgot_kit_count` smallint(5) unsigned NOT NULL DEFAULT 0 COMMENT 'forgot kit in saferoom if some left',
   `total_distance_travelled` float DEFAULT 0,
   `kills_all_specials` int(11) GENERATED ALWAYS AS (`kills_boomer` + `kills_charger` + `kills_smoker` + `kills_jockey` + `kills_hunter` + `kills_spitter`) VIRTUAL,
   `kits_slapped` int(11) NOT NULL DEFAULT 0,
@@ -313,18 +315,35 @@ INSERT INTO `weapon_names` VALUES ('weapon_sniper_scout','Scout Sniper',0);
 INSERT INTO `weapon_names` VALUES ('weapon_vomitjar','Boomer Bile',0);
 
 --
--- Cleanup old point data
+-- System for point management
 --
 
-create procedure if not exists stats_cleanup_points()
+-- Resets temp points and updates user's cumulative points
+create or replace procedure stats_points_reset_next()
 begin
-    delete from stats_points WHERE timestamp < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 180 DAY));
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION, SQLWARNING
+        ROLLBACK;
+    -- record points for this period
+    insert into stats_points_history (period_start, period_end, steamid, points)
+        select points_start_time, unix_timestamp(), steamid, points from stats_users where points > 0;
+
+    -- add to cumulation and res
+    update stats_users SET points_cuml=points_cuml+points;
+
+    -- reset current points
+    update stats_users SET points=0, points_start_time=unix_timestamp();
+    delete from stats_points;
+    select * FROM stats_points_history;
+    select * FROM stats_users order by kills_all_specials desc;
+
+    commit;
 end;
 
-CREATE EVENT if not exists stats_cleanup
+CREATE EVENT if not exists stats_points_reset
 ON SCHEDULE EVERY 1 month
 DO
-    CALL stats_cleanup_points();
+    CALL stats_points_reset_next();
+
 
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

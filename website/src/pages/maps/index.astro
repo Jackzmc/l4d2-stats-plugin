@@ -12,7 +12,7 @@ import { Picture } from "astro:assets";
 import BulmaIcon from "@/components/bulma/BulmaIcon.astro";
 
 const topMaps = await getMapsWithPlayCount(false, 3)
-const sortBy = Astro.url.searchParams.get("sortBy") ?? "avgRating"
+const sortBy = Astro.url.searchParams.get("sortBy") ?? "ratings"
 const dir = (Astro.url.searchParams.get("dir") ?? "DESC").toLowerCase()
 const mapRatings = await getMapsWithRatings(sortBy, dir !== "desc")
 

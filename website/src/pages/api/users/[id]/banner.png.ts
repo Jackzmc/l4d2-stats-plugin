@@ -9,10 +9,9 @@ import { Survivor, SURVIVOR_DEFS } from "@/types/game.ts";
 const WATERMARK_TEXT = process.env.USER_WATERMARK_TEXT || "stats.jackz.me"
 
 const PUBLIC_ROOT = import.meta.env.PROD ? path.resolve('./dist/client') : path.resolve('./public')
-console.debug({ cwd: process.cwd(), dirname: import.meta.dirname, PUBLIC_ROOT, "maybe": path.resolve('./'), "maybe2": path.resolve(path.join(import.meta.dirname, '../../../../assets/'))})
 
-const Futurot = path.join(PUBLIC_ROOT, "fonts/futurot.woff")
-FontLibrary.use("futurot", Futurot)
+FontLibrary.use("futurot", path.join(PUBLIC_ROOT, "fonts/futurot.woff"))
+FontLibrary.use("arial", path.join(PUBLIC_ROOT, "fonts/arial.ttf"))
 
 function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, opts: { font?: string, color?: string, filter?: string } = {}) {
   ctx.save()
@@ -77,16 +76,17 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   if(shouldDrawBg) ctx.fillStyle = "white"
   drawText(ctx, user.last_alias, 120+MARGIN_PX, 40+MARGIN_PX, { font: "bold 20pt futurot", color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)` })
 
-  drawText(ctx, `${topStats.played_any.count.toLocaleString()} games played`, 128+MARGIN_PX, 65+MARGIN_PX, { font: "20px sans-serif" })
-  drawText(ctx, `${formatHumanDuration(user.minutes_played, ", ", ["day", "hour", "minute"])} of playtime`, 124+MARGIN_PX, 90+MARGIN_PX, { font: "20px sans-serif" })
-  drawText(ctx, `Favorite map: ${topStats.top_map.value}`, 128+MARGIN_PX, 115+MARGIN_PX, { font: "20px sans-serif"})  
-  drawText(ctx, `Favorite weapon: ${topStats.top_weapon.value}`, 128+MARGIN_PX, 140+MARGIN_PX, { font: "20px sans-serif"})  
+  drawText(ctx, `${topStats.played_any.count.toLocaleString()} games played`, 120+MARGIN_PX, 65+MARGIN_PX, { font: "20px futurot" })
+  drawText(ctx, `Played${formatHumanDuration(user.minutes_played, " ", ["day", "hour", "minute"])}`, 120+MARGIN_PX, 90+MARGIN_PX, { font: "18px futurot" })
+  drawText(ctx, `Favorite map: ${topStats.top_map.value}`, 120+MARGIN_PX, 115+MARGIN_PX, { font: "20px futurot"})  
+  drawText(ctx, `Favorite weapon: ${topStats.top_weapon.value}`, 120+MARGIN_PX, 140+MARGIN_PX, { font: "20px futurot"})  
 
+  // TODO: future impl
   const playStyle = ""
-  drawText(ctx, playStyle, 128+MARGIN_PX, 170+MARGIN_PX, { font: "bold 24px sans-serif MT" })
+  drawText(ctx, playStyle, 120+MARGIN_PX, 170+MARGIN_PX, { font: "bold 24px arial" })
 
   ctx.restore()
-  ctx.font = 'light 6pt serif'
+  ctx.font = 'light 6pt futurot'
   ctx.fillStyle = '#737578'
 
   const waterMarkDim = ctx.measureText(WATERMARK_TEXT)

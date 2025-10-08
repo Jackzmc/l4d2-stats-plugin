@@ -22,12 +22,10 @@ const maps = await getRecentGames()
         </div>
     </div>
 </div>
-<div class="fixed-grid has-4-cols">
-    <div class="grid">
-        {maps.map(map => 
-            <div class="cell">
-                <MapBox map={map} />
-            </div>
-        )}
-    </div>
+<div class="grid is-col-min-12">
+    {maps.map(map => 
+        <div class="cell is-col-min-8">
+            <MapBox map={map} />
+        </div>
+    )}
 </div>

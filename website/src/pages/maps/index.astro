@@ -90,9 +90,15 @@ export const prerender = false
                         <td>{row.gamesPlayed.toLocaleString()}</td>
                         <td>{row.avgMinutesPlayed.toLocaleString(undefined, { maximumFractionDigits: 0 })} minutes</td>
                         <td>
-                            {Array(5).fill(undefined).map((_,i) => 
-                                <Icon name={Math.floor(row.avgRating) > i ? "iconoir:star-solid" : "iconoir:star"} />
+                            <!-- For tablet+ display, all stars -->
+                            <span class="is-hidden-mobile"> {Array(5).fill(undefined).map((_,i) => 
+                                <Icon name={Math.round(row.avgRating) > i ? "iconoir:star-solid" : "iconoir:star"} />
                             )}
+                            </span>
+                            <!-- For mobile display: one star; '(star) 4.5' -->
+                            <span class="is-hidden-tablet">
+                                <Icon name="iconoir:star-solid" />
+                            </span>
                             {row.avgRating.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 })}
                         </td>
                         <td>{row.ratings}</td>

@@ -58,7 +58,9 @@ if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, ma
 	<div class="container content">
 		<div class="columns">
 			<div class="column is-8 box is-size-5">
-				<Table columns={COLUMNS} data={leaderboard} striped fullwidth />
+				<div class="table-container">
+					<Table columns={COLUMNS} data={leaderboard} striped fullwidth />
+				</div>
 				<Pagination currentPage={page} itemsPerPage={ITEMS_PER_PAGE} totalItems={totalPlayers}  />
 			</div>
 			<div class="column is-4">

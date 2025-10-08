@@ -68,17 +68,17 @@ export const prerender = false
             </section>
     <br>
     <section class="container pt-4 pb-5">
-        <div class="fixed-grid has-5-cols">
-        <div class="grid">
-            {sessions.map(sess =>{
-                const isMvp = sess.steamid == mvpPlayer
-                const isHonkMaster = sess.steamid == honkMasterPlayer
-                return <div class="cell">
-                    <PlayerBox player={sess} mvp={isMvp} honkMaster={isHonkMaster} />
-                </div>
-            })}
+        <div class="fixed-grid has-2-cols-mobile has-5-cols ">
+            <div class="grid">
+                {sessions.map(sess =>{
+                    const isMvp = sess.steamid == mvpPlayer
+                    const isHonkMaster = sess.steamid == honkMasterPlayer
+                    return <div class="cell" style="width: 260">
+                        <PlayerBox player={sess} mvp={isMvp} honkMaster={isHonkMaster} />
+                    </div>
+                })}
+            </div>
         </div>
-    </div>
     </section>
 
     <br>

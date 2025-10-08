@@ -22,19 +22,27 @@ The plugin can be downloaded from [plugins/l4d2_stats_recorder.smx](./plugins/l4
 
 ## Env Variables
 
-```env
-# Defaults
+Env variables can be set with a local `.env.local` file, default values can be seen in the `.env` file provided
 
-MYSQL_HOST=localhost
-MYSQL_DB=left4dead2
-MYSQL_USER=left4dead2
-MYSQL_PASSWORD=left4dead2
+```env
+# Required
+
+DATABASE_URL=mysql://stats@localhost/left4dead2
+
+## URL used for some links
+PUBLIC_SITE_URL=https://stats.jackz.me
+## Name of site to use in navbar, <title>
+PUBLIC_SITE_NAME=L4D2 Stats
+## Description used on home page and any page without it's own description
+PUBLIC_SITE_DESC=View all in-game statistics for Left 4 Dead 2, with a leaderboard, game overviews and user statistics
 
 # Optional
-## Comma separated list of domains to whitelist
-CORS_WHITELIST=stats.example.com 
+## Comma separated list of domains to whitelist for /api routes, or use '*' for any site
+API_ALLOWED_ORIGINS=myotherservice.example.com
+## Host
+HOST=0.0.0.0
 ## Port for server to listen to
-WEB_PORT=8080
+PORT=4321
 ```
 
 ## Docker
@@ -47,12 +55,15 @@ An addition a [docker-compose.yml](./docker-compose.yml) file is included. It do
 
 ## Manual
 
-```bash
-# build ui
-cd website-ui; yarn && yarn build; cp dist/ /var/www/l4d2-stats
+Requires [pnpm](https://pnpm.io/)
 
-# run server
-cd website-api; yarn && node index.js
+```bash
+# install 
+pnpm install
+# build site for production, produces files in dist/
+pnpm build
+# run dev site
+pnpm dev
 ```
 
 ## External Nginx
@@ -68,11 +79,6 @@ server {
     listen 80;
 
     server_name stats.jackz.me;
-    root /var/www/stats.jackz.me;
-    
-    location / {
-        try_files $uri/ $uri /index.html;
-    }
     
     location /api/ {
         proxy_pass http://localhost:8989;
@@ -81,21 +87,4 @@ server {
         proxy_set_header Host $http_host;
     }
 }
-```
-
-## Building
-
-You can build the sourcemod plugin from the scripting/ folder.
-
-The webserver is built using VueJS and you can just cd to the folder and run `<yarn/npm> install && <yarn/npm run> build`
-
-The api server, just install npm packages with yarn or npm, and run index.js. You do need to set the following environment variables to hook to mysql:
-
-```env
-MYSQL_HOST=
-MYSQL_USER=l4d2
-MYSQL_DB=l4d2
-MYSQL_PASSWORD=
-# optional
-WEB_PORT=8080 #default
 ```

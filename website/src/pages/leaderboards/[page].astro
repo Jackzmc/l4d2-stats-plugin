@@ -42,14 +42,15 @@ import BulmaIcon from "@/components/bulma/BulmaIcon.astro";
 import LeaderboardCarousel from "@/components/misc/LeaderboardCarousel.astro";
 import Button from "@/components/bulma/Button.astro";
 import { replaceRoute } from "@/utils/index.ts";
-const totalPlayers = await User.getTotalPlayers()
+const PERIOD = "month"
+const totalPlayers = await User.getTotalPlayers(PERIOD)
 const leaderboard = await User.getLeaderboards(page, ITEMS_PER_PAGE)
 const playerOfDay = await User.getPlayerOfDay()
 
-meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <b>${totalPlayers.toLocaleString()} players</b>`
+meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <b>${totalPlayers.allPlayers.toLocaleString()} players</b> this <b>${PERIOD}</b>`
 
 const canGoBack = page > 1
-const canGoNext = page < Math.ceil(totalPlayers / ITEMS_PER_PAGE)
+const canGoNext = page < Math.ceil(totalPlayers.withPoints / ITEMS_PER_PAGE)
 
 if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, max-age=600, s-maxage=60, stale-while-revalidate=3600, stale-if-error=86400');
 ---
@@ -61,7 +62,7 @@ if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, ma
 				<div class="table-container">
 					<Table columns={COLUMNS} data={leaderboard} striped fullwidth />
 				</div>
-				<Pagination currentPage={page} itemsPerPage={ITEMS_PER_PAGE} totalItems={totalPlayers}  />
+				<Pagination currentPage={page} itemsPerPage={ITEMS_PER_PAGE} totalItems={totalPlayers.withPoints}  />
 			</div>
 			<div class="column is-4">
 				<div class="block">

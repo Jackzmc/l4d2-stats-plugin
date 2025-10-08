@@ -11,7 +11,7 @@ const env = loadEnv(process.env.NODE_ENV ?? "production", process.cwd(), "");
 export default defineConfig({
   integrations: [icon({
     include: {
-      iconoir: ["github", "clock", "star", "star-solid", "search", "sort", "arrow-up", "arrow-down", "nav-arrow-left", "nav-arrow-right", "nav-arrow-down", "arrow-up-right-square", "link"]
+      iconoir: ["github", "clock", "star", "star-solid", "search", "sort", "arrow-up", "arrow-down", "nav-arrow-left", "nav-arrow-right", "nav-arrow-down", "arrow-up-right-square", "link", "arrow-right"]
     }
   })],
 

@@ -7,11 +7,15 @@ interface Props extends HTMLAttributes<"div"> {
     children: any,
     color?: TextColor,
     class?: any
+
+    centered?: boolean
 }
-const { nav = false, color = "", class: className, ...attrs } = Astro.props
+const { nav = false, color = "", class: className, centered = true, ...attrs } = Astro.props
 
 const Component = nav ? "nav" : "div"
 ---
-<Component class:list={["level has-text-centered", className]} {...attrs}>
+<Component class:list={["level", {'has-text-centered': centered }, className]} {...attrs}>
+    {Astro.slots.has("left") && <div class="level-left"><slot name="left" /></div>}
     <slot />
+    {Astro.slots.has("left") && <div class="level-left"><slot name="right" /></div>}
 </Component>

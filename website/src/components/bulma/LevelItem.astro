@@ -2,8 +2,8 @@
 import CountUp from '../CountUp.astro'
 
 interface Props  {
-    title: string,
-    value: number | string,
+    title?: string,
+    value?: number | string,
 
     suffix?: string,
     class?: any,
@@ -17,14 +17,16 @@ const { title, class: className, value, suffix = "", countup = false, tooltip, d
 
 ---
 <div class:list={["level-item", className]} title={tooltip}>
-    <div>
-        <p class:list={["heading", className]}>{title}</p>
-        {countup && <CountUp  class:list={["title", className]} number={value as number} />}
-        {!countup && <p class:list={["title", className]}>
-            {typeof value === "number" 
-                ? value.toLocaleString(undefined, { maximumFractionDigits: decimals }) 
-                : value
-            }{suffix}
-        </p>}
-    </div>
+    <slot>
+        <div>
+            <p class:list={["heading", className]}>{title}</p>
+            {countup && <CountUp  class:list={["title", className]} number={value as number} />}
+            {!countup && <p class:list={["title", className]}>
+                {typeof value === "number" 
+                    ? value.toLocaleString(undefined, { maximumFractionDigits: decimals }) 
+                    : value
+                }{suffix}
+            </p>}
+        </div>
+    </slot>
 </div>

@@ -6,11 +6,14 @@ interface Props {
     iconLeftProps?: Record<string, any>,
     iconRight?: string,
     iconRightProps?: Record<string, any>,
+
+    label?: string
 }
-const { iconLeft, iconLeftProps, iconRight, iconRightProps } = Astro.props
+const { iconLeft, iconLeftProps, iconRight, iconRightProps, label } = Astro.props
 ---
 
 <div class="field">
+  {label != undefined && <label class="label">{label}</label>}
   <p class:list={["control",{'has-icons-left': !!iconLeft, 'has-icons-right': !!iconRight }]}>
     <slot />
     {iconLeft && <span class="icon is-small is-left">

@@ -20,6 +20,11 @@ export interface RecentGame {
   name: string;
 }
 
+/**
+ * Returns count amount of recently played games
+ * @param count number of games to return
+ * @returns Game with some sums and game info
+ */
 export async function getRecentGames(count = 8): Promise<RecentGame[]> {
 
     // const [total] = await db.execute("SELECT COUNT(DISTINCT campaignID) as total FROM `stats_games`")
@@ -54,6 +59,44 @@ export async function getRecentGames(count = 8): Promise<RecentGame[]> {
     })
 }
 
+/**
+ * Returns count amount of recently played games
+ * @param count number of games to return
+ * @returns Game with some sums and game info
+ */
+export async function getFilteredGames(opts: { gamemode?: string, difficulty?: number, map_type?: number, tags?: string[] } = {}, count = 8): Promise<RecentGame[]> {
+    // const [total] = await db.execute("SELECT COUNT(DISTINCT campaignID) as total FROM `stats_games`")
+    const [games] = await db.execute<RowDataPacket[]>(`
+        SELECT COUNT(g.campaignID) as numPlayers,
+            g.campaignID campaignId,
+            g.map map,
+            g.date_end dateEnd,
+            (g.date_end - g.date_start) / 60 durationMins,
+            difficulty,
+            gamemode,
+            SUM(ZombieKills) as commonsKilled,
+            SUM(SurvivorDamage) as friendlyDamage,
+            SUM(Deaths) as deaths,
+            SUM(MedkitsUsed) medkitsUsed,
+            (SUM(MolotovsUsed) + SUM(PipebombsUsed) + SUM(BoomerBilesUsed)) as throwablesUsed,
+            server_tags tags,
+            i.name as name
+        FROM stats_games as g
+        INNER JOIN map_info i ON i.mapid = g.map
+        GROUP BY g.campaignID
+        ORDER BY dateEnd DESC
+        LIMIT ?
+    `, [count])
+
+    return games.map((row,i) => {
+        return {
+            ...row,
+            durationMins: Math.round(row.durationMins),
+            tags: row.tags.split(",")
+        } as RecentGame
+    })
+}
+
 export interface Game {
     map: string;
     map_name: string,
@@ -78,6 +121,11 @@ export interface Game {
     damage_taken: number;
 }
 
+/**
+ * Returns game data, with sums of some its sessions' stats
+ * @param id gamei d
+ * @returns 
+ */
 export async function getGame(id: string): Promise<Game | null> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT i.mapid map, i.name as map_name, g.difficulty difficulty, g.gamemode gamemode, g.date_end date, g.duration, g.server_tags, g.finale_time, g.campaignID,
@@ -128,6 +176,11 @@ export interface GameSessionPartial extends Player {
   honks: number;
 }
 
+/**
+ * Returns list of sessions for a game, with partial data of each session
+ * @param id game id
+ * @returns 
+ */
 export async function getSessions(id: string): Promise<GameSessionPartial[]> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT g.id,
@@ -201,6 +254,9 @@ export interface GameSession extends GameSessionPartial {
     CarAlarmsActivated: number;
 }
 
+/**
+ * Returns full session info, including user, tags, gamemode, etc
+ */
 export async function getSession(id: number | string): Promise<GameSession | null> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT g.id,
@@ -275,6 +331,11 @@ export async function getSession(id: number | string): Promise<GameSession | nul
     } as GameSession
 }
 
+/**
+ * Returns all players in a given game
+ * @param id game id
+ * @returns object[] -> { sessionId, steamid, playerName }[]
+ */
 export async function getSessionPlayers(id: string): Promise<(Player & { sessionId: number })[]> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT id sessionId, g.steamid, u.last_alias playerName
@@ -290,4 +351,39 @@ export async function getSessionPlayers(id: string): Promise<(Player & { session
             name: row.playerName
         }
     })
+}
+
+/**
+ * Returns list of all distinct gamemodes 
+ * @returns string[]
+ */
+export async function getGamemodes(): Promise<string[]> {
+    const [rows] = await db.execute<RowDataPacket[]>(
+    "SELECT distinct gamemode FROM stats_games"
+    )
+    return rows.map(row => row.gamemode)
+}
+/**
+ * Returns list of all distinct server tags 
+ * @returns string[]
+ */
+export async function getServerTags(): Promise<string[]> {
+    const [rows] = await db.execute<RowDataPacket[]>(
+    "SELECT distinct server_tags FROM stats_games WHERE server_tags != ''"
+    )
+    // rows returns unique combinations of tags, 
+    // but we need to split by comma to get full list
+
+    // count the number of occurrences of every tag
+    const obj: Record<string, number> = {}
+    const flatTags = rows.map(row => row.server_tags.split(",")).flat()
+    flatTags.forEach(tag => {
+        if(!obj[tag]) obj[tag] = 0
+        obj[tag]++
+    })
+
+    // return sorted list of all tags, in descending order by count
+    return Object.entries(obj)
+        .sort(([,val1],[,val2]) => val2 - val1)
+        .map(([key]) => key)
 }

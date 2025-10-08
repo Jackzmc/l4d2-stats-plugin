@@ -1,7 +1,77 @@
 ---
 import BulmaIcon from "@/components/bulma/BulmaIcon.astro";
----
+import Button from "@/components/bulma/Button.astro";
+import Field from "@/components/bulma/Field.astro";
+import Level from "@/components/bulma/Level.astro";
+import LevelItem from "@/components/bulma/LevelItem.astro";
+import Select from "@/components/bulma/Select.astro";
+import MapBox from "@/components/misc/MapBox.astro";
+import { getGamemodes, getServerTags, getFilteredGames } from "@/models/Game.ts";
 
+const [gamemodes, tags] = await Promise.all([getGamemodes(), getServerTags()]) 
+
+const queryTags = Astro.url.searchParams.getAll("tags")
+const queryMapType = Astro.url.searchParams.get("map_type")
+const queryGamemode = Astro.url.searchParams.get("gamemode")
+const queryDifficulty = Astro.url.searchParams.get("difficulty")
+
+// Have user press 'Search' at least once before we load anything 
+const shouldLoad = queryGamemode != undefined || queryMapType != undefined || queryGamemode != undefined || queryDifficulty != undefined || queryTags.length > 0
+
+const games = shouldLoad ? await getFilteredGames({
+    gamemode: queryGamemode || undefined,
+    tags: queryTags,
+    map_type: Number(queryMapType) || undefined,
+    difficulty: Number(queryDifficulty) || undefined
+}) : []
+---
+<form id="find_game" method="get" class="box">
+<Level centered={false}>
+    <Fragment slot="left">
+        <LevelItem>
+            <Field label="Server Tag">
+                <Select name="tag" selected="" items={tags}>
+                    <option value="" slot="extra" selected>Any</option>
+                </Select>
+            </Field>
+        </LevelItem>
+        <LevelItem>
+            <Field label="Map Type">
+                <Select name="map_type" selected="">
+                    <option value="" selected>Any</option>
+                    <option value={1}>Official Maps</option>
+                    <option value={1}>Custom Maps</option>
+                </Select>
+            </Field>
+        </LevelItem>
+        <LevelItem>
+            <Field label="Gamemode">
+                <Select name="gamemode" items={gamemodes} selected="">
+                    <option value="" slot="extra" selected>Any</option>
+                </Select>
+            </Field>
+        </LevelItem>
+        <LevelItem>
+            <Field label="Difficulty">
+                <Select name="difficulty" selected="">
+                    <option value="" selected>Any</option>
+                    <option value={0}>Easy</option>
+                    <option value={1}>Normal</option>
+                    <option value={2}>Advanced</option>
+                    <option value={3}>Expert</option>
+                </Select>
+            </Field>
+        </LevelItem>
+        <LevelItem>
+            <Field label="&nbsp;">
+                <Button type="is-link">
+                    <BulmaIcon textLeft="Search" name="iconoir:arrow-right" />
+                </Button>
+            </Field>
+        </LevelItem>
+    </Fragment>
+</Level>
+</form>
 <div class="block has-text-centered ">
     <div class="level">
         <div class="level-item">
@@ -19,8 +89,14 @@ import BulmaIcon from "@/components/bulma/BulmaIcon.astro";
         </div>
     </div>
 </div>
-<div class="fixed-grid has-4-cols">
-    <div class="grid">
-        soon.
-    </div>
+
+<div class="grid is-col-min-12">
+    {games.map(game => 
+        <div class="cell is-col-min-8">
+            <MapBox map={game} />
+        </div>
+    )}
 </div>
+
+{!shouldLoad && <div class="container has-text-centered my-6"><em>Select desired filters and press <span class="has-text-link">[ Search -&gt; ]</span> to view</em></div>}
+{shouldLoad && games.length === 0 && <div class="container has-text-centered my-6"><em>No games were found with selected filters</em></div>}

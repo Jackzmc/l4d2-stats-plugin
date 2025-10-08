@@ -2,7 +2,7 @@
 import BulmaIcon from "../../../components/bulma/BulmaIcon.astro";
 import MapBox from "../../../components/misc/MapBox.astro";
 import { getRecentGames } from "../../../models/Game.ts";
-const maps = await getRecentGames()
+const games = await getRecentGames()
 ---
 
 <div class="block has-text-centered ">
@@ -23,9 +23,9 @@ const maps = await getRecentGames()
     </div>
 </div>
 <div class="grid is-col-min-12">
-    {maps.map(map => 
+    {games.map(game => 
         <div class="cell is-col-min-8">
-            <MapBox map={map} />
+            <MapBox map={game} />
         </div>
     )}
 </div>

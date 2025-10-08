@@ -9,6 +9,10 @@ export interface Summary {
     /** The total number of games played (a campaign was played start to finish) */
     totalGames: number
 }
+/**
+ * Get the number of games played and the total number of sessions
+ * @returns 
+ */
 export async function getTotals(): Promise<Summary> {
     const [totals] = await db.execute<RowDataPacket[]>(`SELECT
         (select count(distinct campaignID) from stats_games) AS total_games, 
@@ -22,7 +26,7 @@ export async function getTotals(): Promise<Summary> {
 
 /**
  * Get the most played and least played official maps
- * @returns [ least map name, highest map name ]
+ * @returns [ least map, most map ]
  */
 export async function getBestWorstOfficialMap(): Promise<[MapCountEntry, MapCountEntry]> {
     const sortedMaps = (await getMapsWithPlayCount(true))

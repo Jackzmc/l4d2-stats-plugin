@@ -1,0 +1,28 @@
+---
+import type { HTMLAttributes } from 'astro/types'
+
+type ItemValue = string | number | null | any
+interface Props extends HTMLAttributes<'select'> {
+    name?: string,
+    selected?: ItemValue,
+    items?: Record<string, ItemValue> | { value: ItemValue, label: string }[] | string[],
+}
+const { name, selected, items, ...extra } = Astro.props
+
+---
+<div class="select">
+    <select name={name} {...extra}>
+        <slot>
+            <slot name="extra" />
+            {typeof items == "object" && !Array.isArray(items) && Object.entries(items).map(([label, value]) => 
+                <option value={value} selected={selected === value || undefined}>{label}</option>
+            )}
+
+            {Array.isArray(items) && items.map(item => {
+                if(typeof item == "string")
+                    return <option value={item} selected={selected === item || undefined}>{item}</option>
+                else return <option value={item.value} selected={selected === item.value || undefined}>{item.label}</option>
+            })}
+        </slot>
+    </select>
+</div>

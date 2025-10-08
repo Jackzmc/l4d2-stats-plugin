@@ -36,12 +36,24 @@ export async function getPlayerOfDay(): Promise<PlayerWithPoints> {
     return playerOfDay.player
 }
 
+export interface PlayerTotals {
+    /** The complete number of players in table */
+    allPlayers: number,
+    /** The number of players who have points > 0 */
+    withPoints: number
+}
 /**
- * Returns the number of players in the users table
+ * Returns the number of players in the users table with poion
  */
-export async function getTotalPlayers(): Promise<number> {
-    const [countRow] = await db.execute<RowDataPacket[]>("SELECT COUNT(*) count FROM stats_users")
-    return countRow[0].count
+export async function getTotalPlayers(period: string): Promise<PlayerTotals> {
+    const [rows] = await db.execute<RowDataPacket[]>(`SELECT
+        (SELECT COUNT(*) FROM stats_users) allPlayers,
+        (SELECT COUNT(*) FROM stats_users WHERE points > 0) withPoints
+    `)
+    return {
+        allPlayers: Number(rows[0].allPlayers),
+        withPoints: Number(rows[0].withPoints)
+    }
 }
 
 /**
@@ -53,7 +65,7 @@ export async function getLeaderboards(page: number = 1, itemsPerPage = 30): Prom
     const offset = (page - 1) * itemsPerPage;
     const [entries] = await db.execute<(LeaderboardEntry & RowDataPacket)[]>(`select
         steamid,last_alias,minutes_played,last_join_date,
-        points as points_old,
+        points as points,
         (
             (common_kills / 1000 * 0.10) +
             (kills_all_specials * 0.25) +
@@ -67,8 +79,9 @@ export async function getLeaderboards(page: number = 1, itemsPerPage = 30): Prom
             (witches_crowned*0.2) -
             (rocks_hitby*0.2) +
             (cleared_pinned*0.05)
-        ) as points
+        ) as points_new_old
         from stats_users
+        where points > 0
         order by points desc
         limit ?,?`, 
         [offset, itemsPerPage]

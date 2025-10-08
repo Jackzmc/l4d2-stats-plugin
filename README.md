@@ -30,7 +30,7 @@ Env variables can be set with a local `.env.local` file, default values can be s
 DATABASE_URL=mysql://stats@localhost/left4dead2
 
 ## URL used for some links
-PUBLIC_SITE_URL=https://stats.jackz.me
+PUBLIC_SITE_URL=https://stats.example.com
 ## Name of site to use in navbar, <title>
 PUBLIC_SITE_NAME=L4D2 Stats
 ## Description used on home page and any page without it's own description

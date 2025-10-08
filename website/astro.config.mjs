@@ -35,6 +35,11 @@ export default defineConfig({
     "/leaderboards": {
       status: 302,
       destination: "/leaderboards/1"
+    },
+    // Old site API had /user, we use /users now
+    "/api/user/[id]": {
+      status: 302,
+      destination: "/api/users/[id]"
     }
   }
 });

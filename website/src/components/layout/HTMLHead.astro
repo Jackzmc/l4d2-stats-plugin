@@ -6,17 +6,23 @@ import { SEO } from "astro-seo";
 
 export interface Props {
     pageTitle?: string;
-    pageDescription?: string;
+    description?: string;
 
     siteTitle: string;
 
     noIndex?: boolean,
-    noFollow?: boolean
-}
-const { pageTitle, pageDescription, siteTitle, noIndex, noFollow } = Astro.props;
+    noFollow?: boolean,
 
-const title = pageTitle ? `${pageTitle} | ${siteTitle}` : siteTitle;
-const description = pageDescription;
+    openGraph?: {
+        title: string,
+        type: string,
+        image: string
+    }
+}
+const { pageTitle, description, siteTitle, noIndex, noFollow, openGraph } = Astro.props;
+
+const og = openGraph ? { basic: openGraph } : undefined
+const titleTemplate = `%s | ${siteTitle}`
 ---
 
 <head>
@@ -25,10 +31,13 @@ const description = pageDescription;
     <meta name="generator" content={Astro.generator} />
     <link rel="stylesheet" href={Bulma}  />
     <SEO
-        title={title}
+        title={pageTitle}
+        titleTemplate={titleTemplate}
+        titleDefault={siteTitle}
         description={description}
         noindex={noIndex}
         nofollow={noFollow}
+        openGraph={og}
     />
     <Tooltips interactive={false} placement="top" delay={[0, 0]} animation={false} />
 </head>

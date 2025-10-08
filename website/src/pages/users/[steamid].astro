@@ -23,12 +23,17 @@ const mapPercents = [ Number(topStats.played_official.count) / totalMaps * 100, 
 
 const meta: PageInfo = {
     title: `${user.last_alias}'s Profile`,
-    description: `View ${user.last_alias}'s profile and view their stats`,
+    description: `View ${user.last_alias}'s game statistics`,
     hero: {
         type: "is-link",
         title: user.last_alias,
         subtitle: `${user.points.toLocaleString()} points`,
         style: "background-image: linear-gradient(0deg,#008cff,#3a47d5)"
+    },
+    openGraph: {
+        title: `${user.last_alias}'s Profile`,
+        type: "website",
+        image: `${import.meta.env.SITE}/api/users/${user.steamid}/banner.png`
     }
 }
 const steamid = new SteamID(user.steamid)
@@ -43,7 +48,7 @@ const steamid64 = steamid.getSteamID64()
             <div class="column">
                 <h4 class="title is-4">Stats Overview</h4>
                 <Image width={608} height={214} class="has-background-black" style="border-radius: 8px" 
-                    src={`/api/users/${user.steamid}/banner.png`} alt={`Profile banner for ${user.last_alias}`} 
+                    src={meta.openGraph!.image} alt={`Profile banner for ${user.last_alias}`} 
                 />
 
                 <div class="block mt-6">

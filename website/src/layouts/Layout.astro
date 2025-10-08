@@ -30,16 +30,24 @@ export interface PageInfo {
 
     /** Marks page to not be indexed */
     noIndex?: boolean
-    noFollow?: boolean
+    noFollow?: boolean,
+
+    openGraph?: {
+        title: string,
+        type: string,
+        image: string
+    }
 }
-const siteTitle = import.meta.env.SITE_TITLE || "L4D2 Stats"
-const siteDescription = import.meta.env.SITE_DESC
+const siteTitle = import.meta.env.PUBLIC_SITE_TITLE || "L4D2 Stats"
+const siteDescription = import.meta.env.PUBLIC_SITE_DESC
+
+console.log( { siteTitle, siteDescription })
 const { meta } = Astro.props;
 ---
 
 <!doctype html>
 <html lang="en" data-theme="light">
-    <HTMLHead pageTitle={meta.title} pageDescription={meta.description ?? siteDescription} siteTitle={siteTitle} noIndex={meta.noIndex} noFollow={meta.noFollow} />
+    <HTMLHead pageTitle={meta.title} description={meta.description ?? siteDescription} siteTitle={siteTitle} noIndex={meta.noIndex} noFollow={meta.noFollow} openGraph={meta.openGraph} />
     <body>
         <NavBar siteTitle={siteTitle} />
         <slot name="hero">

@@ -24,21 +24,21 @@ const PAGES: PageRecord[] = [
             <b>{siteTitle}</b>
         </a>
 
-        <!-- <a
+        <a
             role="button"
             class="navbar-burger"
             aria-label="menu"
             aria-expanded="false"
-            data-target="navbarBasicExample"
+            data-target="main-navbar"
         >
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
-        </a> -->
+        </a>
     </div>
 
-    <div class="navbar-menu">
+    <div class="navbar-menu" id="main-navbar">
         <div class="navbar-start">
             {
                 PAGES.map((page) => {

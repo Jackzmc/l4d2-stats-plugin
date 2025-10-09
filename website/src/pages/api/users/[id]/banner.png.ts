@@ -47,7 +47,6 @@ function findSmallestFontScale(ctx: CanvasRenderingContext2D, maxSize: number, t
   while(size > minSize) {
     ctx.font = `${size}pt ${options.fontFamily ?? ""}`
     const width = ctx.measureText(text).width
-    console.log("test", width, maxWidth, { font: ctx.font })
     if(width <= maxWidth) {
       ctx.restore()
       return size
@@ -114,14 +113,13 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   const startPos = [width + 10, MARGIN_PX + 90]
   const maxWidth = CANVAS_INNER_DIM[0] - startPos[0]
   const lineGap = 22
-  const statFont = "28px futurot"
+  const statFont = "34px futurot"
   const dim = getTextSize(ctx, "test string", statFont)
   const lineHeight = dim.actualBoundingBoxAscent + dim.actualBoundingBoxDescent + lineGap
-  console.log(lineHeight)
 
   // const size = findSmallestFontScale(ctx, 48, user.last_alias, maxWidth, { fontFamily: "futurot"})
   // console.log("size", size, "maxWidth", maxWidth)
-  drawText(ctx, user.last_alias, startPos[0], startPos[1], { wrap: true, font: `bold 48pt futurot`, color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)`, maxWidth })
+  drawText(ctx, user.last_alias, startPos[0], startPos[1], { wrap: true, font: `bold 50pt futurot`, color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)`, maxWidth })
   startPos[1] += 100
 
   drawText(ctx, `${topStats.played_any.count.toLocaleString()} game${topStats.played_any.count > 1 ? 's' : ''} played`, startPos[0], startPos[1], { font: statFont })

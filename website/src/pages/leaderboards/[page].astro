@@ -23,8 +23,7 @@ const meta: PageInfo = {
 import { formatRelUnixDate, unixDateToDuration } from '../../utils/date.ts'
 const COLUMNS: TableColumn[] = [
 	{ name: "Player Name", key: "last_alias", formatFunction: (row) => (
-		`<b><a href="/users
-		/${row['steamid']}">${row['last_alias']}</a></b>`
+		`<b><a href="/users/${row['steamid']}/overview">${row['last_alias']}</a></b>`
 	)},
 	{ name: "Points", key: "points", format: { number: { formatToLocale: true } }, class: "has-text-link" },
 	{ name: "Last Played", formatFunction: (row) => formatRelUnixDate(row["last_join_date"]) },

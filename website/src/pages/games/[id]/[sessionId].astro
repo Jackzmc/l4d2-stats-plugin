@@ -34,7 +34,7 @@ export const prerender = false
             <p class="title">{session.name}'s Session #{session.id}</p>
             <p class="subtitle pt-2">Played on <b>{session.map_name}</b></p>
         </div>
-        <div class="hero-footer">
+        <div class="hero-foot">
             <p class="subtitle mb-3">
                 {getGamemode(session.gamemode)} • {Difficulty[session.difficulty]} • {session.duration} minutes long
             </p>
@@ -106,7 +106,7 @@ export const prerender = false
                     <ul>
                         {otherSessions.map(player => (
                             <li>
-                                <b><a href={`/users/${player.steamid}`}>{player.name}</a></b>
+                                <b><a href={`/users/${player.steamid}/overview`}>{player.name}</a></b>
                                 {player.sessionId != session.id && 
                                     <a href={replaceRoute(Astro, { sessionid: player.sessionId })} class="is-pulled-right">(view stats)</a>
                                 }

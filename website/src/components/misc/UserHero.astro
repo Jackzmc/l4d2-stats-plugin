@@ -1,0 +1,39 @@
+---
+import type { PlayerFull } from '@/models/User.ts'
+
+interface Props {
+    user: PlayerFull,
+    subtitle?: string,
+    activePage: string
+}
+const { user, subtitle, activePage } = Astro.props
+
+const PAGES = {
+    overview: "Overview",
+    weapons: "Weapons",
+    points: "Points",
+    coop: "Coop Games"
+}
+---
+
+<section class="hero has-text-centered is-link" style="background-image: linear-gradient(0deg,#008cff,#3a47d5)">
+    <div class="hero-body">
+        <!-- <Picture src={getMapPoster(session.map)} alt="map" /> -->
+        <p class="title">{user.last_alias}</p>
+        <p class="subtitle pt-2">{subtitle}</p>
+    </div>
+    <div class="hero-foot has-text-centered">
+        <nav class="tabs is-fullwidth pt-4">
+            <div class="container">
+                <ul>
+                    {Object.entries(PAGES).map(([id, label]) =>
+                        <li class:list={{"is-active": activePage === id}} >
+                            <a class:list={{"has-text-dark": activePage === id}} href={`/users/${user.steamid}/${id}`}>{label}</a>
+                        </li>
+                    )}
+                </ul>
+            </div>
+        </nav>
+    </div>
+</section>
+<br>

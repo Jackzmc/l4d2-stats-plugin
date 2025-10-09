@@ -17,7 +17,7 @@ const survivor = SURVIVOR_DEFS[player.characterType]
 
 <div class="box full-height">
     <h6 class="title is-6 mb-3 has-text-centered">
-        <a href={`/users/${player.steamid}`}>{ player.name }</a>
+        <a href={`/users/${player.steamid}/overview`}>{ player.name }</a>
     </h6>
     {mvp && <div class="ribbon ribbon-top-left"><span>MVP</span></div>}
     {!mvp && honkMaster && <div class="ribbon ribbon-top-left honk"><span>Honk Master</span></div>}

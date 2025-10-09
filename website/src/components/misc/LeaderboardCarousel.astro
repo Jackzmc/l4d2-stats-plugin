@@ -13,7 +13,7 @@ if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, ma
                 <!-- @ts-ignore -->
                 {list.map(entry => 
                     <tr>
-                        <th><a href={`/users/${entry.steamid}`}>{entry.name}</a></th>
+                        <th><a href={`/users/${entry.steamid}/overview`}>{entry.name}</a></th>
                         <td>{entry.value.toLocaleString()} times</td>
                     </tr>
                 )}

@@ -40,6 +40,10 @@ export default defineConfig({
     "/api/user/[id]": {
       status: 302,
       destination: "/api/users/[id]"
+    },
+    "/users/[steamid]": {
+      status: 302,
+      destination: "/users/[steamid]/overview"
     }
-  }
+  },
 });

@@ -173,8 +173,13 @@ export interface PlayerFull {
   kits_slapped: number;
 }
 export async function getUser(steamid: string): Promise<PlayerFull | null> {
+    const cacheObj = await cache.get("user.getUser." + steamid)
+    if(cacheObj) return cacheObj
+
     const [rows] = await db.execute<RowDataPacket[]>("SELECT * FROM stats_users WHERE SUBSTRING(steamid, 11) = SUBSTRING(?, 11)", [steamid])
     if(rows.length === 0) return null
+
+    cache.set("user.getUser." + steamid, rows[0], 1000 * 60 * 5)
     return rows[0] as any
 } 
 
@@ -242,6 +247,38 @@ export async function searchUsers(query: string, limit = 20): Promise<PlayerSear
             minutes_played: row.minutes_played,
             last_join_date: row.last_join_date,
             points: row.points
+        }
+    })
+}
+
+export interface WeaponStat {
+    id: string,
+    name: string,
+    melee?: boolean,
+    minutesUsed: number,
+    totalDamage: number,
+    headshots: number,
+    kills: number
+}
+
+export async function getUserWeapons(steamid: string): Promise<WeaponStat[]> {
+    const [rows] = await db.execute<RowDataPacket[]>(`
+        SELECT weapon id,n.name name,n.melee, minutesUsed,totalDamage,headshots,kills
+        FROM stats_weapons_usage
+        RIGHT JOIN weapon_names n ON n.id = weapon 
+        WHERE steamid = ?
+        ORDER BY totalDamage DESC, kills DESC
+    `, [steamid])
+
+    return rows.map(row => {
+        return {
+            id: row.id,
+            name: row.name ?? row.id,
+            melee: Boolean(row.melee),
+            minutesUsed: Number(row.minutesUsed),
+            totalDamage: Number(row.totalDamage),
+            headshots: Number(row.headshots),
+            kills: Number(row.kills)
         }
     })
 }

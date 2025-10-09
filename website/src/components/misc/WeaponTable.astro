@@ -1,0 +1,53 @@
+---
+import type { WeaponStat } from '@/models/User.ts'
+import { getWeaponImage, WEAPON_IMAGES } from '@/utils/index.ts'
+import { Image } from 'astro:assets'
+import { formatDistance } from 'date-fns'
+interface Props {
+    weapons: WeaponStat[],
+    totalMinutes: number
+}
+const { weapons, totalMinutes } = Astro.props
+---
+<table class="table is-fullwidth has-text-white">
+    <thead>
+        <tr>
+            <th></th>
+            <th>Weapon</th>
+            <th>Time Used</th>
+            <th>Usage</th>
+            <th>Total Damage</th>
+            <th>Kills</th>
+            <th>Headshots</th>
+        </tr>
+    </thead>
+    <tbody>
+        {weapons.map(weapon => 
+            <tr>
+                <td>
+                    {WEAPON_IMAGES[weapon.id] && <Image src={getWeaponImage(weapon.id) as any} alt={`Image of ${weapon.name}`} />}
+                </td>
+                <td><h4 class="title is-4">{weapon.name}</h4></td>
+                <td>{formatDistance(0, new Date(weapon.minutesUsed * 60 * 1000))}</td>
+                <td>{(weapon.minutesUsed / totalMinutes * 100).toFixed(1)}%</td>
+                <td>{weapon.totalDamage.toLocaleString()} HP</td>
+                <td>{weapon.kills.toLocaleString()}</td>
+                <td>{weapon.headshots.toLocaleString()}</td>
+            </tr>
+        )}
+    </tbody>
+</table>
+
+<style>
+.tvalue {
+    color: blue;
+}
+.table {
+    background-color: #202020 !important;
+}
+table.table th, table.table td, td h4 {
+    vertical-align: middle;
+    color: white;
+}
+
+</style>

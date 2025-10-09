@@ -1380,7 +1380,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 			players[attacker].damageInfectedGiven += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
-			players[attacker].RecordPoint(PType_FriendlyFire, -40);
+			players[attacker].RecordPoint(PType_FriendlyFire, -5);
 			players[attacker].damageSurvivorFF += dmg;
 			players[attacker].damageSurvivorFFCount++;
 			players[victim].damageFFTaken += dmg;

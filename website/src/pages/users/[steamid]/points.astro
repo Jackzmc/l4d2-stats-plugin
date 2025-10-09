@@ -1,0 +1,66 @@
+---
+import Layout, { type PageInfo } from '@/layouts/Layout.astro'
+const params = Astro.params
+if(!params.steamid) return new Response(null, { status: 404 })
+
+import { getUser, getUserPointsHistory } from '@/models/User.ts'
+import UserHero from '@/components/misc/UserHero.astro'
+import { formatRelUnixDate } from '@/utils/date.ts'
+
+
+const user = await getUser(params.steamid)
+if(!user) return new Response(null, { status: 404 })
+const points = await getUserPointsHistory(params.steamid)
+
+const meta: PageInfo = {
+    title: `Points - ${user.last_alias}`,
+    description: `View ${user.last_alias}'s point history breakdown`,
+}
+
+const POINT_TYPE_DISPLAY = [
+    "Generic",  // PType_Generic = 0,
+    "Finished Campaign",  // PType_FinishCampaign,
+    "Killed zombie",  // PType_CommonKill,
+    "Killed special infected",  // PType_SpecialKill,
+    "Killed a tank",  // PType_TankKill,
+    "Killed a witch",  // PType_WitchKill,
+    "Killed a tank solo", // PType_TankKill_Solo
+    "Killed a tank with melee only",  // PType_TankKill_Melee,
+    "Killed with headshot",  // PType_Headshot,
+    "Shot a teammate",  // PType_FriendlyFire,
+    "Healed Teammate",  // PType_HealOther,
+    "Revived Teammate",  // PType_ReviveOther,
+    "Defibbed Teammate",  // PType_ResurrectOther,
+    "Deployed Special Ammo"  // PType_DeployAmmo
+]
+if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, max-age=86400, s-maxage=172800, stale-while-revalidate=604800, stale-if-error=604800")
+---
+<Layout meta={meta}>
+    <UserHero slot="hero" user={user} subtitle={`${user.points.toLocaleString()} points`} activePage="points" />
+
+    <div class="container">
+        <table class="table is-fullwidth">
+            <thead>
+                <tr>
+                    <th>Points</th>
+                    <th>Action</th>
+                    <th>When</th>
+                </tr>
+            </thead>
+            <tbody>
+                {points.map(point => 
+                    <tr>
+                        <td>
+                            {point.amount >= 20 && <span class="tag is-link has-text-weight-bold">+{point.amount}</span>}
+                            {point.amount >= 0 && point.amount < 20 && <span class="tag has-text-weight-bold">+{point.amount}</span>}
+                            {point.amount < 0 && <span class="tag is-danger has-text-weight-bold">{point.amount}</span>}
+                        </td>
+                        <td>{POINT_TYPE_DISPLAY[point.type]}</td>
+                        <td>{formatRelUnixDate(point.timestamp)}</td>
+                    </tr>
+                )}
+            </tbody>
+        </table>
+    </div>
+</Layout>
+

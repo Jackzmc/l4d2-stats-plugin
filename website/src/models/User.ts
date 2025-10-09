@@ -282,3 +282,29 @@ export async function getUserWeapons(steamid: string): Promise<WeaponStat[]> {
         }
     })
 }
+export interface PointHistory {
+    type: number,
+    amount: number,
+    /** Unix timestamp */
+    timestamp: number
+}
+
+export async function getUserPointsHistory(steamid: string, limit = 300): Promise<PointHistory[]> {
+    const [rows] = await db.execute<RowDataPacket[]>(`
+        SELECT type, amount, timestamp 
+        FROM stats_points
+        WHERE steamid = ?
+        ORDER BY timestamp DESC
+        LIMIT ?
+    `, [steamid, limit])
+
+    
+
+    return rows.map(row => {
+        return {
+            type: row.type,
+            amount: row.amount,
+            timestamp: row.timestamp
+        }
+    })
+}

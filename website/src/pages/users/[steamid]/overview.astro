@@ -26,12 +26,6 @@ const mapPercents = [ Number(topStats.played_official.count) / totalMaps * 100, 
 const meta: PageInfo = {
     title: `${user.last_alias}'s Profile`,
     description: `View ${user.last_alias}'s game statistics`,
-    hero: {
-        type: "is-link",
-        title: user.last_alias,
-        subtitle: `${user.points.toLocaleString()} points`,
-        style: "background-image: linear-gradient(0deg,#008cff,#3a47d5)"
-    },
     openGraph: {
         basic: {
             title: `${user.last_alias}'s Profile`,

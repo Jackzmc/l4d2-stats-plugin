@@ -1,0 +1,23 @@
+---
+/// This page is intended to be used standalone - No layout is used
+Astro.response.status = 503
+export const prerender = true
+---
+<!doctype html>
+<html lang="en" data-theme="light">
+    <head>
+        <title>503 Service Temporarily Unavailable</title>
+        <meta name="robots" content="noindex, nofollow">
+    </head>
+    <body>
+        <div class="block is-size-4 content">
+            <h1>Stats Unavailable At This Time</h1>
+            <p>The stats website server is currently unavailable.</p>
+            <p>This can be caused by server maintenance or capacity problems and should be back shortly </p>
+            <p class="subtitle">Come back and try again later</p>
+        </div>
+        <br>
+    </body>
+</html>
+
+	

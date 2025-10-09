@@ -1,5 +1,3 @@
-import { escape } from "mysql2"
-
 export class QueryConditionBuilder {
     #conditions: string[] = []
     #data: any[] = []

@@ -3,9 +3,19 @@ import { defineMiddleware } from "astro:middleware";
 const CORS_ALLOW_LIST = process.env.API_ALLOWED_ORIGINS ? process.env.API_ALLOWED_ORIGINS.split("") : [""]
 const CORS_ALLOW_ANY = CORS_ALLOW_LIST[0] === "*"
 
+export const metrics = {
+    requests: {
+        total: 0,
+        api: 0,
+        ui: 0
+    }
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
     // Add CORS headers for /api requests
+    metrics.requests.total++
     if(context.url.pathname.startsWith("/api")) {
+        metrics.requests.api++
         const response = await next();
         if(CORS_ALLOW_ANY) {
             response.headers.set("Access-Control-Allow-Origin", "*")
@@ -20,6 +30,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
             }), { status: response.status, statusText: response.statusText, headers: {...response.headers, "Content-Type": "application/json" }})
         }
         return response
+    } else {
+        metrics.requests.ui++
     }
 
     // return a Response or the result of calling `next()`

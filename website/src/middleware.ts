@@ -12,6 +12,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
         } else if(context.url.origin === context.site?.origin || CORS_ALLOW_LIST.includes(context.url.origin)) {
             response.headers.set("Access-Control-Allow-Origin", context.url.origin)
         }
+        // Handle any 404 for API so we always try to return JSON
+        if(response.status === 404 && context.routePattern === "/404") {
+            return new Response(JSON.stringify({
+                error: "NOT_FOUND",
+                message: "No route found"
+            }), { status: response.status, statusText: response.statusText, headers: {...response.headers, "Content-Type": "application/json" }})
+        }
         return response
     }
 

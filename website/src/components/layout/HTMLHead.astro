@@ -15,8 +15,9 @@ export interface Props {
     noFollow?: boolean,
 
     openGraph?: SEOProps['openGraph']
+    twitter?: SEOProps['twitter']
 }
-const { pageTitle, description = "View all in-game statistics for Left 4 Dead 2, with a leaderboard, game overviews and user statistics", siteTitle, noIndex, noFollow, openGraph } = Astro.props;
+const { pageTitle, description = "View all in-game statistics for Left 4 Dead 2, with a leaderboard, game overviews and user statistics", siteTitle, noIndex, noFollow, openGraph, twitter } = Astro.props;
 const titleTemplate = `%s | ${siteTitle}`
 ---
 
@@ -34,6 +35,7 @@ const titleTemplate = `%s | ${siteTitle}`
         noindex={noIndex}
         nofollow={noFollow}
         openGraph={openGraph}
+        twitter={twitter}
     />
     <Tooltips interactive={false} placement="top" delay={[0, 0]} animation={false} />
 </head>

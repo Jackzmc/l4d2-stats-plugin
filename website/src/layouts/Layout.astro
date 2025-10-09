@@ -33,7 +33,8 @@ export interface PageInfo {
     noIndex?: boolean
     noFollow?: boolean,
 
-    openGraph?: HeadProps['openGraph']
+    openGraph?: HeadProps['openGraph'],
+    twitter?: HeadProps['twitter']
 }
 const siteTitle = import.meta.env.PUBLIC_SITE_TITLE || "L4D2 Stats"
 const siteDescription = import.meta.env.PUBLIC_SITE_DESC
@@ -43,7 +44,7 @@ const { meta } = Astro.props;
 
 <!doctype html>
 <html lang="en" data-theme="light">
-    <HTMLHead pageTitle={meta.title} description={meta.description ?? siteDescription} siteTitle={siteTitle} noIndex={meta.noIndex} noFollow={meta.noFollow} openGraph={meta.openGraph} />
+    <HTMLHead pageTitle={meta.title} description={meta.description ?? siteDescription} siteTitle={siteTitle} noIndex={meta.noIndex} noFollow={meta.noFollow} openGraph={meta.openGraph} twitter={meta.twitter} />
     <body>
         <NavBar siteTitle={siteTitle} />
         <slot name="hero">

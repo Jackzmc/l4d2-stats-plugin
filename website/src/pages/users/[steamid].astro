@@ -38,12 +38,18 @@ const meta: PageInfo = {
             type: "website",
             image: `${Astro.url.origin}${import.meta.env.BASE_URL}api/users/${user.steamid}/banner.png`,
         },
+        optional: {
+            description: `View ${user.last_alias}'s game statistics`
+        },
         image: {
             url: `${Astro.url.origin}${import.meta.env.BASE_URL}api/users/${user.steamid}/banner.png`,
             width: BANNER_SIZE[0],
             height: BANNER_SIZE[1],
-            type: "image/png"
-        }
+            type: "image/png",
+        },
+    },
+    twitter: {
+        card: "summary_large_image"
     }
 }
 const steamid = new SteamID(user.steamid)

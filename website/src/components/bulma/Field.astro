@@ -12,20 +12,23 @@ interface Props {
 const { iconLeft, iconLeftProps, iconRight, iconRightProps, label } = Astro.props
 ---
 
-<div class="field">
-  {label != undefined && <label class="label">{label}</label>}
-  <p class:list={["control",{'has-icons-left': !!iconLeft, 'has-icons-right': !!iconRight }]}>
-    <slot />
-    {iconLeft && <span class="icon is-small is-left">
-        <slot name="icon-left">
-            <Icon name={iconLeft} {...iconLeftProps} />
-        </slot>
-    </span>}
-    
-    {iconRight && <span class="icon is-small is-right">
-        <slot name="icon-right">
-            <Icon name={iconRight} {...iconRightProps} />
-        </slot>
-    </span>}
-  </p>
+<div class:list={["field",{ "has-addons": Astro.slots.has("addon") }]}>
+    {label != undefined && <label class="label">{label}</label>}
+    <div class:list={["control",{'has-icons-left': !!iconLeft, 'has-icons-right': !!iconRight }]}>
+        <slot />
+        {iconLeft && <span class="icon is-small is-left">
+            <slot name="icon-left">
+                <Icon name={iconLeft} {...iconLeftProps} />
+            </slot>
+        </span>}
+        
+        {iconRight && <span class="icon is-small is-right">
+            <slot name="icon-right">
+                <Icon name={iconRight} {...iconRightProps} />
+            </slot>
+        </span>}
+    </div>
+    {Astro.slots.has("addon") && <div class="control">
+        <slot name="addon" />
+    </div>}
 </div>

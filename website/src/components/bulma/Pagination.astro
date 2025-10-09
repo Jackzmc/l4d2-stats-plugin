@@ -1,18 +1,25 @@
 ---
 // import { Icon } from 'astro-icon/components'
+import { replaceRoute } from '@/utils/index.ts'
 import BulmaIcon from './BulmaIcon.astro'
 interface Props {
     totalItems: number
     itemsPerPage: number,
 
-    currentPage?: number
+    currentPage?: number,
+    /* The key of the parameter to replace in urls */
+    param?: string
+    /* Is the param a query/search ?param=, defaults false (url param) */
+    query?: boolean
 }
-const { totalItems, itemsPerPage, currentPage = 0 } = Astro.props
+const { totalItems, itemsPerPage, currentPage = 0, param = "page", query: isQuery = false } = Astro.props
 
 const numPages = Math.ceil(totalItems / itemsPerPage)
 
 function getUrl(page: number) {
-    return Astro.routePattern.replace(/\[page\]/, page.toString())
+    return isQuery
+        ? replaceRoute(Astro, {}, { [param]: page })
+        : replaceRoute(Astro, { [param]: page })
 }
 ---
 <nav class="pagination" role="navigation" aria-label="pagination">

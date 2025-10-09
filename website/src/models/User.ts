@@ -179,7 +179,7 @@ export async function getUser(steamid: string): Promise<PlayerFull | null> {
     const [rows] = await db.execute<RowDataPacket[]>("SELECT * FROM stats_users WHERE SUBSTRING(steamid, 11) = SUBSTRING(?, 11)", [steamid])
     if(rows.length === 0) return null
 
-    cache.set("user.getUser." + steamid, rows[0], 1000 * 60 * 5)
+    cache.set("user.getUser." + steamid, rows[0], 1000 * 60 * 30)
     return rows[0] as any
 } 
 
@@ -289,6 +289,11 @@ export interface PointHistory {
     timestamp: number
 }
 
+/**
+ * Returns list of every occurrence where user gained/lost oints
+ * @param steamid steamid
+ * @param limit number of rows to return
+ */
 export async function getUserPointsHistory(steamid: string, limit = 300): Promise<PointHistory[]> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT type, amount, timestamp 
@@ -298,7 +303,7 @@ export async function getUserPointsHistory(steamid: string, limit = 300): Promis
         LIMIT ?
     `, [steamid, limit])
 
-    
+
 
     return rows.map(row => {
         return {
@@ -307,4 +312,37 @@ export async function getUserPointsHistory(steamid: string, limit = 300): Promis
             timestamp: row.timestamp
         }
     })
+}
+
+
+export interface UserGamesCount {
+    wins: number,
+    easy: number,
+    normal: number,
+    advanced: number,
+    expert: number
+}
+/**
+ * Returns number of coop games, and number of games per difficulty and realism
+ * @param steamid steamid
+ */
+export async function getUserGamemodeCounts(steamid: string, gamemode = 'coop'): Promise<UserGamesCount> {
+    const [rows] = await db.execute<RowDataPacket[]>(`
+        SELECT COUNT(*) wins,
+            SUM(IF(g.difficulty = 0, 1, 0)) AS easy,
+            SUM(IF(g.difficulty = 1, 1, 0)) AS normal,
+            SUM(IF(g.difficulty = 2, 1, 0)) AS advanced,
+            SUM(IF(g.difficulty = 3, 1, 0)) AS expert
+        FROM stats_games g
+        WHERE g.steamid = ? AND g.gamemode = ?
+    `, [steamid, gamemode])
+    
+    return {
+        wins: Number(rows[0].wins ?? 0),
+        easy: Number(rows[0].easy ?? 0),
+        normal: Number(rows[0].normal ?? 0),
+        advanced: Number(rows[0].advanced ?? 0),
+        expert: Number(rows[0].expert ?? 0),
+
+    }
 }

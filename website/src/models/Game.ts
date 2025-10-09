@@ -62,13 +62,14 @@ export async function getRecentGames(page: number = 1, limit = 8): Promise<Recen
 }
 
 
-interface FilterOptions { gamemode?: string|null, difficulty?: number|null, map_type?: number|null, tag?: string|null, map?: string|null }
+interface FilterOptions { steamid?: string, gamemode?: string|null, difficulty?: number|null, map_type?: number|null, tag?: string|null, map?: string|null }
 /**
  * Returns count amount of recently played games
  * @param limit number of games to return
  * @returns Game with some sums and game info
  */
-export async function getFilteredGames(opts: FilterOptions = {}, page = 0, limit = 8): Promise<RecentGame[]> {
+export async function getFilteredGames(opts: FilterOptions = {}, page = 1, limit = 8): Promise<RecentGame[]> {
+    if(page < 1) page = 1
     const offset = (page - 1) * limit
 
     // const [total] = await db.execute("SELECT COUNT(DISTINCT campaignID) as total FROM `stats_games`")
@@ -78,6 +79,7 @@ export async function getFilteredGames(opts: FilterOptions = {}, page = 0, limit
     if(opts.map_type) builder.push("i.flags = ?", opts.map_type)
     if(opts.tag) builder.push("FIND_IN_SET(?, server_tags)", opts.tag)
     if(opts.map) builder.push("map LIKE ?", `${opts.map}%`)
+    if(opts.steamid) builder.push("steamid = ?", opts.steamid)
 
     const [whereClause, data] = builder.buildFullWhere()
 

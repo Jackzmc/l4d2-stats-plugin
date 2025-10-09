@@ -1,0 +1,72 @@
+---
+import Layout, { type PageInfo } from '@/layouts/Layout.astro'
+const params = Astro.params
+if(!params.steamid) return new Response(null, { status: 404 })
+
+const ITEMS_PER_PAGE = 4 * 3
+
+import { getUser, getUserGamemodeCounts } from '@/models/User.ts'
+import UserHero from '@/components/misc/UserHero.astro'
+import LevelItem from '@/components/bulma/LevelItem.astro'
+import Level from '@/components/bulma/Level.astro'
+import { getSearchParam, getSearchParamNumber } from '@/utils/index.ts'
+import Select from '@/components/bulma/Select.astro'
+import Field from '@/components/bulma/Field.astro'
+import { getFilteredGames, getGamemodes } from '@/models/Game.ts'
+import MapBox from '@/components/misc/MapBox.astro'
+import Pagination from '@/components/bulma/Pagination.astro'
+
+const gamemode = getSearchParam(Astro, "gamemode", "coop")!
+const page = getSearchParamNumber(Astro, "page", 1)!
+
+const user = await getUser(params.steamid)
+if(!user) return new Response(null, { status: 404 })
+const [ gamemodes, gameStats, games ] = await Promise.all([ 
+    getGamemodes(), 
+    getUserGamemodeCounts(params.steamid, gamemode),
+    getFilteredGames({ steamid: user.steamid, gamemode }, page, ITEMS_PER_PAGE)
+])
+
+const meta: PageInfo = {
+    title: `${gamemode} Games - ${user.last_alias}`,
+    description: `View ${user.last_alias}'s "${gamemode}" gamemode games`,
+}
+if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, max-age=3600")
+---
+<Layout meta={meta}>
+    <UserHero slot="hero" user={user} subtitle={`${user.points.toLocaleString()} points`} activePage="games" />
+
+    <div class="container">
+        <Level class="box">
+            <LevelItem>
+                <form action={Astro.url.pathname} method="get">
+                    <Field label="Gamemode">
+                        <Field>
+                            <Select name="gamemode" items={gamemodes} selected={gamemode} autocomplete="off">
+                            </Select>
+                            <input slot="addon" type="submit" class="button is-link" value="Set" /> 
+                        </Field>
+                    </Field>
+                </form>
+            </LevelItem>
+            <LevelItem title="Total Wins" value={gameStats.wins} />
+            <LevelItem title="Easy Games" value={gameStats.easy} />
+            <LevelItem title="Normal Games" value={gameStats.normal} />
+            <LevelItem title="Advanced Games" value={gameStats.advanced} />
+            <LevelItem title="Expert Games" value={gameStats.expert} />
+        </Level>
+        
+        <div class="grid is-col-min-12">
+            {games.map(game => 
+                <div class="cell is-col-min-8">
+                    <MapBox map={game} />
+                </div>
+            )}
+        </div>
+
+        <div class="box">
+            <Pagination totalItems={gameStats.wins} currentPage={page} itemsPerPage={ITEMS_PER_PAGE} query />
+        </div>
+    </div>
+</Layout>
+

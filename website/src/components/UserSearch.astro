@@ -127,9 +127,7 @@ async function onSearchInput(ev: Event) {
     ignore = false
 
     searchDebounced(value, (users: PlayerSearchResult[]) => {
-        console.debug("Updating list")
         const list = input.parentElement!.parentElement!.parentElement!.querySelector(".search-items") as HTMLInputElement
-        console.debug(list)
         updateAutocomplete(list, users)
     })
 }

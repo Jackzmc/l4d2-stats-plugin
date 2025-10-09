@@ -106,8 +106,6 @@ export async function getFilteredGames(opts: FilterOptions = {}, page = 1, limit
         LIMIT ?, ?
     `, [...data, offset, limit])
 
-    console.debug(whereClause, [...data, offset, limit])
-
     return games.map((row,i) => {
         return {
             ...row,

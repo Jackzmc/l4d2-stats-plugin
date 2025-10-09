@@ -15,7 +15,7 @@ const { map } = Astro.props
 ---
 <div class="box full-height">
     <h6 class="title is-6 l4d2-text has-text-centered">{ map.name }</h6>
-    <Picture class="is-inline-block is-pulled-left image is-128x128" src={getMapPoster(map.map)} alt={`Poster for ${map.name||map.map}`} />
+    <Picture class="is-inline-block is-pulled-left image is-128x128" src={getMapPoster(map.map) as any} alt={`Poster for ${map.name||map.map}`} />
     <span class="has-text-centered">
         <p class:list={["subtitle is-6 mb-0 mt-2", difficultyClass[map.difficulty]]} 
             style="text-shadow:lightgray 0px 0px 5px"

@@ -10,17 +10,17 @@ import { getGamemodes, getServerTags, getFilteredGames } from "@/models/Game.ts"
 
 const [gamemodes, tags] = await Promise.all([getGamemodes(), getServerTags()]) 
 
-const queryTags = Astro.url.searchParams.getAll("tags")
+const queryTag = Astro.url.searchParams.get("tag")
 const queryMapType = Astro.url.searchParams.get("map_type")
 const queryGamemode = Astro.url.searchParams.get("gamemode")
 const queryDifficulty = Astro.url.searchParams.get("difficulty")
 
 // Have user press 'Search' at least once before we load anything 
-const shouldLoad = queryGamemode != undefined || queryMapType != undefined || queryGamemode != undefined || queryDifficulty != undefined || queryTags.length > 0
+const shouldLoad = queryGamemode != undefined || queryMapType != undefined || queryGamemode != undefined || queryDifficulty != undefined || queryTag != undefined
 
 const games = shouldLoad ? await getFilteredGames({
     gamemode: queryGamemode || undefined,
-    tags: queryTags,
+    tag: queryTag || undefined,
     map_type: Number(queryMapType) || undefined,
     difficulty: Number(queryDifficulty) || undefined
 }) : []
@@ -30,36 +30,32 @@ const games = shouldLoad ? await getFilteredGames({
     <Fragment slot="left">
         <LevelItem>
             <Field label="Server Tag">
-                <Select name="tag" selected="" items={tags}>
-                    <option value="" slot="extra" selected>Any</option>
-                </Select>
+                <Select name="tag" selected={queryTag} items={tags} anyOption={{}} />
             </Field>
         </LevelItem>
         <LevelItem>
             <Field label="Map Type">
-                <Select name="map_type" selected="">
-                    <option value="" selected>Any</option>
-                    <option value={1}>Official Maps</option>
-                    <option value={1}>Custom Maps</option>
-                </Select>
+                <Select name="map_type" selected={queryMapType} items={[
+                    {value: "", label: "Any"},
+                    {value: "0", label: "Official Maps"},
+                    {value: "1", label: "Custom Maps"},
+                ]} />
             </Field>
         </LevelItem>
         <LevelItem>
             <Field label="Gamemode">
-                <Select name="gamemode" items={gamemodes} selected="">
-                    <option value="" slot="extra" selected>Any</option>
-                </Select>
+                <Select name="gamemode" items={gamemodes} selected={queryGamemode} anyOption={{}} />
             </Field>
         </LevelItem>
         <LevelItem>
             <Field label="Difficulty">
-                <Select name="difficulty" selected="">
-                    <option value="" selected>Any</option>
-                    <option value={0}>Easy</option>
-                    <option value={1}>Normal</option>
-                    <option value={2}>Advanced</option>
-                    <option value={3}>Expert</option>
-                </Select>
+                <Select name="difficulty" selected={queryDifficulty} items={[
+                    {value: "", label: "Any"},
+                    {value: "0", label: "Easy"},
+                    {value: "1", label: "Normal"},
+                    {value: "2", label: "Advanced"},
+                    {value: "3", label: "Expert"},
+                ]} />
             </Field>
         </LevelItem>
         <LevelItem>

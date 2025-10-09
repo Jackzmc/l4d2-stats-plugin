@@ -1,5 +1,6 @@
 import type { RowDataPacket } from 'mysql2';
 import db from '@/db/pool.ts'
+import { QueryConditionBuilder } from '@/db/helpers.ts';
 import type { Difficulty, Survivor } from '@/types/game.ts';
 import type { Player } from '@/db/types.ts';
 
@@ -59,13 +60,23 @@ export async function getRecentGames(count = 8): Promise<RecentGame[]> {
     })
 }
 
+
+
 /**
  * Returns count amount of recently played games
  * @param count number of games to return
  * @returns Game with some sums and game info
  */
-export async function getFilteredGames(opts: { gamemode?: string, difficulty?: number, map_type?: number, tags?: string[] } = {}, count = 8): Promise<RecentGame[]> {
+export async function getFilteredGames(opts: { gamemode?: string, difficulty?: number, map_type?: number, tag?: string } = {}, count = 8): Promise<RecentGame[]> {
     // const [total] = await db.execute("SELECT COUNT(DISTINCT campaignID) as total FROM `stats_games`")
+    const builder = new QueryConditionBuilder()
+    if(opts.gamemode != undefined) builder.push("gamemode = ?", opts.gamemode)
+    if(opts.difficulty != undefined) builder.push("difficulty = ?", opts.difficulty)
+    if(opts.map_type != undefined) builder.push("i.flags = ?", opts.map_type)
+    if(opts.tag) builder.push("FIND_IN_SET(?, server_tags)", opts.tag)
+
+    const [whereClause, data] = builder.buildFullWhere()
+
     const [games] = await db.execute<RowDataPacket[]>(`
         SELECT COUNT(g.campaignID) as numPlayers,
             g.campaignID campaignId,
@@ -83,10 +94,13 @@ export async function getFilteredGames(opts: { gamemode?: string, difficulty?: n
             i.name as name
         FROM stats_games as g
         INNER JOIN map_info i ON i.mapid = g.map
+        ${whereClause}
         GROUP BY g.campaignID
         ORDER BY dateEnd DESC
         LIMIT ?
-    `, [count])
+    `, [...data, count])
+
+    console.debug(whereClause, [...data, count])
 
     return games.map((row,i) => {
         return {

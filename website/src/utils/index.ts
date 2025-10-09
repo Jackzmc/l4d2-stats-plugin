@@ -94,7 +94,7 @@ export async function getWeaponImage(weaponId: string): Promise<ImageProperties 
 export function getGamemode(gamemode: string) {
   let val = GAMEMODES[gamemode]
   if(val) return val
-  return val.charAt(0).toUpperCase() + val.slice(1)
+  return gamemode.charAt(0).toUpperCase() + gamemode.slice(1)
 }
 
 export function requireParam<T>(params: URLSearchParams, key: string, validValues: string[]): T {

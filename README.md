@@ -16,11 +16,11 @@ Demo: https://stats.jackz.me
 
 ## Deploying
 
-## Plugin
+### Plugin
 
 The plugin can be downloaded from [plugins/l4d2_stats_recorder.smx](./plugins/l4d2_stats_recorder.smx)
 
-## Env Variables
+### Env Variables
 
 Env variables can be set with a local `.env.local` file, default values can be seen in the `.env` file provided
 
@@ -45,28 +45,31 @@ HOST=0.0.0.0
 PORT=4321
 ```
 
-## Docker
+### Docker
 
-A docker image is available at [https://hub.docker.com/jackzmc/l4d2-stats-server](https://hub.docker.com/repository/docker/jackzmc/l4d2-stats-server)
+Due the nature of Astro, the site URL is baked into the files on build time. No pre-built docker image is available, but you could build your own easily with the provided Dockerfile.
 
-An addition a [docker-compose.yml](./docker-compose.yml) file is included. It does not include a database, as you should use the same database sourcemod is using.
+Pulls env variables from [.env files (Vite's docs)](https://vite.dev/guide/env-and-mode.html#env-files)
 
-`docker run jackzmc/l4d2-stats-server:latest`
+```bash
+docker build -t l4d2-stats-website .
+```
 
-## Manual
+### Manual
 
 Requires [pnpm](https://pnpm.io/)
 
+Pulls env variables from [.env files (Vite's docs)](https://vite.dev/guide/env-and-mode.html#env-files)
+
 ```bash
-# install 
-pnpm install
+# install dependencies
+pnpm install --production
+
 # build site for production, produces files in dist/
 pnpm build
-# run dev site
-pnpm dev
 ```
 
-## External Nginx
+### External Nginx
 
 The docker server has express.js serve the UI's static files, but it may be better to use an external reverse proxy
 
@@ -87,4 +90,14 @@ server {
         proxy_set_header Host $http_host;
     }
 }
+```
+
+## Development
+
+```bash
+# install all dependencies
+pnpm i
+
+# serve dev server on localhost:4321
+pnpm dev
 ```

@@ -19,6 +19,7 @@ import { BANNER_SIZE } from '@/pages/api/users/[id]/banner.png.ts'
 const user = await getUser(params.steamid)
 if(!user) return new Response(null, { status: 404 })
 const topStats = (await getUserTopStats(params.steamid))!
+console.log(topStats)
 const totalMaps = topStats.played_any.count
 const mapPercents = [ Number(topStats.played_official.count) / totalMaps * 100, Number(topStats.played_custom.count) / totalMaps * 100 ]
 
@@ -39,8 +40,8 @@ const meta: PageInfo = {
         },
         image: {
             url: `${Astro.url.origin}${import.meta.env.BASE_URL}api/users/${user.steamid}/banner.png`,
-            // width: BANNER_SIZE[0],
-            // height: BANNER_SIZE[1],
+            width: BANNER_SIZE[0],
+            height: BANNER_SIZE[1],
             type: "image/png"
         }
     }
@@ -369,32 +370,33 @@ const steamid64 = steamid.getSteamID64()
                         <li><a href="#averages"><BulmaIcon name="iconoir:link"></BulmaIcon>Averages</a></li>
                     </ul>
                 </div>
-                <div class="box has-background-link has-text-white has-text-centered">
+                {topStats.top_char && <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Most Played Survivor</h4>
                     { /* @ts-expect-error ts(2322) */ }
                     <Image src={getPortrait(topStats.top_char.value) as any} alt={Survivor[topStats.top_char.value] + " portrait"} style="border: 4px solid black" />
                     { /* @ts-expect-error ts(2322) */ }
                     <p class="subtitle is-5 has-text-white mb-1">{Survivor[topStats.top_char.value]}</p>
                     <p class="subtitle is-6 has-text-white">{topStats.top_char.count.toLocaleString()} times</p>
-                </div>
-                <div class="box has-background-link has-text-white has-text-centered">
+                </div>}
+                {topStats.top_map && <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Most Played Map</h4>
                     <Image src={getMapPoster(topStats.top_map.id!) as any} alt={`Map poster for ${topStats.top_map.id}`} style="border: 4px solid black" />
                     <p class="subtitle is-5 has-text-white mb-1">{ topStats!.top_map.value ?? topStats.top_map.id }</p>
                     <p class="subtitle is-6 has-text-white">{topStats.top_map.count.toLocaleString()} times</p>
-                </div>
+                </div>}
                 <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Maps Played</h4>
                     <Level>
-                        <LevelItem class="has-text-white" title="Official" value={Number(topStats!.played_official.count)} />
-                        <LevelItem class="has-text-white" title="Custom" value={Number(topStats!.played_custom.count)} />
+                        <LevelItem class="has-text-white" title="Official" value={Number(topStats.played_official.count)} />
+                        <LevelItem class="has-text-white" title="Custom" value={Number(topStats.played_custom.count)} />
                     </Level>
-                    <Level>
+                    <!-- Check if played any maps at all. If not would be NaN -->
+                    {topStats.played_any.count > 0 && <Level>
                         <LevelItem class="has-text-white" title="Official" value={mapPercents[0]} decimals={0} suffix="%" />
                         <LevelItem class="has-text-white" title="Custom" value={mapPercents[1]} decimals={0} suffix="%"/>
-                    </Level>
+                    </Level>}
                 </div>
-                {topStats!.top_weapon.value && <div class="box has-background-link has-text-white has-text-centered">
+                {topStats.top_weapon?.value && <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Most Used Weapon</h4>
                     <Image src={getWeaponImage(topStats.top_weapon.id!) as any} alt={`Weapon image for ${topStats.top_weapon.id}`} style="border: 4px solid black" />
                     <p>{ topStats!.top_weapon.value }</p>

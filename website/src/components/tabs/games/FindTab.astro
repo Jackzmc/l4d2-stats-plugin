@@ -9,7 +9,9 @@ import SimplePagination from "@/components/bulma/SimplePagination.astro";
 import MapBox from "@/components/misc/MapBox.astro";
 import { getGamemodes, getServerTags, getFilteredGames } from "@/models/Game.ts";
 
+console.time("test")
 const [gamemodes, tags] = await Promise.all([getGamemodes(), getServerTags()]) 
+console.timeEnd("test")
 
 const queryTag = Astro.url.searchParams.get("tag")
 const queryMapType = Astro.url.searchParams.get("map_type")

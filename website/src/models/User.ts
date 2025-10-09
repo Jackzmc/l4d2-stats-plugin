@@ -1,5 +1,6 @@
-import type { RowDataPacket } from "mysql2";
 import db from "@/db/pool.ts";
+import cache from '@/db/cache.ts'
+import type { RowDataPacket } from "mysql2";
 import type { Player } from "@/db/types.ts";
 import assert from "assert";
 
@@ -12,28 +13,32 @@ export interface LeaderboardEntry {
 }
 
 export type PlayerWithPoints = Player & { points: number }
-let playerOfDay: { player: PlayerWithPoints, timestamp: Date } | null = null
 
 /**
  * Selects a random player of the day. Response is cached. Only returns players with points
  */
 export async function getPlayerOfDay(): Promise<PlayerWithPoints> {
     const date = new Date()
-    if(!playerOfDay || playerOfDay.timestamp.getDate() != date.getDate()) {
-        const [rows] = await db.execute<RowDataPacket[]>(`
-            SELECT steamid, last_alias name, points 
-            FROM stats_users 
-            WHERE points > 0 
-            ORDER BY RAND() 
-            LIMIT 1`)
-        assert(rows.length > 0, "no players in table")
-        playerOfDay = {
-            player: rows[0] as PlayerWithPoints,
-            timestamp: date
-        }
-    }
+    const cacheObj = await cache.get(`user.getPlayerOfDay.${date.getDate()}`)
+    if(cacheObj) return cacheObj
+
+    const [rows] = await db.execute<RowDataPacket[]>(`
+        SELECT steamid, last_alias name, points 
+        FROM stats_users 
+        WHERE points > 0 
+        ORDER BY RAND() 
+        LIMIT 1`)
+    assert(rows.length > 0, "no players in table")
+    const playerOfDay = rows[0] as PlayerWithPoints
+
+    // Calculate expire date for cache
+    const nextDate = new Date()
+    nextDate.setDate(date.getDate() + 1)
+    const expires = nextDate.valueOf() - date.valueOf() + 1
+
+    cache.set(`user.getPlayerOfDay.${date.getDate()}`, playerOfDay, expires)
     
-    return playerOfDay.player
+    return playerOfDay
 }
 
 export interface PlayerTotals {
@@ -46,14 +51,19 @@ export interface PlayerTotals {
  * Returns the number of players in the users table with poion
  */
 export async function getTotalPlayers(period: string): Promise<PlayerTotals> {
+    const cacheObj = await cache.get("user.getTotalPlayers")
+    if(cacheObj) return cacheObj
+
     const [rows] = await db.execute<RowDataPacket[]>(`SELECT
         (SELECT COUNT(*) FROM stats_users) allPlayers,
         (SELECT COUNT(*) FROM stats_users WHERE points > 0) withPoints
     `)
-    return {
+    const totals = {
         allPlayers: Number(rows[0].allPlayers),
         withPoints: Number(rows[0].withPoints)
     }
+    cache.set("user.getTotalPlayers", totals, 1000 * 60 * 60) // 1 hr
+    return totals
 }
 
 /**
@@ -63,29 +73,29 @@ export async function getTotalPlayers(period: string): Promise<PlayerTotals> {
  */
 export async function getLeaderboards(page: number = 1, itemsPerPage = 30): Promise<LeaderboardEntry[]> {
     const offset = (page - 1) * itemsPerPage;
-    const [entries] = await db.execute<(LeaderboardEntry & RowDataPacket)[]>(`select
+    const [entries] = await db.execute<(LeaderboardEntry & RowDataPacket)[]>(`SELECT
         steamid,last_alias,minutes_played,last_join_date,
-        points as points,
-        (
-            (common_kills / 1000 * 0.10) +
-            (kills_all_specials * 0.25) +
-            (revived_others * 0.05) +
-            (heal_others * 0.05) -
-            (survivor_incaps * 0.10) -
-            (survivor_deaths * 0.05) +
-            (survivor_ff * 0.03) +
-            (damage_to_tank*0.15/minutes_played) +
-            ((kills_molotov+kills_pipe)*0.025) +
-            (witches_crowned*0.2) -
-            (rocks_hitby*0.2) +
-            (cleared_pinned*0.05)
-        ) as points_new_old
-        from stats_users
-        where points > 0
-        order by points desc
-        limit ?,?`, 
+        points as points
+        FROM stats_users
+        WHERE points > 0
+        ORDER BY points desc
+        LIMIT ?,?`, 
         [offset, itemsPerPage]
     )
+    //        // (
+        //     (common_kills / 1000 * 0.10) +
+        //     (kills_all_specials * 0.25) +
+        //     (revived_others * 0.05) +
+        //     (heal_others * 0.05) -
+        //     (survivor_incaps * 0.10) -
+        //     (survivor_deaths * 0.05) +
+        //     (survivor_ff * 0.03) +
+        //     (damage_to_tank*0.15/minutes_played) +
+        //     ((kills_molotov+kills_pipe)*0.025) +
+        //     (witches_crowned*0.2) -
+        //     (rocks_hitby*0.2) +
+        //     (cleared_pinned*0.05)
+        // ) as points_new_old
     return entries
 }
 
@@ -182,6 +192,8 @@ export interface UserTopStats extends Player {
     played_any: TopStat
 }
 export async function getUserTopStats(steamid: string): Promise<UserTopStats | null> {
+    const cacheObj = await cache.get("user.getUserTopStats." + steamid)
+    if(cacheObj) return cacheObj
     // TODO: support top_map being non-official maps? (need to worry about anything calling getMapScreenshot such as banner.png.ts)
     const [rows] = await db.execute<RowDataPacket[]>(`
         (SELECT 'top_weapon' name, top_weapon id, w.name value, COUNT(*) count FROM stats_games g LEFT JOIN weapon_names w ON w.id = g.top_weapon WHERE steamid = :steamid AND top_weapon != '' GROUP BY top_weapon ORDER BY count DESC LIMIT 1)
@@ -206,6 +218,7 @@ export async function getUserTopStats(steamid: string): Promise<UserTopStats | n
             count: row.count
         }
     }
+    cache.set("user.getUserTopStats." + steamid, out, 1000 * 60 * 5) // 5 min
     return out as unknown as UserTopStats
 }
 

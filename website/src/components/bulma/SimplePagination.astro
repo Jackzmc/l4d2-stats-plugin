@@ -12,8 +12,6 @@ const { maxPages, currentPage = 1, queryName = "page" } = Astro.props
 
 const canGoBack = currentPage > 1
 const canGoNext = maxPages != undefined ? currentPage < maxPages : true
-console.log("back", replaceRoute(Astro, {}, { [queryName]: currentPage - 1 }))
-console.log("next", replaceRoute(Astro, {}, { [queryName]: currentPage + 1 }))
 ---
 <div class="level">
         <div class="level-item">

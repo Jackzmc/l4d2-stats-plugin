@@ -7,13 +7,12 @@ import FindTab from '@/components/tabs/games/FindTab.astro'
 const games = await getTotals()
 const meta: PageInfo = {
 	title: "Games",
-	description: "View recently played games or search through all played games",
+	description: "Find and filter previously played games",
     hero: {
         subtitle: `${games.totalGames.toLocaleString()} games played`
     }
 }
 
-if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, max-age=120');
 export const prerender = false
 ---
 

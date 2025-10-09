@@ -47,7 +47,7 @@ const totalPlayers = await User.getTotalPlayers(PERIOD)
 const leaderboard = await User.getLeaderboards(page, ITEMS_PER_PAGE)
 const playerOfDay = await User.getPlayerOfDay()
 
-meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <b>${totalPlayers.allPlayers.toLocaleString()} players</b> this <b>${PERIOD}</b>`
+meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <b>${totalPlayers.allPlayers.toLocaleString()} players</b> this <b>{PERIOD}</b>`
 
 const canGoBack = page > 1
 const canGoNext = page < Math.ceil(totalPlayers.withPoints / ITEMS_PER_PAGE)

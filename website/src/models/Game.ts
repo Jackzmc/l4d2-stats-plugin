@@ -1,5 +1,6 @@
-import type { RowDataPacket } from 'mysql2';
 import db from '@/db/pool.ts'
+import cache from '@/db/cache.ts'
+import type { RowDataPacket } from 'mysql2';
 import { QueryConditionBuilder } from '@/db/helpers.ts';
 import type { Difficulty, Survivor } from '@/types/game.ts';
 import type { Player } from '@/db/types.ts';
@@ -375,16 +376,23 @@ export async function getSessionPlayers(id: string): Promise<(Player & { session
  * @returns string[]
  */
 export async function getGamemodes(): Promise<string[]> {
+    const cacheObj = await cache.get("game.getGamemodes")
+    if(cacheObj) return cacheObj
+
     const [rows] = await db.execute<RowDataPacket[]>(
     "SELECT distinct gamemode FROM stats_games"
     )
-    return rows.map(row => row.gamemode)
+    const list = rows.map(row => row.gamemode)
+    cache.set("game.getGamemodes", list, 1000 * 60 * 5)
+    return list
 }
 /**
  * Returns list of all distinct server tags 
  * @returns string[]
  */
 export async function getServerTags(): Promise<string[]> {
+    const cacheObj = await cache.get("game.getServerTags")
+    if(cacheObj) return cacheObj
     const [rows] = await db.execute<RowDataPacket[]>(
     "SELECT distinct server_tags FROM stats_games WHERE server_tags != ''"
     )
@@ -400,7 +408,11 @@ export async function getServerTags(): Promise<string[]> {
     })
 
     // return sorted list of all tags, in descending order by count
-    return Object.entries(obj)
+    const sortList = Object.entries(obj)
         .sort(([,val1],[,val2]) => val2 - val1)
-        .map(([key]) => key)
+        .map(([key]) => key);
+
+    cache.set("game.getServerTags", sortList, 1000 * 60 * 5)
+
+    return sortList
 }

@@ -1,5 +1,6 @@
-import type { RowDataPacket } from 'mysql2';
 import db from '@/db/pool.ts'
+import cache from '@/db/cache.ts'
+import type { RowDataPacket } from 'mysql2';
 import { getMapsWithPlayCount, type MapCountEntry } from './Map.ts';
 import assert from 'assert';
 
@@ -14,14 +15,19 @@ export interface Summary {
  * @returns 
  */
 export async function getTotals(): Promise<Summary> {
+    const cacheObj = await cache.get("gameSummary.getTotals")
+    if(cacheObj) return cacheObj
+
     const [totals] = await db.execute<RowDataPacket[]>(`SELECT
         (select count(distinct campaignID) from stats_games) AS total_games, 
         (SELECT COUNT(*) FROM stats_games) AS total_sessions
     `);
-    return {
+    const summary = {
         totalSessions: totals[0].total_sessions,
         totalGames: totals[0].total_games
     }
+    cache.set("gameSummary.getTotals", summary, 1000 * 60 * 10)
+    return summary
 }
 
 /**
@@ -29,6 +35,9 @@ export async function getTotals(): Promise<Summary> {
  * @returns [ least map, most map ]
  */
 export async function getBestWorstOfficialMap(): Promise<[MapCountEntry, MapCountEntry]> {
+    const cacheObj = await cache.get("gameSummary.getBestWorstOfficialMap")
+    if(cacheObj) return cacheObj
+
     const sortedMaps = (await getMapsWithPlayCount(true))
         .sort((a, b) => a.count - b.count)
 
@@ -37,11 +46,16 @@ export async function getBestWorstOfficialMap(): Promise<[MapCountEntry, MapCoun
     const topMap = sortedMaps.at(-1)!
     const btmMap = sortedMaps.at(0)!
 
-    return [btmMap, topMap]
+    const output: [MapCountEntry, MapCountEntry] = [btmMap, topMap]
+    cache.set("gameSummary.getBestWorstOfficialMap", output, 1000 * 60 * 10)
+    return output
 }
 
 // TODO: types
 export async function getSummaryTotals(): Promise<Record<string, number>>{
+    const cacheObj = await cache.get("gameSummary.getSummaryTotals")
+    if(cacheObj) return cacheObj
+
     const [totals] = await db.execute<RowDataPacket[]>(`SELECT 
         sum(nullif(finale_time,0)) as finale_time, 
         sum(date_end - date_start) as game_duration,
@@ -71,11 +85,15 @@ export async function getSummaryTotals(): Promise<Record<string, number>>{
         (SELECT COUNT(*) FROM \`stats_users\`) AS total_users
         FROM stats_games WHERE date_start > 0`
     )
+    cache.set("gameSummary.getSummaryTotals", totals[0], 1000 * 60 * 60) // 1 hour
     return totals[0]
 }
 
 // TODO: types
 export async function getSummaryAverages(): Promise<Record<string, number>> {
+    const cacheObj = await cache.get("gameSummary.getSummaryAverages")
+    if(cacheObj) return cacheObj
+
     const [averages] = await db.execute<RowDataPacket[]>(`SELECT 
         avg(nullif(finale_time,0)) as finale_time, 
         avg(date_end - date_start) as game_duration,
@@ -109,8 +127,10 @@ export async function getSummaryAverages(): Promise<Record<string, number>> {
 
     const avgs = averages[0] as Record<string, number>
     Object.keys(avgs).forEach(key => avgs[key] = Number(avgs[key]))
-    return {
+    const output = {
         ...avgs,
         difficulty: Math.round(averages[0].difficulty)
     }
+    cache.set("gameSummary.getSummaryAverages", output, 1000 * 60 * 60) // 1 hour
+    return output
 }

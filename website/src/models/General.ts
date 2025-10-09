@@ -1,5 +1,6 @@
-import type { RowDataPacket } from 'mysql2';
 import db from '@/db/pool.ts'
+import cache from '@/db/cache.ts'
+import type { RowDataPacket } from 'mysql2';
 import type { Player } from '@/db/types.ts';
 
 export interface PlayerStatEntry extends Player {
@@ -24,6 +25,9 @@ export const TOP_STAT_NAMES: Record<keyof PlayerTopStats, string> = {
     times_mvp: 'Most Times MVP'
 }
 export async function topStats(): Promise<PlayerTopStats> {
+    const cacheObj = await cache.get("general.topStats")
+    if(cacheObj) return cacheObj
+
     const [rows] = await db.execute<RowDataPacket[]>(`
         (SELECT 'survivor_deaths' type,steamid,last_alias name,survivor_deaths value FROM stats_users
         WHERE survivor_deaths > 0 ORDER BY stats_users.survivor_deaths desc, stats_users.points desc limit 10)
@@ -62,5 +66,6 @@ export async function topStats(): Promise<PlayerTopStats> {
             value: Number(row.value)
         })
     } 
+    cache.set("general.topStats", keys, 1000 * 60 * 60 * 6) // 6 hours
     return keys as Record<keyof PlayerTopStats, PlayerStatEntry[]>
 }

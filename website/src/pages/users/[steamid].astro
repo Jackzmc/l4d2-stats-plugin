@@ -49,6 +49,7 @@ const meta: PageInfo = {
 const steamid = new SteamID(user.steamid)
 const steamid64 = steamid.getSteamID64()
 
+const BANNER_SCALE = 0.5
 // TODO: split sections into components
 
 ---
@@ -57,7 +58,7 @@ const steamid64 = steamid.getSteamID64()
         <div class="columns">
             <div class="column">
                 <h4 class="title is-4">Stats Overview</h4>
-                <Image width={608} height={214} class="has-background-black" style="border-radius: 8px" 
+                <Image width={BANNER_SIZE[0] * BANNER_SCALE} height={BANNER_SIZE[1] * BANNER_SCALE} class="has-background-black" style="border-radius: 8px" 
                     src={`/api/users/${user.steamid}/banner.png`} alt={`Profile banner for ${user.last_alias}`} 
                 />
 

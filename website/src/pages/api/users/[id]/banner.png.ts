@@ -6,20 +6,25 @@ import path from "path";
 import { formatHumanDuration } from "@/utils/date.ts";
 import { Survivor, SURVIVOR_DEFS } from "@/types/game.ts";
 
-const WATERMARK_TEXT = process.env.USER_WATERMARK_TEXT || "stats.jackz.me"
+const WATERMARK_TEXT = import.meta.env.USER_WATERMARK_TEXT || process.env.USER_WATERMARK_TEXT
 
 const PUBLIC_ROOT = import.meta.env.PROD ? path.resolve('./dist/client') : path.resolve('./public')
+
+const MARGIN_PX = 20
+const CANVAS_INNER_DIM = [1200, 600]
+
 
 FontLibrary.use("futurot", path.join(PUBLIC_ROOT, "fonts/futurot.woff"))
 FontLibrary.use("arial", path.join(PUBLIC_ROOT, "fonts/arial.ttf"))
 
-function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, opts: { font?: string, color?: string, filter?: string } = {}) {
+function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, opts: { maxWidth?: number, wrap?: boolean, font?: string, color?: string, filter?: string } = {}) {
   ctx.save()
   if(opts.filter) ctx.filter = opts.filter
   if(opts.font) ctx.font = opts.font
   if(opts.color) ctx.fillStyle = opts.color
+  if(opts.wrap != undefined) ctx.textWrap = opts.wrap
 
-  ctx.fillText(text, x, y)
+  ctx.fillText(text, x, y, opts.maxWidth)
 
   ctx.restore()
 }
@@ -27,7 +32,7 @@ function drawText(ctx: CanvasRenderingContext2D, text: string, x: number, y: num
 function drawBackgroundImage(ctx: CanvasRenderingContext2D, image: Image, color: [number, number, number, number] = [0,0,0,0.5]) {
   if(color[3] > 1.0) throw new Error("Alpha must be between 0.0 and 1.0")
   ctx.save()
-  ctx.filter = "blur(4px) brightness(25%) "
+  ctx.filter = "blur(8px) brightness(45%) "
   // ctx.filter = "blur(4px) brightness(80%) contrast(60%)"
   ctx.drawImage(image, 0, 0, ctx.canvas.width, ctx.canvas.height)
   // ctx.fillStyle = `rgba(${color.join(',')})`;
@@ -35,12 +40,41 @@ function drawBackgroundImage(ctx: CanvasRenderingContext2D, image: Image, color:
   ctx.restore()
 }
 
+function findSmallestFontScale(ctx: CanvasRenderingContext2D, maxSize: number, text: string, maxWidth: number, options: { minSize?: number, fontFamily?: string }= {}): number {
+  ctx.save()
+  const minSize = options.minSize ?? 0
+  let size = Math.round(maxSize)
+  while(size > minSize) {
+    ctx.font = `${size}pt ${options.fontFamily ?? ""}`
+    const width = ctx.measureText(text).width
+    console.log("test", width, maxWidth, { font: ctx.font })
+    if(width <= maxWidth) {
+      ctx.restore()
+      return size
+    }
+    size -= 1
+  }
+  ctx.restore()
+  return Math.round(minSize)
+}
+
+function getTextSize(ctx: CanvasRenderingContext2D, text: string, font: string): ReturnType<CanvasRenderingContext2D['measureText']> {
+  ctx.save()
+  ctx.font = font
+  const mes = ctx.measureText(text)
+  ctx.restore()
+  return mes
+}
+
+function performCtx(ctx: CanvasRenderingContext2D, cb: (ctx: CanvasRenderingContext2D) => any): any {
+  ctx.save()
+  const a = cb(ctx)
+  ctx.restore()
+  return a
+}
+
 const DARK_BG_COLOR: [number,number,number,number] = [ 0, 0, 0, 0.75 ]
 const LIGHT_BG_COLOR: [number,number,number,number]  = [ 255, 255, 255, 0.6 ]
-
-const MARGIN_PX = 20
-const CANVAS_INNER_DIM = [588, 194]
-
 export const BANNER_SIZE = [CANVAS_INNER_DIM[0] + MARGIN_PX, CANVAS_INNER_DIM[1] + MARGIN_PX]
 
 export const GET: APIRoute = async ({ params, request, url }) => {
@@ -52,8 +86,10 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   const user = await getUser(params.id)
   if(!user) return api404("USER_NOT_FOUND", "No user found")
   const topStats = (await getUserTopStats(params.id))!
+  const stats = await getUser(params.id)
 
-  const survivor: Survivor = survivorOverride != null ? survivorOverride : Number(topStats.top_char.value)
+  // Use override, if not, check if they have top_char, if not, use bill as default
+  const survivor: Survivor = survivorOverride || topStats.top_char.value != "" && Number(topStats.top_char.value) || 0
   const survivorDef = SURVIVOR_DEFS[survivor]
 
   const canvas = new Canvas(BANNER_SIZE[0], BANNER_SIZE[1])
@@ -62,10 +98,11 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   const shouldDrawBg = url.searchParams.get("bg") != "f" && url.searchParams.get("bg") !== "0"
 
   if(shouldDrawBg) drawBackgroundImage(ctx, 
-    await loadImage(path.join(PUBLIC_ROOT, `img/maps/screenshots/${topStats.top_map.id!}.jpeg`)),
+    // Load map image, where topStats.top_map should always be an official map which we have images for
+    // If they don't have top map, default to c1m1_hotel
+    await loadImage(path.join(PUBLIC_ROOT, `img/maps/screenshots/${topStats.top_map.id! || "c1m1_hotel"}.jpeg`)),
     survivorDef.colorIsDark ? LIGHT_BG_COLOR : DARK_BG_COLOR
   )
-
   const survivorImg = await loadImage(path.join(PUBLIC_ROOT, `img/fullbody/${survivorDef.name.toLowerCase()}.png`))
   const width = survivorImg.width * (CANVAS_INNER_DIM[1] / survivorImg.height)
   // subtract another - 20 to prevent the feet being too far down for some reason
@@ -73,23 +110,38 @@ export const GET: APIRoute = async ({ params, request, url }) => {
 
   // if(shouldDrawBg) ctx.fillStyle = survivorDef.colorIsDark ? 'black' : 'white' // default color for all text:
   if(shouldDrawBg) ctx.fillStyle = "white"
-  drawText(ctx, user.last_alias, 120+MARGIN_PX, 40+MARGIN_PX, { font: "bold 20pt futurot", color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)` })
+  //"01234567890123456789012345678901"
+  const startPos = [width + 10, MARGIN_PX + 90]
+  const maxWidth = CANVAS_INNER_DIM[0] - startPos[0]
+  const lineGap = 22
+  const statFont = "28px futurot"
+  const dim = getTextSize(ctx, "test string", statFont)
+  const lineHeight = dim.actualBoundingBoxAscent + dim.actualBoundingBoxDescent + lineGap
+  console.log(lineHeight)
 
-  drawText(ctx, `${topStats.played_any.count.toLocaleString()} games played`, 120+MARGIN_PX, 65+MARGIN_PX, { font: "20px futurot" })
-  drawText(ctx, `Played${formatHumanDuration(user.minutes_played, "", ["day", "hour", "minute"])}`, 120+MARGIN_PX, 90+MARGIN_PX, { font: "18px futurot" })
-  drawText(ctx, `Favorite map: ${topStats.top_map.value}`, 120+MARGIN_PX, 115+MARGIN_PX, { font: "20px futurot"})  
-  drawText(ctx, `Favorite weapon: ${topStats.top_weapon.value}`, 120+MARGIN_PX, 140+MARGIN_PX, { font: "20px futurot"})  
+  // const size = findSmallestFontScale(ctx, 48, user.last_alias, maxWidth, { fontFamily: "futurot"})
+  // console.log("size", size, "maxWidth", maxWidth)
+  drawText(ctx, user.last_alias, startPos[0], startPos[1], { wrap: true, font: `bold 48pt futurot`, color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)`, maxWidth })
+  startPos[1] += 100
 
-  // TODO: future impl
-  const playStyle = ""
-  drawText(ctx, playStyle, 120+MARGIN_PX, 170+MARGIN_PX, { font: "bold 24px arial" })
+  drawText(ctx, `${topStats.played_any.count.toLocaleString()} game${topStats.played_any.count > 1 ? 's' : ''} played`, startPos[0], startPos[1], { font: statFont })
+  startPos[1] += lineHeight
+  const durationText = user.minutes_played > 60 ? formatHumanDuration(user.minutes_played, "", ["day", "hour", "minute"]) : ` < 1 min`
+  drawText(ctx, `${durationText} played`, startPos[0] - 10, startPos[1], { font: statFont})
+  startPos[1] += lineHeight
+  drawText(ctx, `Favorite map: ${topStats.top_map?.value ?? "None"}`, startPos[0], startPos[1], { font: statFont })  
+  startPos[1] += lineHeight
+  drawText(ctx, `Favorite weapon: ${topStats.top_weapon?.value ?? "None"}`, startPos[0], startPos[1], { font: statFont })  
+  startPos[1] += lineHeight
+  drawText(ctx, `${stats?.clowns_honked.toLocaleString() ?? 0} clowns honked`, startPos[0], startPos[1], { font: statFont })  
+  startPos[1] += lineHeight
+  drawText(ctx, `${stats?.common_kills.toLocaleString() ?? 0} zombies killed`, startPos[0], startPos[1], { font: statFont })  
+  startPos[1] += lineHeight
 
-  ctx.restore()
-  ctx.font = 'light 6pt futurot'
-  ctx.fillStyle = '#737578'
+  // TODO: calculate best stats (highest number for them )
+  // or/and add a 'playstyle' thats more simplistic such as "Pill Popper" if pills best stat
 
-  const waterMarkDim = ctx.measureText(WATERMARK_TEXT)
-  ctx.fillText(WATERMARK_TEXT, canvas.width - waterMarkDim.actualBoundingBoxRight - 8 - MARGIN_PX, canvas.height - 8 - MARGIN_PX)
+  if(WATERMARK_TEXT != undefined) drawWatermark(ctx, WATERMARK_TEXT)
 
   const buf = await canvas.toBuffer("png")
   return new Response(buf as any, { 
@@ -100,3 +152,11 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   })
 }
 
+function drawWatermark(ctx: CanvasRenderingContext2D, text: string) {
+  ctx.restore()
+  ctx.font = 'light 6pt futurot'
+  ctx.fillStyle = '#737578'
+
+  const waterMarkDim = ctx.measureText(text)
+  ctx.fillText(text, ctx.canvas.width - waterMarkDim.actualBoundingBoxRight - 8 - MARGIN_PX, ctx.canvas.height - 8 - MARGIN_PX)
+}

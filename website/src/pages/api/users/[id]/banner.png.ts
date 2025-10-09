@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { getUser, getUserTopStats } from "@/models/User.ts";
 import { api404 } from "@/utils/api.ts";
-import { Canvas, FontLibrary, Image, loadImage, loadImageData, type CanvasRenderingContext2D } from 'skia-canvas';
+import { Canvas, FontLibrary, Image, loadImage, type CanvasRenderingContext2D } from 'skia-canvas';
 import path from "path";
 import { formatHumanDuration } from "@/utils/date.ts";
 import { Survivor, SURVIVOR_DEFS } from "@/types/game.ts";
@@ -45,7 +45,6 @@ export const BANNER_SIZE = [CANVAS_INNER_DIM[0] + MARGIN_PX, CANVAS_INNER_DIM[1]
 
 export const GET: APIRoute = async ({ params, request, url }) => {
   if(!params.id) return api404("MISSING_USER_ID", "A user ID is required")
-
   // Allow overriding survivor type
   let survivorOverride = url.searchParams.has("survivor") ? Number(url.searchParams.get("survivor")) : null
   if(survivorOverride != undefined && (survivorOverride < 0 || survivorOverride > Survivor.Louis)) survivorOverride = null
@@ -77,7 +76,7 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   drawText(ctx, user.last_alias, 120+MARGIN_PX, 40+MARGIN_PX, { font: "bold 20pt futurot", color: survivorDef.color, filter: `drop-shadow(0px 0px 1px white)` })
 
   drawText(ctx, `${topStats.played_any.count.toLocaleString()} games played`, 120+MARGIN_PX, 65+MARGIN_PX, { font: "20px futurot" })
-  drawText(ctx, `Played${formatHumanDuration(user.minutes_played, " ", ["day", "hour", "minute"])}`, 120+MARGIN_PX, 90+MARGIN_PX, { font: "18px futurot" })
+  drawText(ctx, `Played${formatHumanDuration(user.minutes_played, "", ["day", "hour", "minute"])}`, 120+MARGIN_PX, 90+MARGIN_PX, { font: "18px futurot" })
   drawText(ctx, `Favorite map: ${topStats.top_map.value}`, 120+MARGIN_PX, 115+MARGIN_PX, { font: "20px futurot"})  
   drawText(ctx, `Favorite weapon: ${topStats.top_weapon.value}`, 120+MARGIN_PX, 140+MARGIN_PX, { font: "20px futurot"})  
 

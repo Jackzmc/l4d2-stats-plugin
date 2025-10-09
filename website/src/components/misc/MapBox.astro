@@ -33,25 +33,16 @@ const { map } = Astro.props
         <li><b>{map.durationMins}</b> minutes long</li>
         <li><b>{map.commonsKilled}</b> commons killed</li>
         <li><b>{map.friendlyDamage}</b> friendly fire dealt</li>
+        <li>
+            <BulmaIcon iconProps={{class: 'is-pulled-right is-inline'}} name="iconoir:clock" textRight={"Played " + formatRelUnixDate(map.dateEnd)}/>
+        </li>
     </ul>
     <br>
-    <nav class="level">
-        <div class="level-left">
-            <div class="level-item">
-                <span class="tags">
-                    {map.tags.map(tag => {
-                        return <span class="tag has-background-primary-light">{tag}</span>
-                    })}
-                </span>
-            </div>
-        </div>
-        <div class="level-right">
-            <div class="level-item" title="Game last played">
-                <BulmaIcon iconProps={{class: 'is-pulled-right is-inline'}} name="iconoir:clock" textRight={formatRelUnixDate(map.dateEnd)}/>
-            </div>
-        </div>
-    </nav>
-
+    <span class="tags">
+        {map.tags.map(tag => {
+            return <span class="tag has-background-primary-light">{tag}</span>
+        })}
+    </span>
     <Button href={`/games/${map.campaignId.substring(0, 8)}`} type="is-link" fullwidth>View Details</Button>
 </div>
 

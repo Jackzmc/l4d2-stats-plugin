@@ -26,8 +26,8 @@ export interface RecentGame {
  * @param count number of games to return
  * @returns Game with some sums and game info
  */
-export async function getRecentGames(count = 8): Promise<RecentGame[]> {
-
+export async function getRecentGames(page: number = 1, limit = 8): Promise<RecentGame[]> {
+    const offset = (page - 1) * limit
     // const [total] = await db.execute("SELECT COUNT(DISTINCT campaignID) as total FROM `stats_games`")
     const [recents] = await db.execute<RowDataPacket[]>(`
         SELECT COUNT(g.campaignID) as numPlayers,
@@ -48,8 +48,8 @@ export async function getRecentGames(count = 8): Promise<RecentGame[]> {
         INNER JOIN map_info i ON i.mapid = g.map
         GROUP BY g.campaignID
         ORDER BY dateEnd DESC
-        LIMIT ?
-    `, [count])
+        LIMIT ?, ?
+    `, [offset, limit])
 
     return recents.map((row,i) => {
         return {
@@ -61,19 +61,22 @@ export async function getRecentGames(count = 8): Promise<RecentGame[]> {
 }
 
 
-
+interface FilterOptions { gamemode?: string|null, difficulty?: number|null, map_type?: number|null, tag?: string|null, map?: string|null }
 /**
  * Returns count amount of recently played games
- * @param count number of games to return
+ * @param limit number of games to return
  * @returns Game with some sums and game info
  */
-export async function getFilteredGames(opts: { gamemode?: string, difficulty?: number, map_type?: number, tag?: string } = {}, count = 8): Promise<RecentGame[]> {
+export async function getFilteredGames(opts: FilterOptions = {}, page = 0, limit = 8): Promise<RecentGame[]> {
+    const offset = (page - 1) * limit
+
     // const [total] = await db.execute("SELECT COUNT(DISTINCT campaignID) as total FROM `stats_games`")
     const builder = new QueryConditionBuilder()
-    if(opts.gamemode != undefined) builder.push("gamemode = ?", opts.gamemode)
+    if(opts.gamemode) builder.push("gamemode = ?", opts.gamemode)
     if(opts.difficulty != undefined) builder.push("difficulty = ?", opts.difficulty)
-    if(opts.map_type != undefined) builder.push("i.flags = ?", opts.map_type)
+    if(opts.map_type) builder.push("i.flags = ?", opts.map_type)
     if(opts.tag) builder.push("FIND_IN_SET(?, server_tags)", opts.tag)
+    if(opts.map) builder.push("map LIKE ?", `${opts.map}%`)
 
     const [whereClause, data] = builder.buildFullWhere()
 
@@ -97,10 +100,10 @@ export async function getFilteredGames(opts: { gamemode?: string, difficulty?: n
         ${whereClause}
         GROUP BY g.campaignID
         ORDER BY dateEnd DESC
-        LIMIT ?
-    `, [...data, count])
+        LIMIT ?, ?
+    `, [...data, offset, limit])
 
-    console.debug(whereClause, [...data, count])
+    console.debug(whereClause, [...data, offset, limit])
 
     return games.map((row,i) => {
         return {

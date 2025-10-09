@@ -34,6 +34,6 @@ const classObj = {
 
 const Element = href ? "a" : "button"
 ---
-<Element disabled={disabled || undefined} class:list={["button", className, type, size, classObj ]} href={href}>
+<Element disabled={disabled || undefined} class:list={["button", className, type, size, classObj ]} href={disabled ? undefined : href}>
     <slot />
 </Element>

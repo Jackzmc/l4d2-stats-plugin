@@ -1,26 +1,18 @@
 ---
-import BulmaIcon from "../../../components/bulma/BulmaIcon.astro";
-import MapBox from "../../../components/misc/MapBox.astro";
-import { getRecentGames } from "../../../models/Game.ts";
-const games = await getRecentGames()
+import SimplePagination from "@/components/bulma/SimplePagination.astro";
+import MapBox from "@/components/misc/MapBox.astro";
+import { getRecentGames } from "@/models/Game.ts";
+import { getSearchParamNumber } from '@/utils/index.ts'
+
+const page = getSearchParamNumber(Astro, "page", 1)!
+
+const games = await getRecentGames(page)
+
+
 ---
 
 <div class="block has-text-centered ">
-    <div class="level">
-        <div class="level-item">
-            <div class="button is-rounded">
-                <BulmaIcon name="iconoir:nav-arrow-left" textRight="Previous" size={32} />
-            </div>
-        </div>
-        <div class="level-item">
-            Page 1
-        </div>
-        <div class="level-item">
-            <div class="button is-rounded is-pulled-right">
-                <BulmaIcon name="iconoir:nav-arrow-right" textLeft="Next" size={32} />
-            </div>
-        </div>
-    </div>
+    <SimplePagination currentPage={page} />
 </div>
 <div class="grid is-col-min-12">
     {games.map(game => 

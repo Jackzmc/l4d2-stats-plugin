@@ -111,15 +111,41 @@ const ROUTE_PATTERN_REGEX = new RegExp(/\[([a-zA-Z0-9-_]+)\]*/g)
 /**
  * Replace the parameters of current route. If a param is not defined, falls back to Astro.params or shows raw parameter if none
  * @param astro the astro instance
- * @param params params to override Astro.params with
+ * @param urlParams params to override Astro.params and query params with
  * @returns new href
  */
-export function replaceRoute(astro: AstroGlobal, params: Record<string, string | number>) {
+export function replaceRoute(astro: AstroGlobal, urlParams: Record<string, string | number> | undefined, queryParams: Record<string, string | number>|undefined = undefined) {
+  // Replace URL params
   let pattern = astro.routePattern
-  const match = astro.routePattern.matchAll(ROUTE_PATTERN_REGEX)
-  for(const [raw,param] of match) {
-    const value: string|number = params[param] || astro.params[param] || raw
-    pattern = pattern.replace(`[${param}]`, value.toString())
+  if(urlParams) {
+    const match = astro.routePattern.matchAll(ROUTE_PATTERN_REGEX)
+    for(const [raw,param] of match) {
+      const value: string|number = urlParams[param] || astro.params[param] || raw
+      pattern = pattern.replace(`[${param}]`, value.toString())
+    }
+  }
+  
+  // Replace SEARCH parameters
+  if(queryParams) {
+    for(const [id, val] of Object.entries(queryParams)) {
+      astro.url.searchParams.set(id, val.toString())
+    }
+  }
+
+  // Only add ? if we have params
+  if(astro.url.searchParams.size > 0) {
+    pattern = pattern + "?" + astro.url.searchParams.toString()
   }
   return pattern
+}
+
+export function getSearchParam<T = string>(astro: AstroGlobal, param: string, defaultValue?: T): T | null {
+  return astro.url.searchParams.has(param) ? astro.url.searchParams.get(param) as T|null : (defaultValue??null)
+}
+export function getSearchParamNumber(astro: AstroGlobal, param: string, defaultValue?: number): number | null {
+  let val = astro.url.searchParams.get(param)
+  if(!val) return defaultValue ?? null
+  const parsed = parseInt(val)
+  if(isNaN(parsed)) return defaultValue ?? null
+  return parsed
 }

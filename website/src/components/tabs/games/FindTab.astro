@@ -5,6 +5,7 @@ import Field from "@/components/bulma/Field.astro";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
 import Select from "@/components/bulma/Select.astro";
+import SimplePagination from "@/components/bulma/SimplePagination.astro";
 import MapBox from "@/components/misc/MapBox.astro";
 import { getGamemodes, getServerTags, getFilteredGames } from "@/models/Game.ts";
 
@@ -14,16 +15,19 @@ const queryTag = Astro.url.searchParams.get("tag")
 const queryMapType = Astro.url.searchParams.get("map_type")
 const queryGamemode = Astro.url.searchParams.get("gamemode")
 const queryDifficulty = Astro.url.searchParams.get("difficulty")
+const queryMap = Astro.url.searchParams.get("map")
+const page = Astro.url.searchParams.has("page") ? Number(Astro.url.searchParams.get("page")) : 1
 
 // Have user press 'Search' at least once before we load anything 
 const shouldLoad = queryGamemode != undefined || queryMapType != undefined || queryGamemode != undefined || queryDifficulty != undefined || queryTag != undefined
 
 const games = shouldLoad ? await getFilteredGames({
-    gamemode: queryGamemode || undefined,
-    tag: queryTag || undefined,
-    map_type: Number(queryMapType) || undefined,
-    difficulty: Number(queryDifficulty) || undefined
-}) : []
+    gamemode: queryGamemode,
+    tag: queryTag,
+    map_type: Number(queryMapType),
+    difficulty: Number(queryDifficulty),
+    map: queryMap
+}, page) : []
 ---
 <form id="find_game" method="get" class="box">
 <Level centered={false}>
@@ -59,6 +63,11 @@ const games = shouldLoad ? await getFilteredGames({
             </Field>
         </LevelItem>
         <LevelItem>
+            <Field label="Map ID">
+                <input class="input" type="text" name="map" value={queryMap} placeholder="c1m1_hotel" />
+            </Field>
+        </LevelItem>
+        <LevelItem>
             <Field label="&nbsp;">
                 <Button type="is-link">
                     <BulmaIcon textLeft="Search" name="iconoir:arrow-right" />
@@ -69,21 +78,7 @@ const games = shouldLoad ? await getFilteredGames({
 </Level>
 </form>
 <div class="block has-text-centered ">
-    <div class="level">
-        <div class="level-item">
-            <div class="button is-rounded">
-                <BulmaIcon name="iconoir:nav-arrow-left" textRight="Previous" size={32} />
-            </div>
-        </div>
-        <div class="level-item">
-            Page 1
-        </div>
-        <div class="level-item">
-            <div class="button is-rounded is-pulled-right">
-                <BulmaIcon name="iconoir:nav-arrow-right" textLeft="Next" size={32} />
-            </div>
-        </div>
-    </div>
+    <SimplePagination currentPage={page} />
 </div>
 
 <div class="grid is-col-min-12">

@@ -44,6 +44,10 @@ export default defineConfig({
     "/user/[steamid]": {
       status: 302,
       destination: "/users/[steamid]/overview"
+    },
+    "/campaigns/[id]": {
+      status: 302,
+      destination: "/games/[id]"
     }
   },
 });

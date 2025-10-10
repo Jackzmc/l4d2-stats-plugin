@@ -45,9 +45,12 @@ import LeaderboardCarousel from "@/components/misc/LeaderboardCarousel.astro";
 import Button from "@/components/bulma/Button.astro";
 import { replaceRoute } from "@/utils/index.ts";
 const PERIOD = "month"
-const totalPlayers = await User.getTotalPlayers(PERIOD)
-const leaderboard = await User.getLeaderboards(page, ITEMS_PER_PAGE)
-const playerOfDay = await User.getPlayerOfDay()
+
+const [totalPlayers, leaderboard, playerOfDay] = await Promise.all([
+	User.getTotalPlayers(PERIOD),
+	User.getLeaderboards(page, ITEMS_PER_PAGE),
+	User.getPlayerOfDay()
+])
 
 meta.hero!.subtitle = `Showing the <b>top ${ITEMS_PER_PAGE}</b> players out of <b>${totalPlayers.allPlayers.toLocaleString()} players</b> this <b>${PERIOD}</b>`
 

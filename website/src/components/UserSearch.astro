@@ -73,7 +73,7 @@ function updateAutocomplete(list: HTMLInputElement, items: PlayerSearchResult[])
         const div = document.createElement("div")
         const a = document.createElement("a")
         a.classList = "box"
-        a.href = `/users/${item.steamid}`
+        a.href = `/users/${item.steamid}/overview`
 
         const p = document.createElement("p")
         const name = document.createElement("strong")

@@ -1,9 +1,17 @@
 ---
 import Button from "@/components/bulma/Button.astro";
 import Layout, { type PageInfo } from "@/layouts/Layout.astro";
+import { getSearchParam, capitalize } from "@/utils/index.ts";
+
+const object = getSearchParam(Astro, "obj", "page")!
+const objId = getSearchParam(Astro, "id")
+
 const meta: PageInfo = {
 	title: "L4D2 Stats",
-	hero: { title: "Page Not Found", subtitle: `No page matching ${Astro.url.pathname} exists`, type: "is-warning" },
+    hero: { 
+        title: "404 Not Found",
+        type: "is-warning" 
+    },
     noIndex: true
 }
 
@@ -12,13 +20,13 @@ Astro.response.status = 404
 
 <Layout meta={meta}>
 	<div class="container content">
-		<div class="block is-size-4">
-			<h4>Left 4 Dead 2 Statistics</h4>
-			<p>Welcome to the L4D2 stats website. Here you can view statistics about any played games, view the map ratings, see the player leaderboards, and view player's stats.</p>
-			<p>This site shows recorded statistics for servers using the <a href="https://github.com/jackzmc/l4d2-stats-plugin">L4D2 Stats Plugin</a> in-game.</p>
+        <div class="block is-size-4 mb-6">
+			<h4>{capitalize(object)} Not Found</h4>
+            {object === "page" && <p>No page matching {Astro.originPathname} exists</p>}
+            {object !== "page" && <p>No {object} matching <code>{objId}</code> exists</p>}
 		</div>
-        <hr>
-		<div class="block is-size-4">
+        <br>
+		<div class="block is-size-4 mb-6">
             <h4 class="title is-4">Try one of these pages:</h4>
             <div class="buttons">
                 <Button href="/leaderboards">
@@ -30,7 +38,18 @@ Astro.response.status = 404
                 <Button href="/maps">
                     View Maps
                 </Button>
+                <Button href="/games">
+                    View Played Games
+                </Button>
             </div>
         </div>
+        <br>
+        <br>
+		<div class="block is-size-5">
+			<h4>Left 4 Dead 2 Statistics</h4>
+			<p>Welcome to the L4D2 stats website. Here you can view statistics about any played games, view the map ratings, see the player leaderboards, and view player's stats.</p>
+			<p>This site shows recorded statistics for servers using the <a href="https://github.com/jackzmc/l4d2-stats-plugin">L4D2 Stats Plugin</a> in-game.</p>
+		</div>
+        
 	</div>
 </Layout>

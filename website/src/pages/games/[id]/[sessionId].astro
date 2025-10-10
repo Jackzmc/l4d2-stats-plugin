@@ -8,10 +8,10 @@ import { Difficulty } from "@/types/game.ts";
 import { getGamemode, replaceRoute } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
-import { getImage } from "astro:assets";
+
 
 const session = await getSession(sessionId)
-if(!session) return new Response(null, { status: 404 })
+if(!session) return Astro.rewrite(`/404?obj=session&id=${Astro.params.sessionId}`)
 const otherSessions = await getSessionPlayers(gameId)
 
 const meta: PageInfo = {

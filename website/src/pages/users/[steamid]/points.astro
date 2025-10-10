@@ -9,7 +9,7 @@ import { formatRelUnixDate } from '@/utils/date.ts'
 
 
 const user = await getUser(params.steamid)
-if(!user) return new Response(null, { status: 404 })
+if(!user) return Astro.rewrite(`/404?obj=user&id=${Astro.params.steamid}`)
 const points = await getUserPointsHistory(params.steamid)
 
 const meta: PageInfo = {

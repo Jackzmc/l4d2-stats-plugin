@@ -94,7 +94,15 @@ export async function getWeaponImage(weaponId: string): Promise<ImageProperties 
 export function getGamemode(gamemode: string) {
   let val = GAMEMODES[gamemode]
   if(val) return val
-  return gamemode.charAt(0).toUpperCase() + gamemode.slice(1)
+  return capitalize(gamemode)
+}
+
+/**
+ * Upper cases the first letter of input. 'map' -> 'Map'
+ * @param input string to capitalize
+ */
+export function capitalize(input: string): string {
+  return input.charAt(0).toUpperCase() + input.slice(1)
 }
 
 export function requireParam<T>(params: URLSearchParams, key: string, validValues: string[]): T {

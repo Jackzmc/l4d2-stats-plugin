@@ -31,7 +31,7 @@ export async function getMapInfo(
         WHERE map_ratings.map_id = ?
     `, [ map ])
     const row = rows[0]
-    if(!row) return null
+    if(!row || !row.map) return null
     return {
         map: row.map,
         name: row.name,

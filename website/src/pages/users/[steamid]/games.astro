@@ -20,7 +20,7 @@ const gamemode = getSearchParam(Astro, "gamemode", "coop")!
 const page = getSearchParamNumber(Astro, "page", 1)!
 
 const user = await getUser(params.steamid)
-if(!user) return new Response(null, { status: 404 })
+if(!user) return Astro.rewrite(`/404?obj=user&id=${Astro.params.steamid}`)
 const [ gamemodes, gameStats, games ] = await Promise.all([ 
     getGamemodes(), 
     getUserGamemodeCounts(params.steamid, gamemode),

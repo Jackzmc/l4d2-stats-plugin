@@ -7,7 +7,7 @@ import Pagination from "@/components/bulma/Pagination.astro";
 
 let { page = 0 } = Astro.params
 page = parseInt(page as string)
-if(isNaN(page)) return new Response(null, { status: 404 })
+if(isNaN(page)) return new Response(null, { status: 404 }) // invalid page number, give invalid page
 
 // Setup meta data
 const meta: PageInfo = {

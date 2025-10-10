@@ -11,10 +11,9 @@ import { formatUnixDate } from "@/utils/date.ts";
 import { getGamemode } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
-import { getImage } from "astro:assets";
 
 const game = await getGame(id)
-if(!game) return new Response(null, { status: 404 })
+if(!game) return Astro.rewrite(`/404?obj=game&id=${Astro.params.id}`)
 const sessions = await getSessions(id)
 
 

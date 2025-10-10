@@ -29,7 +29,7 @@ interface TableColumnFormatted extends BaseTableColumn {
      * Formats the value to a raw HTML string
      * @param row the raw row object
      */
-    formatFunction: (row: Record<string, any>) => string
+    formatFunction: (row: Record<string, any>, rowIndex: number) => string
 }
 export type TableColumn = TableColumnKey | TableColumnFormatted
 interface Props {
@@ -74,12 +74,12 @@ const { columns, data, type, bordered, striped, narrow, hoverable, fullwidth } =
     <tbody>
         <slot name="body">
             {
-                data.map((row) => {
+                data.map((row, i) => {
                     return (
                         <tr>
                             {columns.map((col) => {
                                 if("formatFunction" in col) {
-                                    let value = col.formatFunction(row)
+                                    let value = col.formatFunction(row, i)
                                     return <td class={col.class} set:html={value} /> 
                                 }
                                 let value = row[col.key]

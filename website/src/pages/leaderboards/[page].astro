@@ -22,7 +22,10 @@ const meta: PageInfo = {
 // Setup table 
 import { formatRelUnixDate, unixDateToDuration } from '../../utils/date.ts'
 const COLUMNS: TableColumn[] = [
-	{ name: "Player Name", key: "last_alias", formatFunction: (row) => (
+	{ name: "", formatFunction: (_,i) => (
+		`#${(i + 1) + (ITEMS_PER_PAGE*(page-1))}`
+	)},
+	{ name: "Player Name", formatFunction: (row) => (
 		`<b><a href="/users/${row['steamid']}/overview">${row['last_alias']}</a></b>`
 	)},
 	{ name: "Points", key: "points", format: { number: { formatToLocale: true } }, class: "has-text-link" },

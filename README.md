@@ -49,7 +49,7 @@ PORT=4321
 
 Due the nature of Astro, the site URL is baked into the files on build time. No pre-built docker image is available, but you could build your own easily with the provided Dockerfile.
 
-Pulls env variables from [.env files (Vite's docs)](https://vite.dev/guide/env-and-mode.html#env-files)
+Pulls env variables from [.env files (Vite's docs)](https://vite.dev/guide/env-and-mode.html#env-files). ALL .env files are copied, so overwrite settings with .env.production if needed
 
 ```bash
 docker build -t l4d2-stats-website .

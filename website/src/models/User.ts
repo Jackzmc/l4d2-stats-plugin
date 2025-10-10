@@ -284,9 +284,12 @@ export async function getUserWeapons(steamid: string): Promise<WeaponStat[]> {
 }
 export interface PointHistory {
     type: number,
+    /** Amount of points to add/remove */
     amount: number,
     /** Unix timestamp */
-    timestamp: number
+    timestamp: number,
+    /** How many times to apply this point */
+    multiplier: number
 }
 
 /**
@@ -296,7 +299,7 @@ export interface PointHistory {
  */
 export async function getUserPointsHistory(steamid: string, limit = 300): Promise<PointHistory[]> {
     const [rows] = await db.execute<RowDataPacket[]>(`
-        SELECT type, amount, timestamp 
+        SELECT type, amount, timestamp, multiplier
         FROM stats_points
         WHERE steamid = ?
         ORDER BY timestamp DESC
@@ -309,7 +312,8 @@ export async function getUserPointsHistory(steamid: string, limit = 300): Promis
         return {
             type: row.type,
             amount: row.amount,
-            timestamp: row.timestamp
+            timestamp: row.timestamp,
+            multiplier: row.multiplier
         }
     })
 }

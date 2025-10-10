@@ -41,10 +41,17 @@ export default defineConfig({
       status: 302,
       destination: "/api/users/[id]"
     },
+    // redirect old /user links
     "/user/[steamid]": {
       status: 302,
       destination: "/users/[steamid]/overview"
     },
+    // redirect to overview page
+    "/users/[steamid]": {
+      status: 302,
+      destination: "/users/[steamid]/overview"
+    },
+    // redirect old stats website links
     "/campaigns/[id]": {
       status: 302,
       destination: "/games/[id]"

@@ -1,7 +1,8 @@
 on: 
   push:
     branches: 
-      - release
+      # - release
+      - redesign # temp
 env:
   # Image name
   image: l4d2-stats-plugin

@@ -133,6 +133,9 @@ enum PointRecordType {
 	PType_ResurrectOther,
 	PType_DeployAmmo,
 	PType_FriendlyKilled,
+	PType_WitchCrowned,
+	PType_SelfClearSmoker,
+	PType_HunterDeadstopped,
 
 	PType_Count
 }
@@ -142,7 +145,7 @@ int PointValueDefaults[PType_Count] = {
 	1, // Common Kill
 	6, // Special Kill
 	200, // Tank Kill
-	100, // Witch Kill
+	25, // Witch Kill
 	100, // Tank Kill (Solo)  [bonus to tank kill]
 	50, // Tank Kill (Melee) [bonus to tank kill]
 	2, // Headshot kill (commons only) [bonus to common kill]
@@ -152,6 +155,9 @@ int PointValueDefaults[PType_Count] = {
 	7, // Defib Other
 	2, // Deploy Special Ammo
 	-500, // Friendly killed
+	100, // Witch crowned
+	5, // Self cleared smoker
+	5, // Hunter dead stopped
 };
 
 enum struct WeaponStatistics {

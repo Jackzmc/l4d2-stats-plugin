@@ -7,6 +7,7 @@ WORKDIR /app
 
 FROM base AS builder
 COPY . .
+COPY .env* .
 
 FROM builder AS prod-deps
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile

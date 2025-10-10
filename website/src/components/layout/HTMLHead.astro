@@ -38,4 +38,7 @@ const titleTemplate = `%s | ${siteTitle}`
         twitter={twitter}
     />
     <Tooltips interactive={false} placement="top" delay={[0, 0]} animation={false} />
+
+    {import.meta.env.PROD && <Fragment set:html={import.meta.env.PUBLIC_EXTRA_HEAD_TAGS_PROD} />}
+    <Fragment set:html={import.meta.env.PUBLIC_EXTRA_HEAD_TAGS} />
 </head>

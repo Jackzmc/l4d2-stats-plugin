@@ -118,7 +118,7 @@ enum struct Game {
 }
 
 enum PointRecordType {
-	PType_Generic = 0,
+	PType_Invalid = 0,
 	PType_FinishCampaign,
 	PType_CommonKill,
 	PType_SpecialKill,
@@ -131,8 +131,28 @@ enum PointRecordType {
 	PType_HealOther,
 	PType_ReviveOther,
 	PType_ResurrectOther,
-	PType_DeployAmmo
+	PType_DeployAmmo,
+	PType_FriendlyKilled,
+
+	PType_Count
 }
+int PointValueDefaults[PType_Count] = {
+	0, // Generic
+	0, // Finish Campaign - don't assign any value as tank kills / other stats should take in
+	1, // Common Kill
+	6, // Special Kill
+	200, // Tank Kill
+	100, // Witch Kill
+	100, // Tank Kill (Solo)  [bonus to tank kill]
+	50, // Tank Kill (Melee) [bonus to tank kill]
+	2, // Headshot kill (commons only) [bonus to common kill]
+	-5, // Friendly Fire
+	10, // Heal Other
+	5, // Revive Other
+	7, // Defib Other
+	2, // Deploy Special Ammo
+	-500, // Friendly killed
+};
 
 enum struct WeaponStatistics {
 	float minutesUsed;
@@ -304,7 +324,7 @@ enum struct Player {
 
 	void Init() {
 		this.wpn.Init();
-		this.pointsQueue = new ArrayList(3); // [ type, amount, time ]
+		this.pointsQueue = new ArrayList(4); // [ type, amount, time, multiplier ]
 		this.pendingHeatmaps = new ArrayList(sizeof(PendingHeatMapData));
 	}
 
@@ -334,14 +354,52 @@ enum struct Player {
 		this.wpn.Reset(true);
 	}
 
-	void RecordPoint(PointRecordType type, int amount = 1) {
-		this.points += amount;
-		// Common kills are too spammy 
-		if(type != PType_CommonKill) {
-			int index = this.pointsQueue.Push(type);
-			this.pointsQueue.Set(index, amount, 1);
-			this.pointsQueue.Set(index, GetTime(), 2);
+	/// Returns the index of the latest queued entry of a point record, or -1
+	int getPointRecord(PointRecordType type) {
+		for(int i = this.pointsQueue.Length - 1; i >= 0; i--) {
+			int pType = this.pointsQueue.Get(i, 0);
+			if(pType == view_as<int>(type)) {
+				return i;
+			}
 		}
+		return -1;
+	}
+
+	/**	
+	 * Records a point change.
+	 * @param type the point type being recorded
+	 * @param points the amount of points to add/remove. if 0, the default value from PointValueDefaults used
+	 * @param allowMerging should recording be merged into previous record if there is one
+	 * @param mergeWindow maximum age of previous record to merge to
+	 */
+	void RecordPoint(PointRecordType type, int points = 0, bool allowMerging = false, int mergeWindow = 0) {
+		// Use default if point is using default value
+		if(points == 0) points = PointValueDefaults[type];
+
+		this.points += points;
+		if(allowMerging) {
+			// Merge point record (if there is a previous record) by increasing 'multiplier' field by one
+			int prevIndex = this.getPointRecord(type);
+			if(prevIndex != -1) {
+				int timestamp = GetTime();
+				int prevTimestamp = this.pointsQueue.Get(prevIndex, 2);
+				// If merge window is unlimited, or record in timespan then merge
+				if(mergeWindow == 0 || timestamp - prevTimestamp <= mergeWindow) {
+					int mult = this.pointsQueue.Get(prevIndex, 3);
+					this.pointsQueue.Set(prevIndex, timestamp, 2); // update timestamp
+					this.pointsQueue.Set(prevIndex, mult + 1, 3); // increment multiplier
+					return;
+				}
+
+				// It's unlikely that there is a record even earlier in list that will younger than this record, so we don't try to find another one
+			}
+		}
+
+		// Add new record entry to queue
+		int index = this.pointsQueue.Push(type);
+		this.pointsQueue.Set(index, points, 1);
+		this.pointsQueue.Set(index, GetTime(), 2);
+		this.pointsQueue.Set(index, 1, 3);
 	}
 
 	void MeasureDistance(int client) {
@@ -608,7 +666,7 @@ public void OnClientDisconnect(int client) {
 			IncrementSessionStat(client);
 			RecordCampaign(client);
 			IncrementStat(client, "finales_won", 1);
-			players[client].RecordPoint(PType_FinishCampaign, 200);
+			players[client].RecordPoint(PType_FinishCampaign);
 		}
 
 		FlushQueuedStats(client, true);
@@ -831,17 +889,22 @@ void FlushQueuedStats(int client, bool disconnect) {
 void SubmitPoints(int client) {
 	if(players[client].pointsQueue.Length > 0) {
 		char query[4098];
-		Format(query, sizeof(query), "INSERT INTO stats_points (steamid,type,amount,timestamp) VALUES ");
+		Format(query, sizeof(query), "INSERT INTO stats_points (steamid,type,amount,timestamp,multiplier) VALUES ");
+		// TODO; merge
 		for(int i = 0; i < players[client].pointsQueue.Length; i++) {
 			int type = players[client].pointsQueue.Get(i, 0);
 			int amount = players[client].pointsQueue.Get(i, 1);
 			int timestamp = players[client].pointsQueue.Get(i, 2);
-			Format(query, sizeof(query), "%s('%s',%d,%d,%d)%c",
+			int multiplier = players[client].pointsQueue.Get(i, 3);
+			Format(query, sizeof(query), "%s('%s',%d,%d,%d,%d)%c",
 				query,
+
 				players[client].steamid,
 				type,
 				amount,
 				timestamp,
+				multiplier,
+
 				i == players[client].pointsQueue.Length - 1 ? ' ' : ',' // No trailing comma on last entry
 			);
 		}
@@ -1342,11 +1405,11 @@ public void Event_InfectedDeath(Event event, const char[] name, bool dontBroadca
 		bool using_minigun = event.GetBool("minigun");
 
 		if(headshot) {
-			players[attacker].RecordPoint(PType_Headshot, 2);
+			players[attacker].RecordPoint(PType_Headshot, .allowMerging = true);
 			players[attacker].wpn.headshots++;
 		}
 
-		players[attacker].RecordPoint(PType_CommonKill, 1);
+		players[attacker].RecordPoint(PType_CommonKill, .allowMerging = true);
 		players[attacker].wpn.kills++;
 
 
@@ -1380,7 +1443,7 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 			players[attacker].damageInfectedGiven += dmg;
 		}
 		if(attacker_team == 2 && victim_team == 2) {
-			players[attacker].RecordPoint(PType_FriendlyFire, -5);
+			players[attacker].RecordPoint(PType_FriendlyFire, .allowMerging = true);
 			players[attacker].damageSurvivorFF += dmg;
 			players[attacker].damageSurvivorFFCount++;
 			players[victim].damageFFTaken += dmg;
@@ -1414,7 +1477,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 					IncrementSpecialKill(attacker, victim_class);
 					Format(statname, sizeof(statname), "kills_%s", class);
 					IncrementStat(attacker, statname, 1);
-					players[attacker].RecordPoint(PType_SpecialKill, 6);
+					players[attacker].RecordPoint(PType_SpecialKill, .allowMerging = true);
 				}
 				char wpn_name[16];
 				event.GetString("weapon", wpn_name, sizeof(wpn_name));
@@ -1424,8 +1487,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 				IncrementStat(victim, "infected_deaths", 1);
 			} else if(victim_team == 2) {
 				IncrementStat(attacker, "ff_kills", 1);
-				//30 point lost for killing teammate
-				players[attacker].RecordPoint(PType_FriendlyFire, -500);
+				players[attacker].RecordPoint(PType_FriendlyKilled);
 			}
 		}
 	}
@@ -1434,7 +1496,7 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 public void Event_MeleeKill(Event event, const char[] name, bool dontBroadcast) {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
-		players[client].RecordPoint(PType_CommonKill, 1);
+		players[client].RecordPoint(PType_CommonKill, .allowMerging = true);
 	}
 }
 public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast) {
@@ -1445,13 +1507,13 @@ public void Event_TankKilled(Event event, const char[] name, bool dontBroadcast)
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		if(solo) {
 			IncrementStat(attacker, "tanks_killed_solo", 1);
-			players[attacker].RecordPoint(PType_TankKill_Solo, 20);
+			players[attacker].RecordPoint(PType_TankKill_Solo);
 		}
 		if(melee_only) {
-			players[attacker].RecordPoint(PType_TankKill_Melee, 50);
+			players[attacker].RecordPoint(PType_TankKill_Melee);
 			IncrementStat(attacker, "tanks_killed_melee", 1);
 		}
-		players[attacker].RecordPoint(PType_TankKill, 100);
+		players[attacker].RecordPoint(PType_TankKill);
 		IncrementStat(attacker, "tanks_killed", 1);
 	}
 }
@@ -1489,18 +1551,18 @@ void Event_ItemUsed(Event event, const char[] name, bool dontBroadcast) {
 			if(subject == client) {
 				IncrementStat(client, "heal_self", 1);
 			}else{
-				players[client].RecordPoint(PType_HealOther, 10);
+				players[client].RecordPoint(PType_HealOther);
 				IncrementStat(client, "heal_others", 1);
 			}
 		} else if(StrEqual(name, "revive_success", true)) {
 			int subject = GetClientOfUserId(event.GetInt("subject"));
 			if(subject != client) {
 				IncrementStat(client, "revived_others", 1);
-				players[client].RecordPoint(PType_ReviveOther, 5);
+				players[client].RecordPoint(PType_ReviveOther);
 				IncrementStat(subject, "revived", 1);
 			}
 		} else if(StrEqual(name, "defibrillator_used", true)) {
-			players[client].RecordPoint(PType_ResurrectOther, 7);
+			players[client].RecordPoint(PType_ResurrectOther);
 			IncrementStat(client, "defibs_used", 1);
 		} else{
 			IncrementStat(client, name, 1);
@@ -1512,7 +1574,7 @@ public void Event_UpgradePackUsed(Event event, const char[] name, bool dontBroad
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
 		players[client].upgradePacksDeployed++;
-		players[client].RecordPoint(PType_DeployAmmo, 2);
+		players[client].RecordPoint(PType_DeployAmmo);
 	}
 }
 public void Event_CarAlarm(Event event, const char[] name, bool dontBroadcast) {
@@ -1525,7 +1587,7 @@ public void Event_WitchKilled(Event event, const char[] name, bool dontBroadcast
 	int client = GetClientOfUserId(event.GetInt("userid"));
 	if(client > 0 && !IsFakeClient(client)) {
 		players[client].witchKills++;
-		players[client].RecordPoint(PType_WitchKill, 50);
+		players[client].RecordPoint(PType_WitchKill);
 	}
 }
 
@@ -1679,7 +1741,7 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 				//get real client
 			}
 			if(players[client].steamid[0]) {
-				players[client].RecordPoint(PType_FinishCampaign, 200);
+				players[client].RecordPoint(PType_FinishCampaign);
 				IncrementSessionStat(client);
 				RecordCampaign(client);
 				IncrementStat(client, "finales_won", 1);

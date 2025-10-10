@@ -18,7 +18,7 @@ const meta: PageInfo = {
 }
 
 const POINT_TYPE_DISPLAY = [
-    "Generic",  // PType_Generic = 0,
+    "Unknown", // PType_Invalid
     "Finished Campaign",  // PType_FinishCampaign,
     "Killed zombie",  // PType_CommonKill,
     "Killed special infected",  // PType_SpecialKill,
@@ -31,7 +31,8 @@ const POINT_TYPE_DISPLAY = [
     "Healed Teammate",  // PType_HealOther,
     "Revived Teammate",  // PType_ReviveOther,
     "Defibbed Teammate",  // PType_ResurrectOther,
-    "Deployed Special Ammo"  // PType_DeployAmmo
+    "Deployed Special Ammo",  // PType_DeployAmmo
+    "Killed a teammate", // PType_FriendlyKilled
 ]
 if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, max-age=86400, s-maxage=172800, stale-while-revalidate=604800, stale-if-error=604800")
 ---
@@ -39,6 +40,7 @@ if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, ma
     <UserHero slot="hero" user={user} subtitle={`${user.points.toLocaleString()} points`} activePage="points" />
 
     <div class="container">
+        <p>Common kills earn +1 point but they are not recorded</p>
         <table class="table is-fullwidth">
             <thead>
                 <tr>

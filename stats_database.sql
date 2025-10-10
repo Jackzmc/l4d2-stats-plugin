@@ -114,9 +114,10 @@ CREATE TABLE `stats_heatmaps` (
 CREATE TABLE `stats_points` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `steamid` varchar(32) NOT NULL,
-  `type` smallint(6) NOT NULL,
-  `amount` smallint(6) NOT NULL,
-  `timestamp` int(11) NOT NULL,
+  `type`       tinyint unsigned           not null,
+  `amount`     smallint                   not null comment 'point value',
+  `timestamp`  int(11) unsigned           not null,
+  `multiplier` tinyint unsigned default 1 not null comment 'number of times to apply (merged record)',
   PRIMARY KEY (`id`),
   KEY `stats_points_stats_users_steamid_fk` (`steamid`),
   KEY `stats_points_timestamp_index` (`timestamp`),

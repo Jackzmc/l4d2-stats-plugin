@@ -55,12 +55,12 @@ char QUERY_TYPE_ID[_QUERY_MAX][] = {
 	"MAP_RATE"
 };
 
-static ConVar hServerTags, hZDifficulty, hClownMode, hPopulationClowns, hMinShove, hMaxShove, hClownModeChangeChance;
+static ConVar hServerTags, hZDifficulty, hClownMode, hPopulationClowns, hMinShove, hMaxShove, hClownModeChangeChance, hStatsUrl;
 ConVar hHeatmapInterval;
 ConVar hHeatmapActive;
 static Handle hHonkCounterTimer;
 Database g_db;
-static char gamemode[32], serverTags[255];
+static char gamemode[32], serverTags[255], websiteUrlPrefix[128];
 static bool lateLoaded; //Has finale started?
 
 int g_iLastBoomUser;
@@ -466,6 +466,9 @@ public void OnPluginStart() {
 	hServerTags = CreateConVar("l4d2_statsrecorder_tags", "", "A comma-seperated list of tags that will be used to identity this server.");
 	hServerTags.GetString(serverTags, sizeof(serverTags));
 	hServerTags.AddChangeHook(CVC_TagsChanged);
+	hStatsUrl = CreateConVar("l4d2_stats_url", "https://stats.example.com/games/", "The URL prefix to use to link at end of game to view stats. Ensure trailing slash at the end");
+	hStatsUrl.GetString(websiteUrlPrefix, sizeof(websiteUrlPrefix));
+	hStatsUrl.AddChangeHook(CVC_UrlChanged);
 
 	ConVar hGamemode = FindConVar("mp_gamemode");
 	hGamemode.GetString(gamemode, sizeof(gamemode));
@@ -591,14 +594,17 @@ Action Timer_CalculateDistances(Handle h) {
 /////////////////////////////////
 // CONVAR CHANGES
 /////////////////////////////////
-public void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[] newValue) {
+void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[] newValue) {
 	strcopy(game.gamemode, sizeof(game.gamemode), newValue);
 	strcopy(gamemode, sizeof(gamemode), newValue);
 }
-public void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
+void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
 	strcopy(serverTags, sizeof(serverTags), newValue);
 }
-public void CVC_ClownModeChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
+void CVC_UrlChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
+	strcopy(websiteUrlPrefix, sizeof(websiteUrlPrefix), newValue);
+}
+void CVC_ClownModeChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
 	hPopulationClowns = FindConVar("l4d2_population_clowns");
 	if(hPopulationClowns == null) {
 		PrintToServer("[Stats] ERROR: Missing plugin for clown mode");
@@ -618,7 +624,7 @@ public void CVC_ClownModeChanged(ConVar convar, const char[] oldValue, const cha
 		}
 	}
 }
-public Action Timer_HonkCounter(Handle h) { 
+Action Timer_HonkCounter(Handle h) { 
 	int honks, honker = -1;
 	for(int j = 1; j <= MaxClients; j++) {
 		if(players[j].clownsHonked > 0 && (players[j].clownsHonked > honks || honker == -1) && !IsFakeClient(j)) {
@@ -1746,7 +1752,7 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 				RecordCampaign(client);
 				IncrementStat(client, "finales_won", 1);
 				if(game.uuid[0] != '\0')
-					PrintToChat(client, "View this game's statistics at https://jackz.me/c/%s", shortID);
+					PrintToChat(client, "View this game's statistics at %s%s", shortID, websiteUrlPrefix);
 				if(game.clownHonks > 0) {
 					PrintToChat(client, "%d clowns were honked this session, you honked %d", game.clownHonks, players[client].clownsHonked);
 				}

@@ -36,25 +36,34 @@ export default defineConfig({
       status: 302,
       destination: "/leaderboards/1"
     },
-    // Old site API had /user, we use /users now
-    "/api/user/[id]": {
-      status: 302,
-      destination: "/api/users/[id]"
-    },
-    // redirect old /user links
-    "/user/[steamid]": {
-      status: 302,
-      destination: "/users/[steamid]/overview"
-    },
     // redirect to overview page
     "/users/[steamid]": {
       status: 302,
       destination: "/users/[steamid]/overview"
     },
+
+    //// OLD SITE REDIRECTS ////
+
+    // Old site API had /user, we use /users now
+    "/api/user/[id]": {
+      status: 301,
+      destination: "/api/users/[id]"
+    },
+    // redirect old /user links
+    "/user/[steamid]": {
+      status: 301,
+      destination: "/users/[steamid]/overview"
+    },
+    
     // redirect old stats website links
     "/campaigns/[id]": {
-      status: 302,
+      status: 301,
       destination: "/games/[id]"
+    },
+    // redirect old FAQ to home
+    "/faq": {
+      status: 301,
+      destination: "/" 
     }
   },
 });

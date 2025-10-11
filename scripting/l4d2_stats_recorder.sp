@@ -148,16 +148,16 @@ int PointValueDefaults[PType_Count] = {
 	25, // Witch Kill
 	100, // Tank Kill (Solo)  [bonus to tank kill]
 	50, // Tank Kill (Melee) [bonus to tank kill]
-	2, // Headshot kill (commons only) [bonus to common kill]
+	4, // Headshot kill (commons only) [bonus to common kill]
 	-5, // Friendly Fire
-	10, // Heal Other
-	5, // Revive Other
-	7, // Defib Other
-	2, // Deploy Special Ammo
+	50, // Heal Other
+	25, // Revive Other
+	50, // Defib Other
+	5, // Deploy Special Ammo
 	-500, // Friendly killed
 	100, // Witch crowned
-	5, // Self cleared smoker
-	5, // Hunter dead stopped
+	10, // Self cleared smoker
+	10, // Hunter dead stopped
 };
 
 enum struct WeaponStatistics {

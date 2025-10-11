@@ -13,8 +13,8 @@ const config = {
     tableNameCasing: "pascal",
     schemas: ["left4dead2"],
     tables: [
-        "left4dead2.map_info",
-        "left4dead2.map_ratings",
+        "left4dead2.stats_map_info",
+        "left4dead2.stats_map_ratings",
         "left4dead2.stats_games",
         "left4dead2.stats_heatmaps",
         "left4dead2.stats_points",

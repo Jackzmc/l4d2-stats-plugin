@@ -247,3 +247,12 @@ void SubmitHeatmaps(int client) {
 		players[client].pendingHeatmaps.Erase(length-1);
 	}
 }
+
+void SubmitMapInfo() {
+	char title[128];
+	InfoEditor_GetString(0, "DisplayTitle", title, sizeof(title));
+	int chapters = L4D_GetMaxChapters();
+	char query[128];
+	g_db.Format(query, sizeof(query), "INSERT INTO stats_map_info (mapid,name,chapter_count) VALUES ('%s','%s',%d)", game.mapId, title, chapters);
+	g_db.Query(DBCT_Generic, query, QUERY_MAP_INFO, DBPrio_Low);
+}

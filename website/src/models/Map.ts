@@ -24,11 +24,11 @@ export async function getMapInfo(
 
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT map_id map, i.name name, i.chapter_count, i.flags, AVG(value) avgRating, COUNT(value) ratings, count gamesPlayed, duration avgMinutesPlayed
-        FROM map_ratings
-        JOIN map_info i ON i.mapid = map_id
+        FROM stats_map_ratings
+        JOIN stats_map_info i ON i.mapid = map_id
         JOIN (SELECT map, COUNT(campaignID) count, AVG(duration) duration FROM stats_games GROUP BY map) as games
-        ON map_ratings.map_id = map
-        WHERE map_ratings.map_id = ?
+        ON stats_map_ratings.map_id = map
+        WHERE stats_map_ratings.map_id = ?
     `, [ map ])
     const row = rows[0]
     if(!row || !row.map) return null
@@ -46,7 +46,7 @@ export async function getMapInfo(
 
 
 export async function getMaps(mapId: string): Promise<MapInfo[]> {
-    const [rows] = await db.execute<RowDataPacket[]>("SELECT name, chapter_count, flags FROM map_info WHERE mapid = ?", [ mapId ])
+    const [rows] = await db.execute<RowDataPacket[]>("SELECT name, chapter_count, flags FROM stats_map_info WHERE mapid = ?", [ mapId ])
     return rows.map(row => {
         return {
             id: mapId,
@@ -72,9 +72,9 @@ export async function getMapsWithPlayCount(officialMapsOnly: boolean = false, li
     const officialMapCondition = officialMapsOnly ? `AND map_info.flags & ${MapFlags.OfficialMap}` : ''
     const limitClause = limit != null ? "LIMIT ?" : ""
     const [rows] = await db.execute<RowDataPacket[]>(`
-        SELECT map, map_info.name, COUNT(map) count 
+        SELECT map, stats_map_info.name, COUNT(map) count 
         FROM stats_games 
-        RIGHT JOIN map_info ON map_info.mapid = stats_games.map ${officialMapCondition}
+        RIGHT JOIN stats_map_info ON stats_map_info.mapid = stats_games.map ${officialMapCondition}
         WHERE map IS NOT NULL
         GROUP BY map
         ORDER BY count DESC
@@ -104,9 +104,9 @@ export async function getMapsWithRatings(
     sortBy = db.escapeId(sortBy)
 
     const [rows] = await db.execute<RowDataPacket[]>(`
-        SELECT map_id as map, map_info.name as name, AVG(value) avgRating, COUNT(value) ratings, count gamesPlayed, duration avgMinutesPlayed
-        FROM map_ratings
-        JOIN map_info ON map_info.mapid = map_id
+        SELECT map_id as map, stats_map_info.name as name, AVG(value) avgRating, COUNT(value) ratings, count gamesPlayed, duration avgMinutesPlayed
+        FROM stats_map_ratings
+        JOIN stats_map_info ON stats_map_info.mapid = map_id
         JOIN (SELECT map, COUNT(campaignID) count, AVG(duration) duration FROM stats_games GROUP BY map) as games
         ON games.map = mapid
         GROUP BY map_id
@@ -134,7 +134,7 @@ export interface MapRating {
 export async function getRatings(map: string): Promise<MapRating[]> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT value rating, comment, steamid rater
-        FROM map_ratings r
+        FROM stats_map_ratings r
         WHERE r.map_id = ?
     `, [map])
 

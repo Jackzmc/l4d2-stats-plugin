@@ -450,14 +450,7 @@ void IncrementSessionStat(int client) {
 //DATABASE CALLBACKS
 /////////////////////////////////
 //Handles the CreateDBUser() response. Either updates alias and stores points, or creates new SQL user.
-void SubmitMapInfo() {
-	char title[128];
-	InfoEditor_GetString(0, "DisplayTitle", title, sizeof(title));
-	int chapters = L4D_GetMaxChapters();
-	char query[128];
-	g_db.Format(query, sizeof(query), "INSERT INTO map_info (mapid,name,chapter_count) VALUES ('%s','%s',%d)", game.mapId, title, chapters);
-	g_db.Query(DBCT_Generic, query, QUERY_MAP_INFO, DBPrio_Low);
-}
+
 ////////////////////////////
 // COMMANDS
 ///////////////////////////
@@ -910,7 +903,7 @@ void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
 }
 void FetchUUID(int attempt = 0) {
 	char query[128];
-	g_db.Format(query, sizeof(query), "SELECT UUID() AS UUID, (SELECT !ISNULL(mapid) from map_info where mapid = '%s') as mapid", game.mapId);
+	g_db.Format(query, sizeof(query), "SELECT UUID() AS UUID, (SELECT !ISNULL(mapid) from stats_map_info where mapid = '%s') as mapid", game.mapId);
 	g_db.Query(DBCT_GetUUIDForCampaign, query, attempt);
 }
 void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast) {

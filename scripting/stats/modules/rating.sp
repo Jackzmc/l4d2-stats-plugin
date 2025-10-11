@@ -61,7 +61,7 @@ Action Command_RateMap(int client, int args) {
 
 void SubmitMapRating(int client, int rating, const char[] comment = "") {
 	char query[1024];
-	g_db.Format(query, sizeof(query), "INSERT INTO map_ratings (map_id,steamid,value,comment) VALUES ('%s','%s',%d,'%s') ON DUPLICATE KEY UPDATE value = %d, comment = '%s'",
+	g_db.Format(query, sizeof(query), "INSERT INTO stats_map_ratings (map_id,steamid,value,comment) VALUES ('%s','%s',%d,'%s') ON DUPLICATE KEY UPDATE value = %d, comment = '%s'",
 		game.mapId,
 		players[client].steamid,
 		rating,

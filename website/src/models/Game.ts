@@ -46,7 +46,7 @@ export async function getRecentGames(page: number = 1, limit = 8): Promise<Recen
             server_tags tags,
             i.name as name
         FROM stats_games as g
-        INNER JOIN map_info i ON i.mapid = g.map
+        INNER JOIN stats_map_info i ON i.mapid = g.map
         GROUP BY g.campaignID
         ORDER BY dateEnd DESC
         LIMIT ?, ?
@@ -99,7 +99,7 @@ export async function getFilteredGames(opts: FilterOptions = {}, page = 1, limit
             server_tags tags,
             i.name as name
         FROM stats_games as g
-        INNER JOIN map_info i ON i.mapid = g.map
+        INNER JOIN stats_map_info i ON i.mapid = g.map
         ${whereClause}
         GROUP BY g.campaignID
         ORDER BY dateEnd DESC
@@ -160,7 +160,7 @@ export async function getGame(id: string): Promise<Game | null> {
             SUM(Deaths) deaths,
             SUM(DamageTaken) damage_taken
         FROM stats_games g
-        JOIN map_info i ON i.mapid = g.map
+        JOIN stats_map_info i ON i.mapid = g.map
         WHERE left(g.campaignID, 8) = ?
         LIMIT 1
     `, [id.substring(0, 8)])
@@ -336,7 +336,7 @@ export async function getSession(id: number | string): Promise<GameSession | nul
             g.CarAlarmsActivated
         FROM stats_games g
         INNER JOIN stats_users ON g.steamid = stats_users.steamid
-        INNER JOIN map_info i ON g.map = i.mapid
+        INNER JOIN stats_map_info i ON g.map = i.mapid
         WHERE g.id = ?
         LIMIT 1
     `, [id]

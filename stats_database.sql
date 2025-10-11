@@ -245,12 +245,12 @@ CREATE TABLE `stats_weapon_usages` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `map_ratings`
+-- Table structure for table `stats_map_ratings`
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `map_ratings` (
+CREATE TABLE `stats_map_ratings` (
   `map_id` varchar(64) NOT NULL,
   `steamid` varchar(32) NOT NULL,
   `value` tinyint(4) NOT NULL,
@@ -260,12 +260,12 @@ CREATE TABLE `map_ratings` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `map_info`
+-- Table structure for table `stats_map_info`
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `map_info` (
+CREATE TABLE `stats_map_info` (
   `mission_id` varchar(64) DEFAULT NULL,
   `mapid` varchar(32) NOT NULL,
   `name` varchar(128) NOT NULL,

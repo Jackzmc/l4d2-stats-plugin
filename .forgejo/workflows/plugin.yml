@@ -37,12 +37,10 @@ jobs:
         uses: https://data.forgejo.org/forgejo/download-artifact@v4
         with: 
           name: 1.12.x.zip
-      - name: Display structure of downloaded files
-        run: ls -R
       - name: Install SSH Key
         uses: https://github.com/shimataro/ssh-key-action@v2.7.0
         with:
           key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
-      # - name: upload plugin to server
-        # run: scp -v *.smx ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST}}/"${{ secrets.PLUGINS_PATH }}"
+      - name: upload plugin to server
+        run: scp -v *.smx ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST}}/"${{ secrets.PLUGINS_PATH }}"

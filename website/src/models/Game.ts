@@ -38,7 +38,7 @@ export async function getRecentGames(page: number = 1, limit = 8): Promise<Recen
             (g.date_end - g.date_start) / 60 durationMins,
             difficulty,
             gamemode,
-            SUM(ZombieKills) as commonsKilled,
+            SUM(zombie_kills) as commonsKilled,
             SUM(SurvivorDamage) as friendlyDamage,
             SUM(Deaths) as deaths,
             SUM(MedkitsUsed) medkitsUsed,
@@ -91,7 +91,7 @@ export async function getFilteredGames(opts: FilterOptions = {}, page = 1, limit
             (g.date_end - g.date_start) / 60 durationMins,
             difficulty,
             gamemode,
-            SUM(ZombieKills) as commonsKilled,
+            SUM(zombie_kills) as commonsKilled,
             SUM(SurvivorDamage) as friendlyDamage,
             SUM(Deaths) as deaths,
             SUM(MedkitsUsed) medkitsUsed,
@@ -148,7 +148,7 @@ export async function getGame(id: string): Promise<Game | null> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT i.mapid map, i.name as map_name, g.difficulty difficulty, g.gamemode gamemode, g.date_end date, g.duration, g.server_tags, g.finale_time, g.campaignID,
             SUM(g.SpecialInfectedKills) specials_killed,
-            SUM(ZombieKills) commons_killed,
+            SUM(zombie_kills) commons_killed,
             SUM(g.honks) honks,
             SUM(medkitsUsed) medkits_used,
             SUM(PillsUsed) pills_used,
@@ -177,9 +177,9 @@ export interface GameSessionPartial extends Player {
   id: number;
   points: number;
   flags: number;
-  characterType: Survivor;
-  ZombieKills: number;
-  MeleeKills: number;
+  character_type: Survivor;
+  zombie_kills: number;
+  melee_kills: number;
   SurvivorDamage: number;
   Medkitsused: number;
   PillsUsed: number;
@@ -206,8 +206,8 @@ export async function getSessions(id: string): Promise<GameSessionPartial[]> {
             last_alias name,
             points,
             g.flags,
-            g.characterType,
-            g.ZombieKills,
+            g.character_type,
+            g.zombie_kills,
             g.SurvivorDamage,
             g.Medkitsused,
             g.PillsUsed,
@@ -223,7 +223,7 @@ export async function getSessions(id: string): Promise<GameSessionPartial[]> {
         FROM stats_games g
         INNER JOIN stats_users ON g.steamid = stats_users.steamid
         WHERE left(g.campaignID, 8) = ?
-        ORDER BY SpecialInfectedKills desc, SurvivorDamage asc, ZombieKills desc, DamageTaken asc
+        ORDER BY SpecialInfectedKills desc, SurvivorDamage asc, zombie_kills desc, DamageTaken asc
     `, [id.substring(0,8)]
     )
 
@@ -241,7 +241,7 @@ export interface GameSession extends GameSessionPartial {
     duration: number,
     date_start: number,
     date_end: number,
-    MeleeKills: number;
+    melee_kills: number;
     SurvivorFFCount: number;
     SurvivorFFTakenCount: number;
     SurvivorFFTakenDamage: number;
@@ -291,12 +291,13 @@ export async function getSession(id: number | string): Promise<GameSession | nul
             g.date_end,
             g.flags,
             g.join_time,
-            g.characterType,
+            g.character_type,
             g.ping,
-            g.ZombieKills,
-            g.MeleeKills,
+            g.zombie_kills,
+            g.melee_kills,
             g.SurvivorDamage,
             g.SurvivorFFCount,
+            g.SurvivorFFDamage,
             g.SurvivorFFTakenCount,
             g.SurvivorFFTakenDamage,
             g.Medkitsused,

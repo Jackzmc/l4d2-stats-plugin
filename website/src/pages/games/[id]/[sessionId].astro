@@ -45,11 +45,11 @@ export const prerender = false
         <div class="columns">
             <div class="column">
                 <Level>
-                    <LevelItem countup title="Zombie Kills" value={session.ZombieKills} />
-                    <LevelItem countup title="Melee Kills" value={session.MeleeKills} />
-                    <LevelItem countup title="Damage Dealt" value={session.MeleeKills} />
+                    <LevelItem countup title="Zombie Kills" value={session.zombie_kills} />
+                    <LevelItem countup title="Melee Kills" value={session.melee_kills} />
+                    <LevelItem countup title="Damage Dealt" value={session.SurvivorDamage} suffix=" HP" />
                     <LevelItem countup title="Friendly Fires" value={session.SurvivorFFCount} />
-                    <LevelItem countup title="Friendly Damage" value={session.SurvivorDamage} suffix=" HP" />
+                    <LevelItem countup title="Friendly Damage" value={session.SurvivorFFDamage} suffix=" HP" />
                     <LevelItem countup title="Times Friendly Fired" value={session.SurvivorFFTakenCount} />
                     <LevelItem countup title="Friendly Damage Taken" value={session.SurvivorFFTakenDamage} suffix=" HP" />
                 </Level>

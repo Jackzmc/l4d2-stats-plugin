@@ -26,7 +26,7 @@ export interface StatsGamesEntity {
   /* unique campaign session id */
   'campaignID': string;
   'CarAlarmsActivated'?: number;
-  'characterType'?: number | null;
+  'character_type'?: number | null;
   'charger_kills'?: number | null;
   'ClearedPinned'?: any | null;
   'DamageDealt'?: number;
@@ -60,7 +60,7 @@ export interface StatsGamesEntity {
   /* the map id */
   'map': string;
   'MedkitsUsed'?: number;
-  'MeleeKills'?: number;
+  'melee_kills'?: number;
   'minutes_idle'?: any;
   'MolotovsUsed'?: number;
   'PillsUsed'?: number;

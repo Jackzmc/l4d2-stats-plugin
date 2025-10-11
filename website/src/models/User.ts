@@ -203,7 +203,7 @@ export async function getUserTopStats(steamid: string): Promise<UserTopStats | n
     const [rows] = await db.execute<RowDataPacket[]>(`
         (SELECT 'top_weapon' name, top_weapon id, w.name value, COUNT(*) count FROM stats_games g LEFT JOIN stats_weapon_names w ON w.id = g.top_weapon WHERE steamid = :steamid AND top_weapon != '' GROUP BY top_weapon ORDER BY count DESC LIMIT 1)
         UNION ALL
-        (SELECT 'top_char' name, '' id, characterType value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND characterType IS NOT NULL GROUP BY characterType ORDER BY count DESC LIMIT 1)
+        (SELECT 'top_char' name, '' id, character_type value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND character_type IS NOT NULL GROUP BY character_type ORDER BY count DESC LIMIT 1)
         UNION ALL
         (SELECT 'top_map' name, map id, i.name value, COUNT(*) count FROM stats_games g LEFT JOIN stats_map_info i ON i.mapid = g.map WHERE steamid = :steamid AND map LIKE 'c%m%_%' GROUP BY map ORDER BY count DESC LIMIT 1)
         UNION ALL

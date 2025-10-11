@@ -11,7 +11,7 @@ interface Props {
     honkMaster?: boolean
 }
 const { player, mvp = false, honkMaster = false } = Astro.props
-const survivor = SURVIVOR_DEFS[player.characterType]
+const survivor = SURVIVOR_DEFS[player.character_type]
 
 ---
 
@@ -21,12 +21,12 @@ const survivor = SURVIVOR_DEFS[player.characterType]
     </h6>
     {mvp && <div class="ribbon ribbon-top-left"><span>MVP</span></div>}
     {!mvp && honkMaster && <div class="ribbon ribbon-top-left honk"><span>Honk Master</span></div>}
-    <Picture class="is-inline-block is-pulled-left image is-64x64" src={getPortrait(player.characterType) as any} title={survivor.name} alt={`Character portrait of ${survivor.name}`} />
+    <Picture class="is-inline-block is-pulled-left image is-64x64" src={getPortrait(player.character_type) as any} title={survivor.name} alt={`Character portrait of ${survivor.name}`} />
 
     <div class="subtitle is-6 has-text-centered mb-2">{player.points.toLocaleString()} points</div>
     <hr class="player-divider">
     <ul class="has-text-right">
-        <li><b>{player.ZombieKills}</b> commons killed</li>
+        <li><b>{player.zombie_kills}</b> commons killed</li>
         <li><b>{player.SpecialInfectedKills}</b> specials killed</li>
         <li><b>{player.SurvivorDamage}</b> friendly fire damage</li>
     </ul>

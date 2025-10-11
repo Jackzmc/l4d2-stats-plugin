@@ -1,4 +1,4 @@
-/// MENU HANDLER ///
+Menu g_rateMenu;
 
 Menu SetupRateMenu() {
 	Menu menu = new Menu(MapVoteHandler);

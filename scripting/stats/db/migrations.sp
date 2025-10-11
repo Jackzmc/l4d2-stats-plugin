@@ -1,4 +1,5 @@
 #define NUM_MIGRATIONS 1
+static bool ENABLE_MIGRATIONS = false;
 
 
 char MIGRATIONS[NUM_MIGRATIONS][1];
@@ -8,8 +9,9 @@ char MIGRATIONS[NUM_MIGRATIONS][1];
  * Will cause plugin to fail on any migration failure
  */
 public void ApplyMigrations() {
-    GetLastAppliedMigration();
-    // TODO: apply each migration if it hasn't already applied
+    // TODO: enable this when a migration is added
+    if(ENABLE_MIGRATIONS)
+        GetLastAppliedMigration();
 }
 
 // Fetch the last migration ID 

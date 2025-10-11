@@ -201,7 +201,7 @@ export async function getUserTopStats(steamid: string): Promise<UserTopStats | n
     if(cacheObj) return cacheObj
     // TODO: support top_map being non-official maps? (need to worry about anything calling getMapScreenshot such as banner.png.ts)
     const [rows] = await db.execute<RowDataPacket[]>(`
-        (SELECT 'top_weapon' name, top_weapon id, w.name value, COUNT(*) count FROM stats_games g LEFT JOIN weapon_names w ON w.id = g.top_weapon WHERE steamid = :steamid AND top_weapon != '' GROUP BY top_weapon ORDER BY count DESC LIMIT 1)
+        (SELECT 'top_weapon' name, top_weapon id, w.name value, COUNT(*) count FROM stats_games g LEFT JOIN stats_weapon_names w ON w.id = g.top_weapon WHERE steamid = :steamid AND top_weapon != '' GROUP BY top_weapon ORDER BY count DESC LIMIT 1)
         UNION ALL
         (SELECT 'top_char' name, '' id, characterType value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND characterType IS NOT NULL GROUP BY characterType ORDER BY count DESC LIMIT 1)
         UNION ALL

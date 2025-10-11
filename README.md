@@ -1,7 +1,7 @@
 # L4D2 Stats Plugin
 
 > [!NOTE]
-> This is more of a custom personal project that I decided to have open sourced - limited support and some features will not work as they rely on my custom systems (such as "Play Style" and "Rating" in user overview)
+> This is more of a custom personal project that I decided to have open sourced - limited support. 
 
 A sourcemod plugin for l4d2 that records statistics for all players on the server and a server that shows the statistics. This was designed for co-op, and so versus and other gamemodes may not track statistics correctly.
 

@@ -19,7 +19,7 @@ const config = {
         "left4dead2.stats_heatmaps",
         "left4dead2.stats_points",
         "left4dead2.stats_users",
-        "left4dead2.stats_weapons_usage",
+        "left4dead2.stats_weapon_usages",
     ]
 } 
 

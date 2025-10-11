@@ -228,12 +228,12 @@ CREATE TABLE `stats_users` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `stats_weapons_usage`
+-- Table structure for table `stats_weapon_usages`
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `stats_weapons_usage` (
+CREATE TABLE `stats_weapon_usages` (
   `steamid` varchar(32) NOT NULL,
   `weapon` varchar(64) NOT NULL,
   `minutesUsed` float DEFAULT NULL,
@@ -275,12 +275,12 @@ CREATE TABLE `map_info` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Table structure for table `weapon_names`
+-- Table structure for table `stats_weapon_names`
 --
 
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8mb4 */;
-CREATE TABLE `weapon_names` (
+CREATE TABLE `stats_weapon_names` (
   `id` varchar(64) NOT NULL,
   `name` varchar(64) NOT NULL,
   `melee` tinyint(1) NOT NULL DEFAULT 0,
@@ -289,10 +289,10 @@ CREATE TABLE `weapon_names` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `weapon_names`
+-- Dumping data for table `wstats_eapon_names`
 --
 
-insert into left4dead2.weapon_names (id, name, melee)
+insert into left4dead2.stats_weapon_names (id, name, melee)
 values  ('baseball_bat', 'Baseball Bat', 1),
         ('cricket_bat', 'Cricket Bat', 1),
         ('crowbar', 'Crowbar', 1),

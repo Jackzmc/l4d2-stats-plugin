@@ -938,7 +938,7 @@ void SubmitWeaponStats(int client) {
 			players[client].wpn.pendingStats.GetArray(weapon, stats, sizeof(stats));
 			if(stats.minutesUsed == 0) continue;
 			g_db.Format(query, sizeof(query), 
-				"INSERT INTO stats_weapons_usage (steamid,weapon,minutesUsed,totalDamage,kills,headshots) VALUES ('%s','%s',%f,%d,%d,%d) ON DUPLICATE KEY UPDATE minutesUsed=minutesUsed+%f,totalDamage=totalDamage+%d,kills=kills+%d,headshots=headshots+%d",
+				"INSERT INTO stats_weapon_usages (steamid,weapon,minutesUsed,totalDamage,kills,headshots) VALUES ('%s','%s',%f,%d,%d,%d) ON DUPLICATE KEY UPDATE minutesUsed=minutesUsed+%f,totalDamage=totalDamage+%d,kills=kills+%d,headshots=headshots+%d",
 				players[client].steamid,
 				weapon,
 				stats.minutesUsed,

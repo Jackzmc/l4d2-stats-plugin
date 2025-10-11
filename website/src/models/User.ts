@@ -264,8 +264,8 @@ export interface WeaponStat {
 export async function getUserWeapons(steamid: string): Promise<WeaponStat[]> {
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT weapon id,n.name name,n.melee, minutesUsed,totalDamage,headshots,kills
-        FROM stats_weapons_usage
-        RIGHT JOIN weapon_names n ON n.id = weapon 
+        FROM stats_weapon_usages
+        RIGHT JOIN stats_weapon_names n ON n.id = weapon 
         WHERE steamid = ?
         ORDER BY totalDamage DESC, kills DESC
     `, [steamid])

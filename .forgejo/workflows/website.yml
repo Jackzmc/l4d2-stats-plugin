@@ -1,8 +1,11 @@
 on: 
   push:
-    branches: 
-      # - release
-      - redesign # temp
+    branches:
+      - master 
+      - redesign
+    paths:
+      - 'website/**'
+      - '.forgejo/workflows/website.yml'
 env:
   # Image name
   image: l4d2-stats-plugin

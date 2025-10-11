@@ -22,36 +22,37 @@ export const prerender = true
 		<h4>FAQ</h4>
 		<div class="block ml-2">
 			<Card type="has-background-primary-light" title="Campaign MVP" collapsed>
-				<p>Campaign MVP is determined by the following fields:</p>
+				<p>Campaign MVP is determined by the player with the first player with the highest or lowest value in each category:</p>
 				<ol>
 					<li>Special Infected Killed <em>(highest number)</em></li>
 					<li>Survivor FF Count <em>(lowest number)</em></li>
 					<li>Zombie Kills <em>(highest number)</em></li>
 					<li>Damage Taken <em>(lowest number)</em></li>
 				</ol>
-				<p>When a campaign is fetched, the list of sessions for that campaign are sorted in the order listed above. The first player in the list will be assigned the MVP.</p>
 			</Card>
 		</div>
 		<div class="block ml-2">
 			<Card type="has-background-primary-light" title="Points Breakdown" collapsed>
-				<p>Points are gained or lost from certain actions in a game a player performs. Below is the list of actions and the points added/removed for it:</p>
-
+				<p style="max-width:800px">Points are gained or lost from certain actions in a game that a player performed. List below breaks down how the points are acquired or lost.</p>
+				<p style="max-width:800px">In addition, points are reset every month and the leaderboards will show the points earned that month. You can view on a player's profile how they earned their points, and see their total lifetime accumlated points</p>
 				<ul>
-					<li><span class="has-text-success">+1</span> per common killed (any damage type)</li>
-					<li><span class="has-text-success">+2</span> per common headshot</li>
-					<li><span class="has-text-success">+6</span> per special kill</li>
-					<li><span class="has-text-success">+100</span> per tank kill</li>
-					<li><span class="has-text-success">+20</span> per tank kill solo (in addition to tank kill)</li>
-					<li><span class="has-text-success">+50</span> per tank kill melee (in addition to tank kill))</li>
-					<li><span class="has-text-success">+50</span> per witch kill</li>
-					<li><span class="has-text-success">+10</span> per heal teammate</li>
-					<li><span class="has-text-success">+5</span> per revive teammate</li>
-					<li><span class="has-text-success">+7</span> per teammate defibbed</li>
-					<li><span class="has-text-success">+2</span> per ammo pack deploy</li>
-					<li><span class="has-text-success">+200</span> per finale win</li>
+					<li><span class="tag is-success">+1</span> per common killed (any damage type)</li>
+					<li><span class="tag is-success">+2</span> per common headshot (bonus to common kill)</li>
+					<li><span class="tag is-success">+6</span> per special kill</li>
+					<li><span class="tag is-success">+200</span> per tank kill</li>
+					<li><span class="tag is-success">+100</span> per tank kill solo (in addition to tank kill)</li>
+					<li><span class="tag is-success">+50</span> per tank kill melee (in addition to tank kill))</li>
+					<li><span class="tag is-success">+25</span> per witch kill</li>
+					<li><span class="tag is-success">+10</span> per heal teammate</li>
+					<li><span class="tag is-success">+5</span> per revive teammate</li>
+					<li><span class="tag is-success">+7</span> per teammate defibbed</li>
+					<li><span class="tag is-success">+2</span> per ammo pack deploy</li>
+					<li><span class="tag is-success">+100</span> per witch crowned</li>
+					<li><span class="tag is-success">+5</span> per smoker self cleared</li>
+					<li><span class="tag is-success">+5</span> per hunter dead stopped</li>
 					<br>
-					<li><span class="has-text-danger">-100</span> for teammate kill</li>
-					<li><span class="has-text-danger">-10</span> per teammate dmg</li>
+					<li><span class="tag is-danger">-500</span> for teammate kill</li>
+					<li><span class="tag is-danger">-5</span> per teammate dmg</li>
 				</ul>
 			</Card>
 		</div>

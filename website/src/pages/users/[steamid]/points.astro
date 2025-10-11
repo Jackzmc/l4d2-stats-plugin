@@ -44,10 +44,10 @@ if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, ma
     <UserHero slot="hero" user={user} subtitle={`${user.points.toLocaleString()} points`} activePage="points" />
 
     <div class="container">
-        <p>Common kills earn +1 point but they are not recorded</p>
         <table class="table is-fullwidth">
             <thead>
                 <tr>
+                    <th></th>
                     <th>Points</th>
                     <th>Action</th>
                     <th>When</th>
@@ -56,15 +56,13 @@ if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, ma
             <tbody>
                 {points.map(point => 
                     <tr>
+                        <td>{point.multiplier > 1 && <span>{point.multiplier}x</span>}</td>
                         <td>
                             {point.amount >= 20 && <span class="tag is-link has-text-weight-bold">+{point.amount}</span>}
                             {point.amount >= 0 && point.amount < 20 && <span class="tag has-text-weight-bold">+{point.amount}</span>}
                             {point.amount < 0 && <span class="tag is-danger has-text-weight-bold">{point.amount}</span>}
                         </td>
-                        <td>
-                            {point.multiplier > 1 && <span>{point.multiplier}x</span>} 
-                            {POINT_TYPE_DISPLAY[point.type]}
-                        </td>
+                        <td>{POINT_TYPE_DISPLAY[point.type]}</td>
                         <td>{formatRelUnixDate(point.timestamp)}</td>
                     </tr>
                 )}

@@ -334,6 +334,21 @@ values  ('baseball_bat', 'Baseball Bat', 1),
         ('weapon_sniper_military', 'Military Sniper', 0),
         ('weapon_sniper_scout', 'Scout Sniper', 0),
         ('weapon_vomitjar', 'Boomer Bile', 0);
+
+--
+-- Table structure for table `stats_migrations`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stats_migrations` (
+  `id` smallint(6) NOT NULL,
+  `timestamp` datetime DEFAULT NULL,
+  `state` tinyint(4) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
         
 --
 -- System for point management

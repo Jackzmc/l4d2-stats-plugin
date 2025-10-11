@@ -1,5 +1,6 @@
 #include "callbacks.sp"
-#tryinclude "methods.sp"
+#include "migrations.sp"
+#include "methods.sp"
 
 public void InitDB() {
     if(!SQL_CheckConfig("stats")) {

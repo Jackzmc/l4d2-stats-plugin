@@ -300,29 +300,6 @@ stock int GiveClientWeapon(int client, const char[] wpnName) {
 		return -1;
 	}
 }
-stock int GetNearestEntity(int client, char[] classname)
-{
-	int nearestEntity = -1;
-	float clientVecOrigin[3], entityVecOrigin[3];
-	
-	//Get the distance between the first entity and client
-	float distance, nearestDistance = -1.0;
-	
-	//Find all the entity and compare the distances
-	int entity = -1;
-	while ((entity = FindEntityByClassname(entity, classname)) != -1)
-	{
-		GetEntPropVector(entity, Prop_Data, "m_vecOrigin", entityVecOrigin);
-		distance = GetVectorDistance(clientVecOrigin, entityVecOrigin, true);
-		
-		if (distance < nearestDistance || nearestDistance == -1.0)
-		{
-			nearestEntity = entity;
-			nearestDistance = distance;
-		}
-	}
-	return nearestEntity;
-}  
 
 stock bool IsValidPlayer(int i) {
 	return IsClientConnected(i) && IsClientInGame(i) && IsPlayerAlive(i);
@@ -866,7 +843,7 @@ stock bool IsNearGround(int ref, float distFromGround = 15.0) {
 	GetEntPropVector(ref, Prop_Send, "m_vecOrigin", sPos);
 	ePos[0] = sPos[0];
 	ePos[1] = sPos[1];
-	ePos[2] = sPos[2] -= 15.0;
+	ePos[2] = sPos[2] -= distFromGround;
 	TR_TraceRayFilter(sPos, ePos, MASK_SOLID, RayType_EndPoint, Filter_IgnorePlayer, ref);
 	if(TR_DidHit()) {
 		return true;
@@ -875,7 +852,7 @@ stock bool IsNearGround(int ref, float distFromGround = 15.0) {
 }
 
 stock bool IsAreaClear(const float pos[3], const float ang[3], const float minBound[3], const float maxBound[3]) { 
-
+	#pragma unused ang
 	TR_TraceHullFilter(pos, pos, minBound, maxBound, MASK_SOLID, Filter_World);
 	if(TR_DidHit()) {
 		return false;

@@ -36,7 +36,7 @@ jobs:
       - name: Pull Artifact
         uses: https://data.forgejo.org/forgejo/download-artifact@v4
         with: 
-          name: 1.12.zip
+          name: 1.12.x.zip
       - name: Display structure of downloaded files
         run: ls -R
       - name: Install SSH Key

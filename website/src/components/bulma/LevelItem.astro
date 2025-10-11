@@ -20,7 +20,7 @@ const { title, class: className, value, suffix = "", countup = false, tooltip, d
     <slot>
         <div>
             <p class:list={["heading", className]}>{title}</p>
-            {countup && <CountUp  class:list={["title", className]} number={value as number} />}
+            {countup && <Fragment><CountUp  class:list={["title", className]} number={value as number} />{suffix}</Fragment>}
             {!countup && <p class:list={["title", className]}>
                 {typeof value === "number" 
                     ? value.toLocaleString(undefined, { maximumFractionDigits: decimals }) 

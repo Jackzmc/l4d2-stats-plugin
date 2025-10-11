@@ -41,6 +41,8 @@ jobs:
           context: "{{defaultContext}}:website"
           push: true
           tags: ${{ env.host }}/${{ env.user }}/${{ env.image }}:${{ env.tag }}
+          cache-from: type=registry,ref=${{ env.image }}:buildcache
+          cache-to: type=registry,ref=${{ env.image }}:buildcache,mode=max
 
   deploy:
     runs-on: ubuntu-full

@@ -243,6 +243,7 @@ export interface GameSession extends GameSessionPartial {
     date_end: number,
     melee_kills: number;
     SurvivorFFCount: number;
+    SurvivorFFDamage: number;
     SurvivorFFTakenCount: number;
     SurvivorFFTakenDamage: number;
     FirstAidShared: number;

@@ -12,7 +12,7 @@ env:
   image: l4d2-stats-plugin
   tag: ${{ forgejo.ref_name }}
   user: deploy
-  host: git.jackz.me
+  registry: git.jackz.me
 
 jobs:
   build:
@@ -30,7 +30,7 @@ jobs:
       - name: Login to Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.host }}
+          registry: ${{ env.registry }}
           username: ${{ env.user }}
           password: ${{ secrets.REGISTRY_TOKEN }}
       - name: Set up Docker Buildx
@@ -40,9 +40,9 @@ jobs:
         with:
           context: "{{defaultContext}}:website"
           push: true
-          tags: ${{ env.host }}/${{ env.user }}/${{ env.image }}:${{ env.tag }}
-          cache-from: type=registry,ref=${{ env.image }}:buildcache
-          cache-to: type=registry,ref=${{ env.image }}:buildcache,mode=max
+          tags: ${{ env.registry }}/${{ env.user }}/${{ env.image }}:${{ env.tag }}
+          cache-from: type=registry,ref={{ env.registry }}/${{ env.user }}:buildcache
+          cache-to: type=registry,ref={{ env.registry }}/${{ env.user }}:buildcache,mode=max
 
   deploy:
     runs-on: ubuntu-full

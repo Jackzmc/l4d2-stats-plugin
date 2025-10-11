@@ -43,4 +43,4 @@ jobs:
           key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
       - name: upload plugin to server
-        run: scp -v *.smx "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ secrets.PLUGINS_PATH }}"
+        run: scp *.smx "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ secrets.PLUGINS_PATH }}"

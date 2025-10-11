@@ -3,3 +3,4 @@ node_modules
 *.bat
 *.sh
 !compile_all.sh
+plugins/

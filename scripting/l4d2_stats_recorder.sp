@@ -387,14 +387,17 @@ enum struct Player {
 			// Merge point record (if there is a previous record) by increasing 'multiplier' field by one
 			int prevIndex = this.getPointRecord(type);
 			if(prevIndex != -1) {
-				int timestamp = GetTime();
-				int prevTimestamp = this.pointsQueue.Get(prevIndex, 2);
-				// If merge window is unlimited, or record in timespan then merge
-				if(mergeWindow == 0 || timestamp - prevTimestamp <= mergeWindow) {
-					int mult = this.pointsQueue.Get(prevIndex, 3);
-					this.pointsQueue.Set(prevIndex, timestamp, 2); // update timestamp
-					this.pointsQueue.Set(prevIndex, mult + 1, 3); // increment multiplier
-					return;
+				int mult = this.pointsQueue.Get(prevIndex, 3);
+				// Multiplier is unsigned tiny int, don't merge if it's over capacity
+				if(mult <= 255) {
+					int timestamp = GetTime();
+					int prevTimestamp = this.pointsQueue.Get(prevIndex, 2);
+					// If merge window is unlimited, or record in timespan then merge
+					if(mergeWindow == 0 || timestamp - prevTimestamp <= mergeWindow) {
+						this.pointsQueue.Set(prevIndex, timestamp, 2); // update timestamp
+						this.pointsQueue.Set(prevIndex, mult + 1, 3); // increment multiplier
+						return;
+					}
 				}
 
 				// It's unlikely that there is a record even earlier in list that will younger than this record, so we don't try to find another one

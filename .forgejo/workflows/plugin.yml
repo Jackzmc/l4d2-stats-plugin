@@ -27,20 +27,3 @@ jobs:
         with: 
           name: ${{ matrix.sm-version }}.zip
           path: plugins/*.smx  
-
-  deploy:
-    runs-on: ubuntu-full
-    needs: build
-    if: github.ref == 'refs/heads/master'
-    steps:
-      - name: Pull Artifact
-        uses: https://data.forgejo.org/forgejo/download-artifact@v4
-        with: 
-          name: 1.12.x.zip
-      - name: Install SSH Key
-        uses: https://github.com/shimataro/ssh-key-action@v2.7.0
-        with:
-          key: ${{ secrets.REMOTE_PRIVATE_KEY }}
-          known_hosts: ${{ secrets.KNOWN_HOSTS }}
-      - name: upload plugin to server
-        run: rsync --info=NAME *.smx "${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }}:${{ secrets.PLUGINS_PATH }}"

@@ -21,7 +21,7 @@ jobs:
       PUBLIC_SITE_DESC: ${{ vars.PUBLIC_SITE_DESC }}
       USER_WATERMARK: ${{ vars.USER_WATERMARK }}
       PUBLIC_EXTRA_HEAD_TAGS_PROD: ${{ vars.PUBLIC_EXTRA_HEAD_TAGS_PROD }}
-      DATABASE_URL: ${{ env.DATABASE_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - name: Login to Container Registry
         uses: docker/login-action@v3

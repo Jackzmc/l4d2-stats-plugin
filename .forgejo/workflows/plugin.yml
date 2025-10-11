@@ -6,6 +6,7 @@ on:
     paths:
       - 'scripting/**'
       - '.forgejo/workflows/plugin.yml'
+  workflow_dispatch:
 
 jobs:
   build:

@@ -6,6 +6,7 @@ on:
     paths:
       - 'website/**'
       - '.forgejo/workflows/website.yml'
+  workflow_dispatch:
 env:
   # Image name
   image: l4d2-stats-plugin

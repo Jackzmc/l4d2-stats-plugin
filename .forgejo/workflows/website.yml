@@ -48,4 +48,4 @@ jobs:
           key: ${{ secrets.REMOTE_PRIVATE_KEY }}
           known_hosts: ${{ secrets.KNOWN_HOSTS }}
       - name: pull changes & restart
-        run: ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST}} -C "docker compose -f {{ secrets.COMPOSE_PATH }} up -d --pull always --quiet-pull"
+        run: ssh ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST}} -C "docker compose -f ${{ secrets.COMPOSE_PATH }} up -d --pull always --quiet-pull"

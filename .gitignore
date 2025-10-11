@@ -1,5 +1,5 @@
 node_modules
-.vscode/settings.json
+.vscode
 *.bat
 *.sh
 !compile_all.sh

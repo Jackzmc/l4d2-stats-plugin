@@ -419,7 +419,9 @@ enum struct Player {
 
 		float pos[3];
 		GetClientAbsOrigin(client, pos);
-		this.distance.accumulation += GetVectorDistance(this.distance.lastPos, pos);
+		// Convert hammer units to meters to get _slightly_ smaller numbers
+		float distance = GetVectorDistance(this.distance.lastPos, pos) / 2.54;
+		this.distance.accumulation += distance;
 		this.distance.lastPos = pos;
 		this.distance.recordTime = GetTime();
 	}
@@ -427,7 +429,8 @@ enum struct Player {
 Player players[MAXPLAYERS+1];
 Game game;
 
-#include <stats/heatmaps.sp>
+#include "stats/heatmaps.sp"
+#include "stats/migrations.sp"
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
 	CreateNative("Stats_GetPoints", Native_GetPoints);
@@ -449,7 +452,7 @@ public void OnPluginStart() {
 	} else if(!ConnectDB()) {
 		SetFailState("Failed to connect to database.");
 	}
-	RunMigrations();
+	ApplyMigrations();
 
 	g_rateMenu = SetupRateMenu();
 
@@ -556,16 +559,6 @@ public void OnPluginEnd() {
 	ClearHeatMapEntities();
 }
 
-#define MAX_MIGRATIONS 1
-char MIGRATIONS[MAX_MIGRATIONS][] = {
-	"alter table stats_users add total_distance_travelled float default 0 null"
-};
-
-void RunMigrations() {
-	for(int i = 0; i < MAX_MIGRATIONS; i++) {
-		g_db.Query(DBCT_Migration, MIGRATIONS[i], i);
-	}
-}
 //////////////////////////////////
 // TIMER
 /////////////////////////////////
@@ -1136,11 +1129,6 @@ void DBCT_Generic(Handle db, Handle child, const char[] error, queryType data) {
 	}
 }
 
-void DBCT_Migration(Handle db, Handle child, const char[] error, int migrationIndex) {
-	if(db == null || child == null) {
-		LogError("Migration #%d failed: %s", migrationIndex, error);
-	}
-}
 void DBCT_RateMap(Handle db, Handle child, const char[] error, int userid) { 
 	int client = GetClientOfUserId(userid);
 	if(client == 0) return;

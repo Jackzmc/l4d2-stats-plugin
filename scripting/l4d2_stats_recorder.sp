@@ -904,7 +904,7 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 				RecordCampaign(client);
 				IncrementStat(client, "finales_won", 1);
 				if(game.uuid[0] != '\0')
-					PrintToChat(client, "View this game's statistics at %s%s", shortID, websiteUrlPrefix);
+					PrintToChat(client, "View this game's statistics at %s%s", websiteUrlPrefix, shortID);
 				if(game.clownHonks > 0) {
 					PrintToChat(client, "%d clowns were honked this session, you honked %d", game.clownHonks, players[client].clownsHonked);
 				}

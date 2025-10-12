@@ -1,3 +1,5 @@
+name: Release
+# change to run after plugin.yml build, and filter only tags? idk
 on:
   push:
     tags:

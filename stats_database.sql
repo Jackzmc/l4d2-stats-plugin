@@ -70,6 +70,12 @@ DELIMITER ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
 
+create definer = jackz@localhost event stats_points_reset on schedule
+    every '1' MONTH
+    enable
+    do
+    CALL stats_points_reset_next();
+
 --
 -- Table structure for table `stats_weapon_usages`
 --

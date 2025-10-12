@@ -118,7 +118,6 @@ void FlushQueuedStats(int client, bool disconnect) {
 		char query[1023];
 		Format(query, sizeof(query), "UPDATE stats_users SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,survivor_ff_rec=survivor_ff_rec+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d,points=%d,packs_used=packs_used+%d,damage_molotov=damage_molotov+%d,kills_molotov=kills_molotov+%d,kills_pipe=kills_pipe+%d,kills_minigun=kills_minigun+%d,clowns_honked=clowns_honked+%d,total_distance_travelled=total_distance_travelled+%d WHERE steamid='%s'",
 			//VARIABLE													//COLUMN NAME
-
 			players[client].damageSurvivorGiven, 						//survivor_damage_give
 			GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),   //survivor_damage_rec
 			players[client].damageInfectedGiven,  						//infected_damage_give
@@ -187,6 +186,10 @@ void SubmitPoints(int client) {
 }
 
 void SubmitWeaponStats(int client) {
+	if(players[client].steamid[0] == '\0') {
+		LogError("SubmitWeaponStats: Steamid is empty");
+		return;
+	} 
 	if(players[client].wpn.pendingStats != null && players[client].wpn.pendingStats.Size > 0) {
 		// Force save weapon stats, instead of waiting for player to switch weapon
 		char query[512], weapon[64];

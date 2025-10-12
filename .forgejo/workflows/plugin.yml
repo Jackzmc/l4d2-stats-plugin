@@ -31,8 +31,9 @@ jobs:
   release:
     name: Create release for tags
     # Only release on tags
-    if: ${{ startsWith(forgejo.ref, "refs/tags") )}}
+    if: ${{ startsWith(forgejo.ref, "refs/tags") }}
     runs-on: docker
+    needs: build
     steps:
       - name: Pull Artifact
         uses: https://data.forgejo.org/forgejo/download-artifact@v4

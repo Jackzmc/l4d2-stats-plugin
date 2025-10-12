@@ -29,7 +29,7 @@ jobs:
           path: plugins/*.smx  
 
   release:
-    name: Release pushed tag
+    name: Create release for tags
     # Only release on tags
     if: ${{ startsWith(forgejo.ref, "refs/tags") )}}
     runs-on: docker
@@ -45,10 +45,11 @@ jobs:
           prerelease: true
 
   deploy:
+    name: Deploy release
     runs-on: ubuntu-full
     needs: build
     # Only deploy on tags
-    if: ${{ startsWith(forgejo.ref, "refs/tags") )}}
+    if: ${{ startsWith(forgejo.ref, "refs/tags") }}
     steps:
       - name: Pull Artifact
         uses: https://data.forgejo.org/forgejo/download-artifact@v4

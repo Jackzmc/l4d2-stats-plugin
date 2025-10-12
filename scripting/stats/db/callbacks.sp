@@ -49,7 +49,7 @@ void DBCT_CheckUserExistance(Handle db, DBResultSet results, const char[] error,
 		g_db.Query(DBCT_Generic, query, QUERY_UPDATE_USER);
 		if(!StrEqual(prevName, alias)) {
 			// Add prev name to history
-			g_db.Format(query, sizeof(query), "INSERT INTO user_names_history (steamid, name, created) VALUES ('%s','%s', UNIX_TIMESTAMP())", players[client].steamid, alias);
+			g_db.Format(query, sizeof(query), "INSERT INTO stats_names_history (steamid, name, created) VALUES ('%s','%s', UNIX_TIMESTAMP())", players[client].steamid, alias);
 			g_db.Query(DBCT_Generic, query, QUERY_UPDATE_NAME_HISTORY);
 		}
 	}

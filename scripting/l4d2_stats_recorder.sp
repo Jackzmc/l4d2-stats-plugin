@@ -2,7 +2,7 @@
 #pragma newdecls required
 
 // #define DEBUG 1
-#define PLUGIN_VERSION "2.0.0"
+#define PLUGIN_VERSION "2.1.0"
 
 #include <sourcemod>
 #include <sdktools>

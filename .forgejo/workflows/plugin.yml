@@ -44,6 +44,7 @@ jobs:
           direction: upload
           release-dir: .
           prerelease: true
+          override: true
 
   deploy:
     name: Deploy release

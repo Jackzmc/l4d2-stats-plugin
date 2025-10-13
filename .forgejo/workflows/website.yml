@@ -59,6 +59,7 @@ jobs:
   deploy:
     runs-on: ubuntu-full
     needs: build
+    if: forgejo.ref == 'refs/head/master'
     steps:
       - name: Install SSH Key
         uses: https://github.com/shimataro/ssh-key-action@v2.7.0

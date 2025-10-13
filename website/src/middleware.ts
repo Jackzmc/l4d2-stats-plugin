@@ -1,6 +1,6 @@
 import { defineMiddleware } from "astro:middleware";
 
-const CORS_ALLOW_LIST = process.env.API_ALLOWED_ORIGINS ? process.env.API_ALLOWED_ORIGINS.split("") : [""]
+const CORS_ALLOW_LIST = process.env.API_ALLOWED_ORIGINS ? process.env.API_ALLOWED_ORIGINS.split(",") : [""]
 const CORS_ALLOW_ANY = CORS_ALLOW_LIST[0] === "*"
 
 console.info("[Cors] Allowed Origins:", CORS_ALLOW_ANY ? "-any-" : CORS_ALLOW_LIST.join(" "))

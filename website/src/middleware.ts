@@ -19,7 +19,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if(context.url.pathname.startsWith("/api")) {
         metrics.requests.api++
         const response = await next();
-        console.debug(context.url.origin, context.site?.origin, context.url.origin)
+        console.debug(context.request.headers.get("origin"), context.url.origin, context.site?.origin)
         if(CORS_ALLOW_ANY) {
             response.headers.set("Access-Control-Allow-Origin", "*")
         } else if((context.site && context.url.origin === context.site.origin) || CORS_ALLOW_LIST.includes(context.url.origin)) {

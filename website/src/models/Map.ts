@@ -69,7 +69,7 @@ export interface MapCountEntry {
  * @returns object, key being map id, value being count
  */
 export async function getMapsWithPlayCount(officialMapsOnly: boolean = false, limit: number | null = null): Promise<MapCountEntry[]> {
-    const officialMapCondition = officialMapsOnly ? `AND map_info.flags & ${MapFlags.OfficialMap}` : ''
+    const officialMapCondition = officialMapsOnly ? `AND stats_map_info.flags & ${MapFlags.OfficialMap}` : ''
     const limitClause = limit != null ? "LIMIT ?" : ""
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT map, stats_map_info.name, COUNT(map) count 

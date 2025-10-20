@@ -11,7 +11,8 @@ interface Props {
     honkMaster?: boolean
 }
 const { player, mvp = false, honkMaster = false } = Astro.props
-const survivorName = SURVIVOR_DEFS[player.character_type] ?? "Unknown Character"
+const survivor = SURVIVOR_DEFS[player.character_type]
+const survivorName = survivor?.name ?? "Unknown Character"
 
 ---
 

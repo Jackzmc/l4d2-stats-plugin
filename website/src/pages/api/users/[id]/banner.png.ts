@@ -74,10 +74,11 @@ function performCtx(ctx: CanvasRenderingContext2D, cb: (ctx: CanvasRenderingCont
 
 async function tryGetImage(mapId?: string) {
   try {
-    return await loadImage(path.join(PUBLIC_ROOT, `img/maps/screenshots/${mapId || "c1m1_hotel"}.jpeg`))
+    return await loadImage(path.join(PUBLIC_ROOT, `img/maps/screenshots/${mapId || "c1m4_atrium"}.jpeg`))
   } catch(err) {
+    console.error(`[Banner] Failed to load image: `, err)
     // fall back to hotel on error
-    return await loadImage(path.join(PUBLIC_ROOT, "c1m1_hotel.jpeg"))
+    return await loadImage(path.join(PUBLIC_ROOT, "img/maps/screenshots/c1m4_atrium.jpeg"))
   }
 }
 
@@ -106,7 +107,7 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   const shouldDrawBg = url.searchParams.get("bg") != "f" && url.searchParams.get("bg") !== "0"
 
   if(shouldDrawBg) {
-    const img = await tryGetImage(topStats.top_map.id)
+    const img = await tryGetImage(topStats.top_map?.id)
     drawBackgroundImage(ctx, 
       // Load map image, where topStats.top_map *should* always be an official map which we have images for
       // If they don't have top map or getting map errors, default to c1m1_hotel

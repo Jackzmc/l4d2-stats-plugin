@@ -56,6 +56,7 @@ if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, ma
             <LevelItem title="Expert Games" value={gameStats.expert} />
         </Level>
         
+        {games.length === 0 && <p class="has-text-centered has-text-centered my-6">No games found</p>}
         <div class="grid is-col-min-12">
             {games.map(game => 
                 <div class="cell is-col-min-8">

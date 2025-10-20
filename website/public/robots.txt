@@ -5,3 +5,5 @@ Disallow: /api
 Disallow: /search
 Disallow: /*?*page=*
 Disallow: /*?*gamemode=*
+Disallow: /fonts
+Disallow /img

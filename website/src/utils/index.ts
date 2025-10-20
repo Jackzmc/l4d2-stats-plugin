@@ -74,15 +74,17 @@ export const WEAPON_IMAGES: ImageMap = Object.fromEntries(Object.entries(import.
 
 import type { AstroGlobal } from 'astro';
 import DefaultMapImage from '@assets/maps/default.png'
+import DefaultUserImage from '@assets/portraits/random.png'
 import { GAMEMODES, Survivor, SURVIVOR_DEFS } from '@/types/game.ts';
 export async function getMapPoster(mapId: string): Promise<ImageProperties> {
   if(MAP_POSTERS[mapId] === undefined) {
-    console.warn("No map poster for", mapId)
+    console.warn("Warn: No map poster for", mapId)
     return DefaultMapImage
   }
   return (await (MAP_POSTERS[mapId].image())).default
 }
 export async function getPortrait(survivorType: Survivor): Promise<ImageProperties> {
+  if(survivorType == undefined) return DefaultUserImage
   return (await (SURVIVOR_PORTRAITS[SURVIVOR_DEFS[survivorType].model].image())).default
 }
 

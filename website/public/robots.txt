@@ -3,3 +3,5 @@ Disallow: /404
 Disallow: /500
 Disallow: /api
 Disallow: /search
+Disallow: /*?*page=*
+Disallow: /*?*gamemode=*

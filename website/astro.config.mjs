@@ -43,18 +43,6 @@ export default defineConfig({
     },
 
     //// OLD SITE REDIRECTS ////
-
-    // Old site API had /user, we use /users now
-    "/api/user/[id]": {
-      status: 301,
-      destination: "/api/users/[id]"
-    },
-    // redirect old /user links
-    "/user/[steamid]": {
-      status: 301,
-      destination: "/users/[steamid]/overview"
-    },
-    
     // redirect old stats website links
     "/campaigns/[id]": {
       status: 301,

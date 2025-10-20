@@ -17,11 +17,12 @@ if(!game) return Astro.rewrite(`/404?obj=game&id=${Astro.params.id}`)
 const sessions = await getSessions(id)
 
 
+const mapName = game.map_name ?? game.map
 const meta: PageInfo = {
-	title: `${game.map_name} - Game ${id}`,
+	title: `${mapName} - Game ${id}`,
 	description: "",
     hero: {
-        title: game.map_name,
+        title: mapName,
     },
 }
 const totalHonks = sessions.reduce((pv, cv) => pv + cv.honks, 0)

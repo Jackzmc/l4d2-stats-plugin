@@ -32,6 +32,7 @@ const meta: PageInfo = {
     description: `View ${user.last_alias}'s "${gamemode}" gamemode games`,
 }
 if(import.meta.env.PROD) Astro.response.headers.set("Cache-Control", "public, max-age=3600")
+meta.noIndex = meta.noFollow = Astro.url.searchParams.size > 0 // Disable indexing/follow if any queries have been set
 ---
 <Layout meta={meta}>
     <UserHero slot="hero" user={user} subtitle={`${user.points.toLocaleString()} points`} activePage="games" />

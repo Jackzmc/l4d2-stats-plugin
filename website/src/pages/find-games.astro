@@ -12,8 +12,8 @@ const meta: PageInfo = {
         subtitle: `${games.totalGames.toLocaleString()} games played`
     }
 }
-
 export const prerender = false
+meta.noIndex = meta.noFollow = Astro.url.searchParams.size > 0 // Disable indexing/follow if any queries have been set
 ---
 
 <Layout meta={meta}>

@@ -72,6 +72,15 @@ function performCtx(ctx: CanvasRenderingContext2D, cb: (ctx: CanvasRenderingCont
   return a
 }
 
+async function tryGetImage(mapId?: string) {
+  try {
+    return await loadImage(path.join(PUBLIC_ROOT, `img/maps/screenshots/${mapId || "c1m1_hotel"}.jpeg`))
+  } catch(err) {
+    // fall back to hotel on error
+    return await loadImage(path.join(PUBLIC_ROOT, "c1m1_hotel.jpeg"))
+  }
+}
+
 const DARK_BG_COLOR: [number,number,number,number] = [ 0, 0, 0, 0.75 ]
 const LIGHT_BG_COLOR: [number,number,number,number]  = [ 255, 255, 255, 0.6 ]
 export const BANNER_SIZE = [CANVAS_INNER_DIM[0] + MARGIN_PX, CANVAS_INNER_DIM[1] + MARGIN_PX]
@@ -96,12 +105,15 @@ export const GET: APIRoute = async ({ params, request, url }) => {
 
   const shouldDrawBg = url.searchParams.get("bg") != "f" && url.searchParams.get("bg") !== "0"
 
-  if(shouldDrawBg) drawBackgroundImage(ctx, 
-    // Load map image, where topStats.top_map should always be an official map which we have images for
-    // If they don't have top map, default to c1m1_hotel
-    await loadImage(path.join(PUBLIC_ROOT, `img/maps/screenshots/${topStats.top_map.id! || "c1m1_hotel"}.jpeg`)),
-    survivorDef.colorIsDark ? LIGHT_BG_COLOR : DARK_BG_COLOR
-  )
+  if(shouldDrawBg) {
+    const img = await tryGetImage(topStats.top_map.id)
+    drawBackgroundImage(ctx, 
+      // Load map image, where topStats.top_map *should* always be an official map which we have images for
+      // If they don't have top map or getting map errors, default to c1m1_hotel
+      img,
+      survivorDef.colorIsDark ? LIGHT_BG_COLOR : DARK_BG_COLOR
+    )
+  }
   const survivorImg = await loadImage(path.join(PUBLIC_ROOT, `img/fullbody/${survivorDef.name.toLowerCase()}.png`))
   const width = survivorImg.width * (CANVAS_INNER_DIM[1] / survivorImg.height)
   // subtract another - 20 to prevent the feet being too far down for some reason

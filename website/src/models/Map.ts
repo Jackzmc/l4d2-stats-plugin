@@ -25,8 +25,8 @@ export async function getMapInfo(
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT map_id map, i.name name, i.chapter_count, i.flags, AVG(value) avgRating, COUNT(value) ratings, count gamesPlayed, duration avgMinutesPlayed
         FROM stats_map_ratings
-        JOIN stats_map_info i ON i.mapid = map_id
-        JOIN (SELECT map, COUNT(campaignID) count, AVG(duration) duration FROM stats_games GROUP BY map) as games
+        LEFT JOIN stats_map_info i ON i.mapid = map_id
+        LEFT JOIN (SELECT map, COUNT(campaignID) count, AVG(duration) duration FROM stats_games GROUP BY map) as games
         ON stats_map_ratings.map_id = map
         WHERE stats_map_ratings.map_id = ?
     `, [ map ])
@@ -74,7 +74,7 @@ export async function getMapsWithPlayCount(officialMapsOnly: boolean = false, li
     const [rows] = await db.execute<RowDataPacket[]>(`
         SELECT map, stats_map_info.name, COUNT(map) count 
         FROM stats_games 
-        RIGHT JOIN stats_map_info ON stats_map_info.mapid = stats_games.map ${officialMapCondition}
+        LEFT JOIN stats_map_info ON stats_map_info.mapid = stats_games.map ${officialMapCondition}
         WHERE map IS NOT NULL
         GROUP BY map
         ORDER BY count DESC

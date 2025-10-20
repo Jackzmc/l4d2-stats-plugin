@@ -46,7 +46,7 @@ export async function getRecentGames(page: number = 1, limit = 8): Promise<Recen
             server_tags tags,
             i.name as name
         FROM stats_games as g
-        INNER JOIN stats_map_info i ON i.mapid = g.map
+        LEFT JOIN stats_map_info i ON i.mapid = g.map
         GROUP BY g.campaignID
         ORDER BY dateEnd DESC
         LIMIT ?, ?
@@ -99,7 +99,7 @@ export async function getFilteredGames(opts: FilterOptions = {}, page = 1, limit
             server_tags tags,
             i.name as name
         FROM stats_games as g
-        INNER JOIN stats_map_info i ON i.mapid = g.map
+        LEFT JOIN stats_map_info i ON i.mapid = g.map
         ${whereClause}
         GROUP BY g.campaignID
         ORDER BY dateEnd DESC

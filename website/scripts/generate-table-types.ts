@@ -30,4 +30,4 @@ const definition = await Client
 
 writeFileSync(path.join(import.meta.dirname, '../src/db/types.ts'), definition)
 
-console.log(definition)
+console.info(definition)

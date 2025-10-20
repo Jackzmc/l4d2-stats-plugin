@@ -11,7 +11,6 @@ import LevelItem from "@/components/bulma/LevelItem.astro";
 
 
 const session = await getSession(sessionId)
-console.log(sessionId, session)
 if(!session) return Astro.rewrite(`/404?obj=session&id=${Astro.params.sessionId}`)
 const otherSessions = await getSessionPlayers(gameId)
 

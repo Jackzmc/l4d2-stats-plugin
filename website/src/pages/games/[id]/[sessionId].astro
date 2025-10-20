@@ -11,14 +11,17 @@ import LevelItem from "@/components/bulma/LevelItem.astro";
 
 
 const session = await getSession(sessionId)
+console.log(sessionId, session)
 if(!session) return Astro.rewrite(`/404?obj=session&id=${Astro.params.sessionId}`)
 const otherSessions = await getSessionPlayers(gameId)
 
+const mapName = session.map_name ?? session.map
+
 const meta: PageInfo = {
-	title: `${session.name}'s Session #${session.id} - ${session.map_name}`,
-	description: `View statistics for ${session.name}'s game on ${session.map_name}`,
+	title: `${session.name}'s Session #${session.id} - ${mapName}`,
+	description: `View statistics for ${session.name}'s game on ${mapName}`,
     hero: {
-        title: session.map_name,
+        title: mapName,
     },
 }
 
@@ -32,7 +35,7 @@ export const prerender = false
         <div class="hero-body">
             <!-- <Picture src={getMapPoster(session.map)} alt="map" /> -->
             <p class="title">{session.name}'s Session #{session.id}</p>
-            <p class="subtitle pt-2">Played on <b>{session.map_name}</b></p>
+            <p class="subtitle pt-2">Played on <b>{mapName}</b></p>
         </div>
         <div class="hero-foot">
             <p class="subtitle mb-3">

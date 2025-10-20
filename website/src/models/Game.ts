@@ -338,7 +338,7 @@ export async function getSession(id: number | string): Promise<GameSession | nul
             g.CarAlarmsActivated
         FROM stats_games g
         INNER JOIN stats_users ON g.steamid = stats_users.steamid
-        INNER JOIN stats_map_info i ON g.map = i.mapid
+        LEFT JOIN stats_map_info i ON g.map = i.mapid
         WHERE g.id = ?
         LIMIT 1
     `, [id]

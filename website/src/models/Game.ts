@@ -169,7 +169,8 @@ export async function getGame(id: string): Promise<Game | null> {
     return {
         ...rows[0],
         duration: Math.round(rows[0].duration),
-        server_tags: rows[0].server_tags.split(",")
+        // Prevent empty string turning into [""]
+        server_tags: rows[0].server_tags.length > 0 ? rows[0].server_tags.split(",") : []
     } as Game
 }
 
@@ -346,7 +347,8 @@ export async function getSession(id: number | string): Promise<GameSession | nul
     if(rows.length === 0) return null
     return {
         ...rows[0],
-        server_tags: rows[0].server_tags.split(","),
+        // Prevent empty string turning into [""]
+        server_tags: rows[0].server_tags.length > 0 ? rows[0].server_tags.split(",") : [],
         duration: Math.round(rows[0].duration),
     } as GameSession
 }
@@ -403,7 +405,10 @@ export async function getServerTags(): Promise<string[]> {
 
     // count the number of occurrences of every tag
     const obj: Record<string, number> = {}
-    const flatTags = rows.map(row => row.server_tags.split(",")).flat()
+    const flatTags = rows
+        // Prevent empty string turning into [""]
+        .map(row => row.server_tags.length > 0 ? row.server_tags.split(",") : [])
+        .flat()
     flatTags.forEach(tag => {
         if(!obj[tag]) obj[tag] = 0
         obj[tag]++

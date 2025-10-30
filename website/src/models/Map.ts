@@ -104,12 +104,12 @@ export async function getMapsWithRatings(
     sortBy = db.escapeId(sortBy)
 
     const [rows] = await db.execute<RowDataPacket[]>(`
-        SELECT map_id as map, stats_map_info.name as name, AVG(value) avgRating, COUNT(value) ratings, count gamesPlayed, duration avgMinutesPlayed
-        FROM stats_map_ratings
-        JOIN stats_map_info ON stats_map_info.mapid = map_id
-        JOIN (SELECT map, COUNT(campaignID) count, AVG(duration) duration FROM stats_games GROUP BY map) as games
-        ON games.map = mapid
-        GROUP BY map_id
+        SELECT i.mapid map, i.name name, i.chapter_count, i.flags, AVG(value) avgRating, COUNT(r.map_id) ratings, count gamesPlayed, duration avgMinutesPlayed
+        FROM stats_map_info i
+        LEFT JOIN stats_map_ratings r ON r.map_id = i.mapid
+        LEFT JOIN (SELECT map, COUNT(campaignID) count, AVG(duration) duration FROM stats_games GROUP BY map) as g
+            ON g.map = i.mapid
+        GROUP BY mapid
         ORDER BY ${sortBy} ${sortAscending ? "ASC" : "DESC"}
     `)
     

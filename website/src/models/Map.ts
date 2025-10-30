@@ -23,12 +23,12 @@ export async function getMapInfo(
 ): Promise<MapDetailInfo | null> {
 
     const [rows] = await db.execute<RowDataPacket[]>(`
-        SELECT map_id map, i.name name, i.chapter_count, i.flags, AVG(value) avgRating, COUNT(value) ratings, count gamesPlayed, duration avgMinutesPlayed
-        FROM stats_map_ratings
-        LEFT JOIN stats_map_info i ON i.mapid = map_id
-        LEFT JOIN (SELECT map, COUNT(campaignID) count, AVG(duration) duration FROM stats_games GROUP BY map) as games
-        ON stats_map_ratings.map_id = map
-        WHERE stats_map_ratings.map_id = ?
+        SELECT i.mapid map, i.name name, i.chapter_count, i.flags, AVG(value) avgRating, COUNT(r.map_id) ratings, count gamesPlayed, duration avgMinutesPlayed
+        FROM stats_map_info i
+        LEFT JOIN stats_map_ratings r ON r.map_id = i.mapid
+        LEFT JOIN (SELECT map, COUNT(campaignID) count, AVG(duration) duration FROM stats_games GROUP BY map) as g
+            ON g.map = i.mapid
+        WHERE mapid = ?
     `, [ map ])
     const row = rows[0]
     if(!row || !row.map) return null

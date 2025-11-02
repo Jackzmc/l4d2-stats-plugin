@@ -77,7 +77,7 @@ async function tryGetImage(mapId?: string) {
     return await loadImage(path.join(PUBLIC_ROOT, `img/maps/screenshots/${mapId || "c1m4_atrium"}.jpeg`))
   } catch(err) {
     console.error(`[Banner] Failed to load image: `, err)
-    // fall back to hotel on error
+    // fall back to hotel on error 
     return await loadImage(path.join(PUBLIC_ROOT, "img/maps/screenshots/c1m4_atrium.jpeg"))
   }
 }
@@ -98,7 +98,9 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   const stats = await getUser(params.id)
 
   // Use override, if not, check if they have top_char, if not, use bill as default
-  const survivor: Survivor = survivorOverride || topStats.top_char.value != "" && Number(topStats.top_char.value) || 0
+  const survivor: Survivor = survivorOverride 
+    || (topStats.top_char && topStats.top_char.value != "" && Number(topStats.top_char.value)) 
+    || 0
   const survivorDef = SURVIVOR_DEFS[survivor]
 
   const canvas = new Canvas(BANNER_SIZE[0], BANNER_SIZE[1])

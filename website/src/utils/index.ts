@@ -159,3 +159,16 @@ export function getSearchParamNumber(astro: AstroGlobal, param: string, defaultV
   if(isNaN(parsed)) return defaultValue ?? null
   return parsed
 }
+
+/**
+ * Trims text with added ellipses if over maxLength
+ * @param text text to trim
+ * @param maxLength maximum length (including with ellipses dots)
+ * @returns text or text...
+ */
+export function trimText(text: string, maxLength: number) {
+  if(text.length > maxLength) {
+    return text.substring(0, maxLength - 3) + "..."
+  }
+  return text
+}

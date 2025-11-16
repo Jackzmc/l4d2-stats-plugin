@@ -364,6 +364,7 @@ export async function getSessionPlayers(id: string): Promise<(Player & { session
         FROM stats_games g
         INNER JOIN stats_users u ON u.steamid = g.steamid
         WHERE left(campaignID, 8) = ?
+        order by g.date_end asc
     `, [id.substring(0,8)])
 
     return rows.map(row => {

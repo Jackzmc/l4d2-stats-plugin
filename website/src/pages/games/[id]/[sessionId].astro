@@ -5,7 +5,7 @@ if(!gameId || !sessionId) return new Response(null, { status: 404 })
 
 import { getSession, getSessionPlayers } from '../../../models/Game.ts'
 import { Difficulty } from "@/types/game.ts";
-import { getGamemode, replaceRoute } from "@/utils/index.ts";
+import { getGamemode, replaceRoute, trimText } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
 
@@ -104,9 +104,17 @@ export const prerender = false
                     <ul>
                         {otherSessions.map(player => (
                             <li>
-                                <b><a href={`/users/${player.steamid}/overview`}>{player.name}</a></b>
+                                <b>
+                                    <a href={`/users/${player.steamid}/overview`}>
+                                        {trimText(player.name, 23)}
+                                    </a>
+                                </b>
                                 {player.sessionId != session.id && 
-                                    <a href={replaceRoute(Astro, { sessionid: player.sessionId })} class="is-pulled-right">(view stats)</a>
+                                    <a href={replaceRoute(Astro, { sessionid: player.sessionId })} 
+                                        class="is-pulled-right">(view stats)</a>
+                                }
+                                {player.sessionId === session.id && 
+                                    <span class="is-pulled-right">(current)</span>
                                 }
                             </li>
                         ))}

@@ -9,8 +9,9 @@ interface Props {
     player: GameSessionPartial,
     mvp?: boolean,
     honkMaster?: boolean
+    showHonks?: boolean
 }
-const { player, mvp = false, honkMaster = false } = Astro.props
+const { player, mvp = false, honkMaster = false, showHonks = false } = Astro.props
 const survivor = SURVIVOR_DEFS[player.character_type]
 const survivorName = survivor?.name ?? "Unknown Character"
 
@@ -30,6 +31,7 @@ const survivorName = survivor?.name ?? "Unknown Character"
         <li><b>{player.zombie_kills}</b> commons killed</li>
         <li><b>{player.SpecialInfectedKills}</b> specials killed</li>
         <li><b>{player.SurvivorDamage}</b> friendly fire damage</li>
+        {showHonks && <li><b>{player.honks}</b> clowns honked</li>}
     </ul>
     <br>
     <nav class="level mb-2">

@@ -74,7 +74,7 @@ export const prerender = false
                     const isMvp = sess.steamid == mvpPlayer
                     const isHonkMaster = sess.steamid == honkMasterPlayer
                     return <div class="cell" style="width: 260">
-                        <PlayerBox player={sess} mvp={isMvp} honkMaster={isHonkMaster} />
+                        <PlayerBox showHonks={ totalHonks > 0 } player={sess} mvp={isMvp} honkMaster={isHonkMaster} />
                     </div>
                 })}
             </div>

@@ -4,6 +4,7 @@ import Table, { type TableColumn } from "@/components/bulma/Table.astro";
 import Layout, { type PageInfo } from "@/layouts/Layout.astro";
 import UserSearch from "@/components/UserSearch.astro";
 import Pagination from "@/components/bulma/Pagination.astro";
+import { formatRelUnixDate, formatHumanDuration } from "@/utils/date.ts";
 
 let { page = 0 } = Astro.params
 page = parseInt(page as string)
@@ -19,8 +20,7 @@ const meta: PageInfo = {
 	noFollow: page > 1,
 }
 
-// Setup table 
-import { formatRelUnixDate, unixDateToDuration } from '../../utils/date.ts'
+// Setup table
 const COLUMNS: TableColumn[] = [
 	{ name: "", formatFunction: (_,i) => (
 		`#${(i + 1) + (ITEMS_PER_PAGE*(page-1))}`
@@ -30,11 +30,7 @@ const COLUMNS: TableColumn[] = [
 	)},
 	{ name: "Points", key: "points", format: { number: { formatToLocale: true } }, class: "has-text-link" },
 	{ name: "Last Played", formatFunction: (row) => formatRelUnixDate(row["last_join_date"]) },
-	{ name: "Total Playtime", 
-		formatFunction: (row) => unixDateToDuration(
-			row["minutes_played"], 
-			{ format: ["days", "hours", "minutes"], delimiter: ", "}
-		)}
+	{ name: "Total Playtime", formatFunction: (row) => formatHumanDuration(row["minutes_played"] * 60)}
 ]
 
 // Load data

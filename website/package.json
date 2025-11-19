@@ -11,7 +11,7 @@
   "dependencies": {
     "@astrojs/node": "^9.4.4",
     "@iconify-json/iconoir": "^1.2.9",
-    "astro": "^5.14.1",
+    "astro": "^5.15.9",
     "astro-icon": "^1.1.5",
     "astro-seo": "^0.8.4",
     "astro-tooltips": "^0.6.2",

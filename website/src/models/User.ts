@@ -7,7 +7,7 @@ import assert from "assert";
 export interface LeaderboardEntry {
     steamid: string,
     last_alias: string,
-    minutes_played: number,
+    seconds_total: number,
     last_join_date: number,
     points: number
 }
@@ -74,28 +74,14 @@ export async function getTotalPlayers(period: string): Promise<PlayerTotals> {
 export async function getLeaderboards(page: number = 1, itemsPerPage = 30): Promise<LeaderboardEntry[]> {
     const offset = (page - 1) * itemsPerPage;
     const [entries] = await db.execute<(LeaderboardEntry & RowDataPacket)[]>(`SELECT
-        steamid,last_alias,minutes_played,last_join_date,
+        steamid,last_alias,seconds_total,last_join_date,
         points as points
         FROM stats_users
         WHERE points > 0
-        ORDER BY points desc
+        ORDER BY points desc,seconds_total desc
         LIMIT ?,?`, 
         [offset, itemsPerPage]
     )
-    //        // (
-        //     (common_kills / 1000 * 0.10) +
-        //     (kills_all_specials * 0.25) +
-        //     (revived_others * 0.05) +
-        //     (heal_others * 0.05) -
-        //     (survivor_incaps * 0.10) -
-        //     (survivor_deaths * 0.05) +
-        //     (survivor_ff * 0.03) +
-        //     (damage_to_tank*0.15/minutes_played) +
-        //     ((kills_molotov+kills_pipe)*0.025) +
-        //     (witches_crowned*0.2) -
-        //     (rocks_hitby*0.2) +
-        //     (cleared_pinned*0.05)
-        // ) as points_new_old
     return entries
 }
 
@@ -125,13 +111,13 @@ export interface PlayerFull {
   revived: number;
   revived_others: number;
   pickups_pain_pills: number;
-  melee_kills: number;
+  kills_melee: number;
   tanks_killed: number;
   tanks_killed_solo: number;
   tanks_killed_melee: number;
   survivor_ff: number;
   survivor_ff_rec: null;
-  common_kills: number;
+  kills_common: number;
   common_headshots: number;
   door_opens: number;
   damage_to_tank: number;
@@ -147,7 +133,7 @@ export interface PlayerFull {
   kills_charger: number;
   kills_witch: number;
   packs_used: number;
-  ff_kills: number;
+  kills_ff: number;
   throws_puke: number;
   throws_molotov: number;
   throws_pipe: number;
@@ -201,17 +187,43 @@ export async function getUserTopStats(steamid: string): Promise<UserTopStats | n
     if(cacheObj) return cacheObj
     // TODO: support top_map being non-official maps? (need to worry about anything calling getMapScreenshot such as banner.png.ts)
     const [rows] = await db.execute<RowDataPacket[]>(`
-        (SELECT 'top_weapon' name, top_weapon id, w.name value, COUNT(*) count FROM stats_games g LEFT JOIN stats_weapon_names w ON w.id = g.top_weapon WHERE steamid = :steamid AND top_weapon != '' GROUP BY top_weapon ORDER BY count DESC LIMIT 1)
-        UNION ALL
-        (SELECT 'top_char' name, '' id, character_type value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND character_type IS NOT NULL GROUP BY character_type ORDER BY count DESC LIMIT 1)
-        UNION ALL
-        (SELECT 'top_map' name, map id, i.name value, COUNT(*) count FROM stats_games g LEFT JOIN stats_map_info i ON i.mapid = g.map WHERE steamid = :steamid AND i.flags & 1 GROUP BY map ORDER BY count DESC LIMIT 1)
-        UNION ALL
-        (SELECT 'played_official' name, '' id, '' value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND map LIKE 'c%m%_%' ORDER BY count DESC LIMIT 1)
-        UNION ALL
-        (SELECT 'played_custom' name, '' id, '' value, COUNT(*) count FROM stats_games WHERE steamid = :steamid AND map NOT LIKE 'c%m%_%' ORDER BY count DESC LIMIT 1)
-        UNION ALL
-        (SELECT 'played_any' name, '' id, '' value, COUNT(*) count FROM stats_games WHERE steamid = :steamid LIMIT 1)`,
+        (SELECT 'top_weapon' name, top_weapon id, w.name value, COUNT(*) count
+        FROM stats_sessions s
+        LEFT JOIN stats_weapon_names w ON w.id = s.top_weapon
+        WHERE steamid = :steamid AND top_weapon != ''
+        GROUP BY top_weapon
+        ORDER BY count DESC LIMIT 1)
+            UNION ALL
+        (SELECT 'top_char' name, '' id, character_type value, COUNT(*) count
+        FROM stats_sessions s
+        WHERE steamid = :steamid AND character_type IS NOT NULL
+        GROUP BY character_type
+        ORDER BY count DESC LIMIT 1)
+            UNION ALL
+        (SELECT 'top_map' name, map_id id, i.name value, COUNT(*) count
+        FROM stats_sessions s
+        LEFT JOIN stats_games g ON g.id = s.game_id
+        LEFT JOIN stats_map_info i ON i.mapid = g.map_id
+        WHERE steamid = :steamid AND i.flags & 1
+        GROUP BY map_id
+        ORDER BY count DESC LIMIT 1)
+            UNION ALL
+        (SELECT 'played_official' name, '' id, '' value, COUNT(*) count
+        FROM stats_sessions s
+        LEFT JOIN stats_games g ON g.id = s.game_id
+        WHERE steamid = :steamid AND g.map_id LIKE 'c%m%_%'
+        LIMIT 1)
+            UNION ALL
+        (SELECT 'played_custom' name, '' id, '' value, COUNT(*) count
+        FROM stats_sessions s
+        LEFT JOIN stats_games g ON g.id = s.game_id
+        WHERE steamid = :steamid AND g.map_id NOT LIKE 'c%m%_%'
+        LIMIT 1)
+            UNION ALL
+        (SELECT 'played_any' name, '' id, '' value, COUNT(*) count
+        FROM stats_sessions s
+        WHERE steamid = :steamid
+        LIMIT 1)`,
         { steamid }
     )
     if(rows.length === 0) return null

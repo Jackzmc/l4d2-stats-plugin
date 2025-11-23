@@ -17,7 +17,7 @@ if(!game) return Astro.rewrite(`/404?obj=game&id=${Astro.params.id}`)
 const sessions = await getSessions(id)
 
 
-const mapName = game.map_name ?? game.map
+const mapName = game.map_name ?? game.map_id
 const meta: PageInfo = {
 	title: `${mapName} - Game ${id}`,
 	description: "",
@@ -30,7 +30,7 @@ const honkMasterPlayer = totalHonks && sessions.reduce((pv, cv) => {
     return (cv.honks > pv.honks) ? cv : pv
 }).steamid
 const mvpPlayer = sessions.reduce((pv, cv) => {
-    return (cv.SpecialInfectedKills > pv.SpecialInfectedKills) ? cv : pv
+    return (cv.kills_all_specials > pv.kills_all_specials) ? cv : pv
 }).steamid
 
 export const prerender = false
@@ -39,7 +39,7 @@ export const prerender = false
     <section slot="hero" class="hero has-text-centered is-dark hero-map-bg" style={{'background-image': `linear-gradient(
       rgba(0, 0, 0, 0.5),
       rgba(0, 0, 0, 0.5)
-    ), url("/img/maps/screenshots/${game.map}.jpeg"), url("/img/maps/default.png")`}}>
+    ), url("/img/maps/screenshots/${game.map_id}.jpeg"), url("/img/maps/default.png")`}}>
         <div class="hero-body">
             <p class="title">{meta.hero!.title}</p>
             <p class="subtitle pt-2">
@@ -49,7 +49,7 @@ export const prerender = false
         </div>
         <div class="hero-foot mb-3">
             <p class="subtitle pt-2">
-                {getGamemode(game.gamemode)} • {Difficulty[game.difficulty]} • {game.duration} minutes long
+                {getGamemode(game.gamemode)} • {Difficulty[game.difficulty]} • {Math.round(game.duration_game/60)} minutes long
             </p>
         </div>
     </section>
@@ -59,7 +59,7 @@ export const prerender = false
                     <div class="container">
                         <Level>
                             <LevelItem class="has-text-white" title="Zombie Kills" value={game.commons_killed} />
-                            <LevelItem class="has-text-white" title="Specials Killed" value={game.specials_killed} />
+                            <LevelItem class="has-text-white" title="Specials Killed" value={game.kills_all_specials} />
                             <LevelItem class="has-text-white" title="Damage Taken" value={game.damage_taken} />
                             {totalHonks > 0 && <LevelItem class="has-text-white" title="Total Honks" value={totalHonks} />}
                         </Level>
@@ -87,25 +87,25 @@ export const prerender = false
             <div class="column">
                 <div class="box has-background-danger has-text-white">
                     <Level>
-                        <LevelItem class="has-text-white" title="Incaps" value={game.incaps} />
+                        <LevelItem class="has-text-white" title="Incaps" value={game.times_incapped} />
                         <LevelItem class="has-text-white" title="Deaths" value={game.deaths} />
-                        <LevelItem class="has-text-white" title="Kits Used" value={game.medkits_used} />
-                        <LevelItem class="has-text-white" title="Pills Used" value={game.pills_used} />
-                        <LevelItem class="has-text-white" title="Adrenalines Used" value={game.adrenalines_used} />
+                        <LevelItem class="has-text-white" title="Kits Used" value={game.used_kit} />
+                        <LevelItem class="has-text-white" title="Pills Used" value={game.used_pills} />
+                        <LevelItem class="has-text-white" title="Adrenalines Used" value={game.used_adrenaline} />
                     </Level>
                 </div>
                 <div class="box has-background-link has-text-white">
                     <Level>
-                        <LevelItem class="has-text-white" title="Biles Thrown" value={game.biles_used} />
-                        <LevelItem class="has-text-white" title="Pipes Thrown" value={game.pipes_used} />
-                        <LevelItem class="has-text-white" title="Molotovs Thrown" value={game.molotovs_used} />
+                        <LevelItem class="has-text-white" title="Biles Thrown" value={game.used_bile} />
+                        <LevelItem class="has-text-white" title="Pipes Thrown" value={game.used_pipebomb} />
+                        <LevelItem class="has-text-white" title="Molotovs Thrown" value={game.used_molotov} />
                     </Level>
                 </div>
             </div>
             <div class="column is-2">
                 <div class="box content">
                     <h4>Map Id</h4>
-                    <p>{game.map}</p>
+                    <p>{game.map_id}</p>
                     <h4>Server Tags</h4>
                     <span class="tags">
                         {game.server_tags.map(tag => <span class="tag">{tag}</span>)}
@@ -114,7 +114,8 @@ export const prerender = false
             </div>
         </div>
         <div class="block">
-            Campaign ID {game.campaignID}
+            <p>Campaign ID <a href={`/games/${game.uuid}`}>{game.uuid}</a></p>
+            <p>Game ID <a href={`/games/${game.id}`}>{game.id}</a></p>
         </div>
     </div>
 

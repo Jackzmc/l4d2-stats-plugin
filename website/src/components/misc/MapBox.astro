@@ -14,8 +14,8 @@ const difficultyClass = ["has-text-success","","has-text-link","has-text-danger"
 const { map } = Astro.props
 ---
 <div class="box full-height">
-    <h6 class="title is-6 l4d2-text has-text-centered">{ map.name }</h6>
-    <Picture class="is-inline-block is-pulled-left image is-128x128" src={getMapPoster(map.map) as any} alt={`Poster for ${map.name||map.map}`} />
+    <h6 class="title is-6 l4d2-text has-text-centered">{ map.map_name }</h6>
+    <Picture class="is-inline-block is-pulled-left image is-128x128" src={getMapPoster(map.map_id) as any} alt={`Poster for ${map.map_name||map.map_id}`} />
     <span class="has-text-centered">
         <p class:list={["subtitle is-6 mb-0 mt-2", difficultyClass[map.difficulty]]} 
             style="text-shadow:lightgray 0px 0px 5px"
@@ -30,12 +30,12 @@ const { map } = Astro.props
     <hr class="player-divider">
     <ul class="has-text-right">
         <li><b>{map.deaths}</b> deaths</li>
-        <li><b>{map.numPlayers}</b> players</li>
-        <li><b>{map.durationMins}</b> minutes long</li>
-        <li><b>{map.commonsKilled}</b> commons killed</li>
-        <li><b>{map.friendlyDamage}</b> friendly fire dealt</li>
+        <li><b>{map.num_players}</b> players</li>
+        <li><b>{map.duration_mins}</b> minutes long</li>
+        <li><b>{map.kills_common}</b> commons killed</li>
+        <li><b>{map.damage_dealt_friendly_count}</b> friendly fires</li>
         <li>
-            <BulmaIcon iconProps={{class: 'is-pulled-right is-inline'}} name="iconoir:clock" textRight={"Played " + formatRelUnixDate(map.dateEnd)}/>
+            <BulmaIcon iconProps={{class: 'is-pulled-right is-inline'}} name="iconoir:clock" textRight={"Played " + formatRelUnixDate(map.date_end)}/>
         </li>
     </ul>
     <br>
@@ -44,7 +44,7 @@ const { map } = Astro.props
             return <span class="tag has-background-primary-light">{tag}</span>
         })}
     </span>
-    <Button href={`/games/${map.campaignId.substring(0, 8)}`} type="is-link" fullwidth>View Details</Button>
+    <Button href={`/games/${map.campaign_id.substring(0, 8)}`} type="is-link" fullwidth>View Details</Button>
 </div>
 
 <style>

@@ -1,0 +1,148 @@
+rename table stats_games to stats_sessions;
+create table stats_games
+(
+    id                int unsigned auto_increment primary key,
+    uuid              uuid default uuid() not null comment 'legacy campaignID' unique,
+    date_start        bigint              not null comment 'unix timestamp',
+    date_start_finale int                 null comment 'unix timestamp of finale',
+    date_end          bigint              null comment 'unix timestamp',
+    duraton_game      bigint as (`date_end` - `date_start`) comment 'seconds of game',
+    duration_finale   bigint as (`date_end` - `date_start_finale`) comment 'seconds of finale',
+    map_id            varchar(64)         not null comment 'map id of last chapter',
+    gamemode          varchar(64)         not null,
+    difficulty        tinyint             null comment '0=easy, 1=normal, 2=advanced, 3=expert',
+    server_tags       varchar(255)        not null comment 'comma separated list of tags',
+    stat_version      tinyint unsigned    not null comment 'version of metrics',
+    index stats_games_gamemode_index (gamemode),
+    index stats_games_map_id_index (map_id)
+);
+insert into stats_games (uuid, date_start, date_start_finale, date_end, map_id, gamemode, difficulty, server_tags, stat_version)
+# add stats_games data from session data
+SELECT campaignID, date_start, date_end-finale_time, date_end, map, gamemode, difficulty, server_tags, 0
+FROM stats_sessions group by campaignID
+order by id asc;
+alter table stats_sessions
+    add game_id int unsigned not null after id,
+    # moved to games
+    drop map,
+    drop gamemode,
+    drop difficulty,
+    drop finale_time,
+    drop server_tags,
+    drop DamageDealt,
+    # renamed columns for consistency
+    change zombie_kills kills_common int unsigned default 0 not null,
+    change melee_kills kills_melee smallint(10) unsigned default 0 not null,
+    change SurvivorDamage damage_dealt int unsigned default 0 not null,
+    change SurvivorFFCount damage_dealt_friendly_count mediumint unsigned default 0 not null,
+    change SurvivorFFTakenCount damage_taken_friendly_count int null,
+    change SurvivorFFDamage damage_dealt_friendly int null,
+    change SurvivorFFTakenDamage damage_taken_friendly int null,
+    change MedkitsUsed used_kit_self tinyint(10) unsigned default 0 not null comment 'heal self',
+    change FirstAidShared used_kit_other tinyint(10) unsigned default 0 not null comment 'healed teammate',
+    change PillsUsed used_pills smallint(10) unsigned default 0 not null,
+    change MolotovsUsed used_molotov smallint(10) unsigned default 0 not null,
+    change PipebombsUsed used_pipebomb smallint(10) unsigned default 0 not null,
+    change BoomerBilesUsed used_bile smallint(10) unsigned default 0 not null,
+    change AdrenalinesUsed used_adrenaline smallint(10) unsigned default 0 not null,
+    change DefibrillatorsUsed used_defib smallint(10) unsigned default 0 not null,
+    change DamageTaken damage_taken int unsigned default 0 not null,
+    change ReviveOtherCount times_revive_other smallint(10) unsigned default 0 not null,
+    change Incaps times_incapped smallint(10) unsigned default 0 not null,
+    change Deaths deaths tinyint(10) unsigned default 0 not null,
+    change boomer_kills kills_boomer smallint(10) unsigned not null,
+    change smoker_kills kills_smoker smallint(10) unsigned not null,
+    change jockey_kills kills_jockey smallint(10) unsigned not null,
+    change hunter_kills kills_hunter smallint(10) unsigned not null,
+    change spitter_kills kills_spitter smallint(10) unsigned not null,
+    change charger_kills kills_charger smallint(10) unsigned not null,
+    change SpecialInfectedKills kills_all_specials int unsigned as (`kills_boomer` + `kills_smoker` + `kills_jockey` + `kills_hunter` + `kills_spitter` + `kills_charger`),
+    modify honks smallint unsigned default 0 null comment 'clowns honked',
+    change WitchesCrowned witches_crowned smallint(8) unsigned default 0 not null,
+    change SmokersSelfCleared smokers_selfcleared smallint(8) unsigned default 0 not null,
+    change RocksHitBy rocks_hitby smallint(8) unsigned default 0 not null,
+    change RocksDodged rocks_dodged smallint(8) unsigned default 0 not null,
+    change HuntersDeadstopped hunters_deadstopped smallint(8) unsigned default 0 not null,
+    change TimesPinned times_pinned smallint(8) unsigned default 0 not null,
+    change ClearedPinned times_cleared_pinned smallint(8) unsigned default 0 null comment 'helped pinned teammate',
+    change BoomedTeammates times_boomed_teammates smallint unsigned default 0 not null,
+    change TimesBoomed times_boomed smallint(8) unsigned default 0 not null,
+    change DamageToTank damage_dealt_tank mediumint unsigned default 0 not null comment 'dmg to tank',
+    change DamageToWitch damage_dealt_witch mediumint unsigned default 0 not null comment 'dmg to witch',
+    change CarAlarmsActivated caralarms_activated tinyint unsigned default 0 not null,
+    # new metrics
+    add longest_shot_distance float null,
+    add times_hanging smallint unsigned default 0 null after times_revive_other,
+    add kills_tank smallint unsigned null after kills_all_specials,
+    add kills_witch smallint unsigned null after kills_tank,
+    add kills_fire smallint unsigned null comment 'gasca/molotov' after kills_witch,
+    add kills_pipebomb smallint unsigned null after kills_fire,
+    add kills_minigun smallint unsigned null after kills_pipebomb,
+    add seconds_alive int unsigned not null,
+    add seconds_idle int unsigned not null,
+    add seconds_dead int unsigned default 0,
+    add seconds_total int unsigned as (seconds_alive + seconds_idle + seconds_dead);
+# get new game id, update seconds_* (not perfect but whatever)
+update stats_sessions u
+join stats_games g on g.uuid = u.campaignID
+SET u.game_id=g.id, u.seconds_alive=duration*60, u.seconds_idle=u.minutes_idle*60;
+# drop rest of columns and add fk
+alter table stats_sessions
+    drop duration,
+    drop date_start,
+    drop date_end,
+    drop minutes_idle,
+    add constraint stats_sessions_stats_games_id_fk
+       foreign key (game_id)
+       references stats_games (id)
+        on update cascade on delete cascade;
+alter table stats_users
+    change survivor_deaths deaths int(11) unsigned default 0 not null,
+    drop infected_deaths,
+    change survivor_damage_rec damage_taken bigint(11) unsigned default 0 not null,
+    change survivor_damage_give damage_dealt bigint(11) unsigned default 0 not null,
+    drop infected_damage_rec,
+    drop infected_damage_give,
+    add pickups_bile int(11) unsigned default 0 not null after pickups_molotov,
+    change pickups_pipe_bomb pickups_pipebomb int(11) unsigned default 0 not null,
+    add pickups_adrenaline int null after pickups_pills,
+    change survivor_incaps times_incapped int(11) unsigned default 0 not null,
+    change pickups_pain_pills pickups_pills int(11) unsigned default 0 not null after pickups_pipebomb,
+    add times_hanging int(11) unsigned default 0 not null comment 'ledge grabs' after times_incapped,
+    change revived_others times_revive_other int(11) unsigned default 0 not null,
+    change melee_kills kills_melee int(11) unsigned default 0 not null comment 'kils with melee',
+    change tanks_killed kills_tank int unsigned default 0 not null,
+    change tanks_killed_solo kils_tank_solo int unsigned default 0 not null,
+    change tanks_killed_melee kills_tank_melee int unsigned default 0 not null comment 'with melee',
+    change survivor_ff damage_dealt_friendly int unsigned default 0 not null,
+    change survivor_ff_rec damage_taken_friendly int default 0 null comment 'ff recv',
+    change common_kills kills_common int unsigned default 0 null,
+    change common_headshots kills_common_headshots int unsigned default 0 not null,
+    change damage_to_tank damage_dealt_tank int unsigned default 0 null,
+    drop column damage_as_tank,
+    change damage_witch damage_dealt_witch int unsigned default 0 not null,
+    change packs_used used_ammo_packs int unsigned default 0 not null,
+    change ff_kills kills_friendly int unsigned default 0 not null comment 'teammates killed',
+    change damage_molotov damage_dealt_fire int unsigned default 0 not null comment 'gascan/molotov',
+    change kills_molotov kills_fire int unsigned default 0 not null comment 'gascan/molotov',
+    change kills_pipe kills_pipebomb int unsigned default 0 not null,
+    change clowns_honked honks smallint unsigned default 0 not null comment 'clown honks',
+    change boomer_mellos times_boomed_teammate int default 0 null comment 'popped boomer and got someone boomed',
+    change boomer_mellos_self times_boomed_self smallint default 0 null comment 'popped boomer and got self boomed',
+    add times_boomed int null after times_boomed_self,
+    change heal_self used_kit_self int(11) unsigned default 0 not null comment 'healed self',
+    change heal_others used_kit_other int(11) unsigned default 0 not null comment 'healed teammate',
+    add used_kit int(11) as (used_kit_self + used_kit_other) comment 'any usage',
+    change defibs_used used_defib int(11) unsigned default 0 not null after used_kit_other,
+    change pills_used used_pills int(11) unsigned default 0 not null,
+    change adrenaline_used used_adrenaline int(11) unsigned default 0 not null after used_pills,
+    change revived times_revived int(11) unsigned default 0 not null comment 'self got incapped',
+    add seconds_alive int unsigned not null,
+    add seconds_idle int unsigned not null,
+    add seconds_dead int unsigned default 0,
+    add seconds_total int unsigned as (seconds_alive + seconds_idle + seconds_dead);
+update stats_users
+set seconds_alive = minutes_played * 60, seconds_idle = minutes_idle * 60;
+alter table stats_users
+    drop minutes_played,
+    drop minutes_idle;

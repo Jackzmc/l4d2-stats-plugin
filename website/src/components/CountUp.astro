@@ -1,14 +1,15 @@
 ---
 interface Props {
     number: number,
-    class?: any
+    class?: any,
+    precision?: number
 }
+const { number, class: className, precision = 0 } = Astro.props
 function formatNumber(number: number) {
     return Number(number).toLocaleString(undefined, {
-        maximumFractionDigits: 0
+        maximumFractionDigits: precision
     })
 }
-const { number, class: className } = Astro.props
 ---
 
 <span data-count={number} class:list={[className]}>{formatNumber(number)}</span>

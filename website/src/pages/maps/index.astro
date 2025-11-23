@@ -54,12 +54,12 @@ export const prerender = false
         <nav class="level">
             {topMaps.map((map, i) => {
                 return <div class="level-item has-text-centered">
-                    <a class:list={["topmap",{'animate': shouldAnimate}]} href={`/maps/${map.map}`}>
+                    <a class:list={["topmap",{'animate': shouldAnimate}]} href={`/maps/${map.map_id}`}>
                         <h3 class="title is-3 mb-2 l4d2-text">
                             #{i+1}
                         </h3>
                         <figure class="image">
-                            <Picture width={200} height={300} src={getMapPoster(map.map) as any} alt={`Poster for ${map.name}`}/>
+                            <Picture width={200} height={300} src={getMapPoster(map.map_id) as any} alt={`Poster for ${map.name}`}/>
                         </figure>
                         <p class="title is-4 l4d2-text">{map.name}</p>
                         <div class="subtitle is-6">{map.count.toLocaleString()} games played</div>

@@ -32,7 +32,7 @@ const COLUMNS: TableColumn[] = [
 	{ name: "Last Played", formatFunction: (row) => formatRelUnixDate(row["last_join_date"]) },
 	{ name: "Total Playtime", 
 		formatFunction: (row) => unixDateToDuration(
-			row["minutes_played"], 
+			row["seconds_total"], 
 			{ format: ["days", "hours", "minutes"], delimiter: ", "}
 		)}
 ]

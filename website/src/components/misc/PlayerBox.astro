@@ -28,10 +28,10 @@ const survivorName = survivor?.name ?? "Unknown Character"
     <div class="subtitle is-6 has-text-centered mb-2">{player.points.toLocaleString()} points</div>
     <hr class="player-divider">
     <ul class="has-text-right">
-        <li><b>{player.zombie_kills}</b> commons killed</li>
-        <li><b>{player.SpecialInfectedKills}</b> specials killed</li>
-        <li><b>{player.SurvivorDamage}</b> friendly fire damage</li>
+        <li><b>{player.damage_dealt_friendly_count}</b> friendly fires</li>
         {showHonks && <li><b>{player.honks}</b> clowns honked</li>}
+        <li><b>{player.kills_all_specials}</b> specials killed</li>
+        <li><b>{player.kills_common}</b> commons killed</li>
     </ul>
     <br>
     <nav class="level mb-2">

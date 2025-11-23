@@ -14,7 +14,7 @@ const session = await getSession(sessionId)
 if(!session) return Astro.rewrite(`/404?obj=session&id=${Astro.params.sessionId}`)
 const otherSessions = await getSessionPlayers(gameId)
 
-const mapName = session.map_name ?? session.map
+const mapName = session.map_name ?? session.map_id
 
 const meta: PageInfo = {
 	title: `${session.name}'s Session #${session.id} - ${mapName}`,
@@ -30,7 +30,7 @@ export const prerender = false
     <section slot="hero" class="hero has-text-centered is-medium is-dark hero-map-bg" style={{'background-image': `linear-gradient(
       rgba(0, 0, 0, 0.5),
       rgba(0, 0, 0, 0.5)
-    ), url("/img/maps/screenshots/${session.map}.jpeg"), url("/img/maps/default.png")`}}>
+    ), url("/img/maps/screenshots/${session.map_id}.jpeg"), url("/img/maps/default.png")`}}>
         <div class="hero-body">
             <!-- <Picture src={getMapPoster(session.map)} alt="map" /> -->
             <p class="title">{session.name}'s Session #{session.id}</p>
@@ -38,7 +38,7 @@ export const prerender = false
         </div>
         <div class="hero-foot">
             <p class="subtitle mb-3">
-                {getGamemode(session.gamemode)} • {Difficulty[session.difficulty]} • {session.duration} minutes long
+                {getGamemode(session.gamemode)} • {Difficulty[session.difficulty]} • {Math.round(session.duration_game/60)} minutes long
             </p>
         </div>
     </section>
@@ -47,56 +47,66 @@ export const prerender = false
         <div class="columns">
             <div class="column">
                 <Level>
-                    <LevelItem countup title="Zombie Kills" value={session.zombie_kills} />
-                    <LevelItem countup title="Melee Kills" value={session.melee_kills} />
-                    <LevelItem countup title="Damage Dealt" value={session.SurvivorDamage} suffix=" HP" />
-                    <LevelItem countup title="Friendly Fires" value={session.SurvivorFFCount} />
-                    <LevelItem countup title="Friendly Damage" value={session.SurvivorFFDamage} suffix=" HP" />
-                    <LevelItem countup title="Times Friendly Fired" value={session.SurvivorFFTakenCount} />
-                    <LevelItem countup title="Friendly Damage Taken" value={session.SurvivorFFTakenDamage} suffix=" HP" />
+                    <LevelItem countup title="Zombie Kills" value={session.kills_common} />
+                    <LevelItem countup title="Melee Kills" value={session.kills_melee} />
+                    <LevelItem countup title="Tank Kills" value={session.kills_tank} />
+                    <LevelItem countup title="Witch Kills" value={session.kills_witch} />
+                    {session.honks > 0 && <LevelItem countup title="Clowns Honked" value={session.honks} />}
+                </Level>
+                <Level>
+                    <LevelItem countup title="Damage Dealt" value={session.damage_dealt} suffix=" HP" />
+                    <LevelItem countup title="Damage Taken" value={session.damage_taken} suffix=" HP" />
+                    <LevelItem countup title="Friendly Fires" value={session.damage_dealt_friendly_count} />
+                    <LevelItem countup title="Times Friendly Fired" value={session.damage_taken_friendly_count} />
+                    <LevelItem countup title="Friendly Damage Dealt" value={session.damage_dealt_friendly} suffix=" HP" />
+                    <LevelItem countup title="Friendly Damage Taken" value={session.damage_taken_friendly} suffix=" HP" />
                 </Level>
                 <div class="columns">
                     <div class="column is-6">
                         <div class="box has-background-link">
                               <Level>
-                                <LevelItem class="has-text-white" title="Biles Thrown" value={session.BoomerBilesUsed} />
-                                <LevelItem class="has-text-white" title="Pipes Thrown" value={session.PipebombsUsed} />
-                                <LevelItem class="has-text-white" title="Molotovs Thrown" value={session.MolotovsUsed} />
+                                <LevelItem class="has-text-white" title="Biles Thrown" value={session.used_bile} />
+                                <LevelItem class="has-text-white" title="Pipes Thrown" value={session.used_pipebomb} />
+                                <LevelItem class="has-text-white" title="Molotovs Thrown" value={session.used_molotov} />
                             </Level>
                         </div>
                         <div class="box has-background-success">
                             <Level>
-                                <LevelItem class="has-text-white" title="Smoker Kills" value={session.smoker_kills} />
-                                <LevelItem class="has-text-white" title="Boomer Kills" value={session.boomer_kills} />
-                                <LevelItem class="has-text-white" title="Spitter Kills" value={session.spitter_kills} />
+                                <LevelItem class="has-text-white" title="Smoker Kills" value={session.kills_smoker} />
+                                <LevelItem class="has-text-white" title="Boomer Kills" value={session.kills_boomer} />
+                                <LevelItem class="has-text-white" title="Spitter Kills" value={session.kills_spitter} />
                             </Level>
                             <Level>
-                                <LevelItem class="has-text-white" title="Jockey Kills" value={session.jockey_kills} />
-                                <LevelItem class="has-text-white" title="Hunter Kills" value={session.hunter_kills} />
-                                <LevelItem class="has-text-white" title="Charger Kills" value={session.charger_kills} />
+                                <LevelItem class="has-text-white" title="Jockey Kills" value={session.kills_jockey} />
+                                <LevelItem class="has-text-white" title="Hunter Kills" value={session.kills_hunter} />
+                                <LevelItem class="has-text-white" title="Charger Kills" value={session.kills_charger} />
                             </Level>
                         </div>
-                        <p>Campaign ID <a href={`/games/${gameId}`}>{gameId}</a></p>
+                        <p>Campaign ID <a href={`/games/${session.game_uuid}`}>{session.game_uuid}</a></p>
+                        <p>Game ID <a href={`/games/${session.game_id}`}>{session.game_id}</a></p>
                     </div>
                     <div class="column">
                         <div class="box has-background-warning">
                             <Level>
-                                <LevelItem title="Kits Used" value={session.Medkitsused} />
-                                <LevelItem title="Kits Shared" value={session.FirstAidShared} />
+                                <LevelItem title="Kits (Self)" value={session.used_kit_self} />
+                                <LevelItem title="Kits (Shared)" value={session.used_kit_other} />
                             </Level>
                             <Level>
-                                <LevelItem title="Pills Consumed" value={session.PillsUsed} />
-                                <LevelItem title="Adrenaline Consumed" value={session.AdrenalinesUsed} />
+                                <LevelItem title="Pills Consumed" value={session.used_pills} />
+                                <LevelItem title="Adrenaline Consumed" value={session.used_adrenaline} />
                             </Level>
                         </div>
                         <div class="box has-background-danger">
                             <Level>
-                                <LevelItem title="Incaps" value={session.incaps} />
+                                <LevelItem title="Incaps" value={session.times_incapped} />
                                 <LevelItem title="Deaths" value={session.deaths} />
                             </Level>
                         </div>
                     </div>
                 </div>
+                <!-- TODO: add longest_shot_distance, times_boomed, times_boomed_teammate, caralarms_activated, hunters_deadstopped, witches_crowned, rocks_hitby, rocks_dodged, smokers_slefcleared, times_pinned, etc... -->
+                <!-- TODO: maybe add: kills_minigun, kills_fire, kills_pipebomb -->
+                 <!-- TODO: add: seconds_alive, seconds_idle, seconds_dead -->
             </div>
             <div class="column is-3">
                 <div class="box">
@@ -121,8 +131,8 @@ export const prerender = false
                     </ul>
                 </div>
                 <div class="box content">
-                    <strong>Map</strong>
-                    <p>{session.map}</p>
+                    <strong>Map Id</strong>
+                    <p><a href={'/maps/' + session.map_id}>{session.map_id}</a></p>
                     <div class="columns">
                         <div class="column">
                             <strong>Gamemode</strong>
@@ -135,10 +145,6 @@ export const prerender = false
                     </div>
                     <strong>Most Used Weapon</strong>
                     <p>{session.top_weapon || "-"}</p>
-                    {session.honks > 0 && 
-                        <strong>Honks</strong>
-                        <p>{session.honks}</p>
-                    }
                     <span class="tags">
                         {session.server_tags.map(tag => <span class="tag">{tag}</span>)}
                     </span>

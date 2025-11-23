@@ -13,7 +13,6 @@ export interface PlayerTopStats {
     revived_others: PlayerStatEntry[],
     survivor_incaps: PlayerStatEntry[],
     clowns_honked: PlayerStatEntry[],
-    times_mvp: PlayerStatEntry[]
 }
 export const TOP_STAT_NAMES: Record<keyof PlayerTopStats, string> = {
     survivor_deaths: 'Most Deaths',
@@ -22,39 +21,29 @@ export const TOP_STAT_NAMES: Record<keyof PlayerTopStats, string> = {
     revived_others: 'Revived the Most Players',
     survivor_incaps: 'Most Incaps',
     clowns_honked: 'Most Clown Honks',
-    times_mvp: 'Most Times MVP'
 }
 export async function topStats(): Promise<PlayerTopStats> {
     const cacheObj = await cache.get("general.topStats")
     if(cacheObj) return cacheObj
 
     const [rows] = await db.execute<RowDataPacket[]>(`
-        (SELECT 'survivor_deaths' type,steamid,last_alias name,survivor_deaths value FROM stats_users
-        WHERE survivor_deaths > 0 ORDER BY stats_users.survivor_deaths desc, stats_users.points desc limit 10)
+        (SELECT 'survivor_deaths' type,steamid,last_alias name,deaths value FROM stats_users
+        WHERE deaths > 0 ORDER BY stats_users.deaths desc, stats_users.points desc limit 10)
         union all
-        (SELECT 'survivor_ff' type,steamid,last_alias,survivor_ff value FROM stats_users
-                WHERE survivor_ff > 0 ORDER BY stats_users.survivor_ff desc, stats_users.points desc limit 10)
+        (SELECT 'survivor_ff' type,steamid,last_alias,damage_dealt_friendly value FROM stats_users
+                WHERE damage_dealt_friendly > 0 ORDER BY stats_users.damage_dealt_friendly desc, stats_users.points desc limit 10)
         union all
-        (SELECT 'heal_others' type,steamid,last_alias,heal_others value FROM stats_users
-                WHERE heal_others > 0 ORDER BY stats_users.heal_others desc, stats_users.points desc limit 10)
+        (SELECT 'heal_others' type,steamid,last_alias,used_kit_other value FROM stats_users
+                WHERE used_kit_other > 0 ORDER BY stats_users.used_kit_other desc, stats_users.points desc limit 10)
         union all
-        (SELECT 'revived_others' type,steamid,last_alias,revived_others value FROM stats_users
-                WHERE revived_others > 0 ORDER BY stats_users.revived_others desc, stats_users.points desc limit 10)
+        (SELECT 'revived_others' type,steamid,last_alias,times_revive_other value FROM stats_users
+                WHERE times_revive_other > 0 ORDER BY stats_users.times_revive_other desc, stats_users.points desc limit 10)
         union all 
-        (SELECT 'survivor_incaps' type,steamid,last_alias,survivor_incaps value FROM stats_users
-                WHERE survivor_incaps > 0 ORDER BY stats_users.survivor_incaps desc, stats_users.points desc limit 10 )
+        (SELECT 'survivor_incaps' type,steamid,last_alias,times_incapped value FROM stats_users
+                WHERE times_incapped > 0 ORDER BY stats_users.times_incapped desc, stats_users.points desc limit 10 )
         union all
-        (SELECT 'clowns_honked' type,steamid,last_alias,clowns_honked value FROM stats_users
-            WHERE clowns_honked > 0 ORDER BY stats_users.clowns_honked desc, stats_users.points desc limit 10 )
-        union all
-        (SELECT 'times_mvp', g.steamid,su.last_alias as name, SUM(honks) value
-                FROM stats_games g
-                INNER JOIN stats_users as su
-                    ON su.steamid = g.steamid
-                WHERE g.honks > 0
-                GROUP BY g.steamid
-                ORDER by value DESC
-                LIMIT 10)
+        (SELECT 'clowns_honked' type,steamid,last_alias,honks value FROM stats_users
+            WHERE honks > 0 ORDER BY honks desc, stats_users.points desc limit 10 )
     `)
 
     const keys: Record<string, PlayerStatEntry[]> = {}

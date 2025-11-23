@@ -129,13 +129,13 @@ const BANNER_SCALE = 0.5
                     </div>
                     <div class="box has-background-primary-light">
                         <Level>
-                            <LevelItem countup title="Commons" value={user.common_kills} />
+                            <LevelItem countup title="Commons" value={user.kills_common} />
                             <LevelItem countup title="With Minigun" value={user.kills_minigun} />
-                            <LevelItem countup title="With Melee" value={user.melee_kills} />
+                            <LevelItem countup title="With Melee" value={user.kills_melee} />
                             <LevelItem countup title="Tank" value={user.tanks_killed} />
                             <LevelItem countup title="Tank (Solo)" value={user.tanks_killed_solo} />
                             <LevelItem countup title="Witch" value={user.witches_crowned} />
-                            <LevelItem countup title="Teammates :(" value={user.ff_kills} />
+                            <LevelItem countup title="Teammates :(" value={user.kills_ff} />
                         </Level>
                     </div>
 

@@ -338,12 +338,12 @@ Action Timer_HeatMapInterval(Handle h) {
 
 	float pos[3];
 	for(int i=1; i<=MaxClients;i++) {
-		if(IsClientInGame(i) && !IsFakeClient(i) && players[i].steamid[0]) {
+		if(IsClientInGame(i) && !IsFakeClient(i) && g_players[i].user.steamid[0]) {
 			MoveType moveType = GetEntityMoveType(i);
 			if(moveType != MOVETYPE_WALK && moveType != MOVETYPE_LADDER) continue;
 			GetClientAbsOrigin(i, pos);
-			players[i].RecordHeatMap(HeatMap_Periodic, pos);
-			if(players[i].pendingHeatmaps.Length > 25) {
+			g_players[i].RecordHeatMap(HeatMap_Periodic, pos);
+			if(g_players[i].pendingHeatmaps.Length > 25) {
 				SubmitHeatmaps(i);
 			}
 		}

@@ -103,7 +103,7 @@ const BANNER_SCALE = 0.5
                             <tr>
                                 <th>Total Playtime</th>
                                 <td>
-                                    {formatHumanDuration(user.minutes_played * 60)} 
+                                    {formatHumanDuration(user.seconds_total)} 
                                 </td>
                             </tr>
                             <tr>
@@ -135,7 +135,7 @@ const BANNER_SCALE = 0.5
                             <LevelItem countup title="Tank" value={user.tanks_killed} />
                             <LevelItem countup title="Tank (Solo)" value={user.tanks_killed_solo} />
                             <LevelItem countup title="Witch" value={user.witches_crowned} />
-                            <LevelItem countup title="Teammates :(" value={user.kills_ff} />
+                            <LevelItem countup title="Teammates :(" value={user.kills_friendly} />
                         </Level>
                     </div>
 
@@ -154,31 +154,31 @@ const BANNER_SCALE = 0.5
                                     <tbody>
                                         <tr>
                                             <td>Total Dealt</td>
-                                            <td class="tvalue"><CountUp number={user.survivor_damage_give} /></td>
+                                            <td class="tvalue"><CountUp number={user.damage_dealt} /></td>
                                         </tr>
                                         <tr>
-                                            <td>Total Received</td>
-                                            <td class="tvalue"><CountUp number={user.survivor_damage_rec} /></td>
+                                            <td>Total Taken</td>
+                                            <td class="tvalue"><CountUp number={user.damage_taken} /></td>
                                         </tr>
                                         <tr>
-                                            <td>To Tank</td>
-                                            <td class="tvalue"><CountUp number={user.damage_to_tank} /></td>
+                                            <td>Damage To Tank</td>
+                                            <td class="tvalue"><CountUp number={user.damage_dealt_tank} /></td>
                                         </tr>
                                         <tr>
-                                            <td>To Witch</td>
-                                            <td class="tvalue"><CountUp number={user.damage_witch} /></td>
+                                            <td>Damage To Witch</td>
+                                            <td class="tvalue"><CountUp number={user.damage_dealt_witch} /></td>
                                         </tr>
                                         <tr>
-                                            <td>Friendly Fire</td>
-                                            <td class="tvalue"><CountUp number={user.survivor_ff} /></td>
+                                            <td>Friendly Fires</td>
+                                            <td class="tvalue"><CountUp number={user.damage_dealt_friendly_count} /></td>
                                         </tr>
                                         <tr>
                                             <td>Incaps</td>
-                                            <td class="tvalue"><CountUp number={user.survivor_incaps} /></td>
+                                            <td class="tvalue"><CountUp number={user.times_incapped} /></td>
                                         </tr>
                                         <tr>
                                             <td>Deaths</td>
-                                            <td class="tvalue"><CountUp number={user.survivor_deaths } /></td>
+                                            <td class="tvalue"><CountUp number={user.deaths } /></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -195,27 +195,27 @@ const BANNER_SCALE = 0.5
                                     <tbody>
                                     <tr>
                                         <td>Pills</td>
-                                        <td class="tvalue"><CountUp number={user.pills_used} /></td>
+                                        <td class="tvalue"><CountUp number={user.used_pills} /></td>
                                     </tr>
                                     <tr>
                                         <td>Adrenaline</td>
-                                        <td class="tvalue"><CountUp number={user.adrenaline_used} /></td>
+                                        <td class="tvalue"><CountUp number={user.used_adrenaline} /></td>
                                     </tr>
                                     <tr>
                                         <td>Defibs</td>
-                                        <td class="tvalue"><CountUp number={user.defibs_used} /></td>
+                                        <td class="tvalue"><CountUp number={user.used_defib} /></td>
                                     </tr>
                                     <tr>
                                         <td>Ammo Packs</td>
-                                        <td class="tvalue"><CountUp number={user.packs_used} /></td>
+                                        <td class="tvalue"><CountUp number={user.used_ammo_packs} /></td>
                                     </tr>
                                     <tr>
                                         <td>Kits <em>(Self)</em></td>
-                                        <td class="tvalue"><CountUp number={user.heal_self} /></td>
+                                        <td class="tvalue"><CountUp number={user.used_kit_self} /></td>
                                     </tr>
                                     <tr>
                                         <td>Kits <em>(Others)</em></td>
-                                        <td class="tvalue"><CountUp number={user.heal_others} /></td>
+                                        <td class="tvalue"><CountUp number={user.used_kit_other} /></td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -239,12 +239,8 @@ const BANNER_SCALE = 0.5
                                         <td class="tvalue"><CountUp number={user.finales_won} /></td>
                                     </tr>
                                     <tr>
-                                        <td>Times Revived</td>
-                                        <td class="tvalue"><CountUp number={user.revived} /></td>
-                                    </tr>
-                                    <tr>
                                         <td>Revived Others</td>
-                                        <td class="tvalue"><CountUp number={user.revived_others} /></td>
+                                        <td class="tvalue"><CountUp number={user.times_revive_other} /></td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -275,9 +271,9 @@ const BANNER_SCALE = 0.5
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Molotov</td>
-                                <td align="center" class="tvalue"><CountUp number={user.damage_molotov} /></td>
-                                <td align="center" class="tvalue"><CountUp number={user.kills_molotov} /></td>
+                                <td>Molotov/Gascans</td>
+                                <td align="center" class="tvalue"><CountUp number={user.damage_dealt_fire} /></td>
+                                <td align="center" class="tvalue"><CountUp number={user.kills_fire} /></td>
                                 <td align="center" class="tvalue"><CountUp number={user.throws_molotov } /></td>
                             </tr>
                             <tr>
@@ -287,9 +283,9 @@ const BANNER_SCALE = 0.5
                                 <td align="center" class="tvalue"><CountUp number={user.throws_puke} /></td>
                             </tr>
                             <tr>
-                                <td>Pipe</td>
+                                <td>Pipebomb</td>
                                 <td align="center" >-</td>
-                                <td align="center" class="tvalue"><CountUp number={user.kills_pipe} /></td>
+                                <td align="center" class="tvalue"><CountUp number={user.kills_pipebomb} /></td>
                                 <td align="center" class="tvalue"><CountUp number={user.throws_pipe} /></td>
                             </tr>
                         </tbody>
@@ -309,42 +305,42 @@ const BANNER_SCALE = 0.5
                         <tbody>
                             <tr>
                                 <td>Deaths</td>
-                                <td><CountUp number={user.survivor_deaths} /></td>
+                                <td align="center"><CountUp number={user.deaths} /></td>
                                 <!-- <td><CountUp number={(user.survivor_deaths / averages.totalSessions).toFixed(2)} /></td> -->
                                 <!-- <td><CountUp number={(user.survivor_deaths / hoursPlayed).toFixed(5)} /></td> -->
                                 <!-- <td><CountUp number={(user.survivor_deaths / averages.globalTotalSessions).toFixed(2)} /></td> -->
                             </tr>
                             <tr>
                                 <td>Friendly Fire</td>
-                                <td><CountUp number={user.survivor_ff} /></td>
+                                <td align="center"><CountUp number={user.damage_dealt_friendly_count} /></td>
                                 <!-- <td><CountUp number={(averages.survivor_ff / averages.totalSessions).toFixed(2)} /></td> -->
                                 <!-- <td><CountUp number={(averages.survivor_ff / averages.minutes_played).toFixed(5)} /></td> -->
                                 <!-- <td><CountUp number={(averages.survivor_ff / averages.globalTotalSessions).toFixed(2)} /></td> -->
                             </tr>
                             <tr>
                                 <td>Healing Others</td>
-                                <td><CountUp number={user.heal_others} /></td>
+                                <td align="center"><CountUp number={user.used_kit_other} /></td>
                                 <!-- <td><CountUp number={(averages.heal_others / averages.totalSessions).toFixed(2)} /></td> -->
                                 <!-- <td><CountUp number={(averages.heal_others / hoursPlayed).toFixed(5)} /></td> -->
                                 <!-- <td><CountUp number={(averages.heal_others / averages.globalTotalSessions).toFixed(2)} /></td> -->
                             </tr>
                             <tr>
                                 <td>Revived Others</td>
-                                <td><CountUp number={user.revived_others} /></td>
+                                <td align="center"><CountUp number={user.times_revive_other} /></td>
                                 <!-- <td><CountUp number={(averages.revived_others / averages.totalSessions).toFixed(2)} /></td> -->
                                 <!-- <td><CountUp number={(averages.revived_others / hoursPlayed).toFixed(5)} /></td> -->
                                 <!-- <td><CountUp number={(averages.revived_others / averages.globalTotalSessions).toFixed(2)} /></td> -->
                             </tr>
                             <tr>
                                 <td>Incaps</td>
-                                <td><CountUp number={user.survivor_incaps} /></td>
+                                <td align="center"><CountUp number={user.times_incapped} /></td>
                                 <!-- <td><CountUp number={(averages.survivor_incaps / averages.totalSessions).toFixed(2)} /></td> -->
                                 <!-- <td><CountUp number={(averages.survivor_incaps / hoursPlayed).toFixed(5)} /></td> -->
                                 <!-- <td><CountUp number={(averages.survivor_incaps / averages.globalTotalSessions).toFixed(2)} /></td> -->
                             </tr>
                             <tr>
-                                <td>Minutes Spent Idle</td>
-                                <td><CountUp number={user.minutes_idle} /></td>
+                                <td>Time Spent Idle</td>
+                                <td align="center"><CountUp number={user.seconds_idle} />s</td>
                                 <!-- <td><CountUp number={(averages.minutes_idle / averages.totalSessions).toFixed(2)} /></td> -->
                                 <!-- <td><CountUp number={(averages.minutes_idle / hoursPlayed).toFixed(5)} /></td> -->
                                 <!-- <td><CountUp number={(averages.minutes_idle / averages.globalTotalSessions).toFixed(2)} /></td> -->
@@ -355,9 +351,9 @@ const BANNER_SCALE = 0.5
                     <h5 class="title is-5" id="misc"><a href="#misc"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Miscellaneous</h5>
                     <div class="box has-background-success-light">
                         <Level>
-                            <LevelItem tooltip="Killed boomer getting someone boomed" countup title="Boomers Popped Others" value={user.boomer_mellos} />
-                            <LevelItem tooltip="Killed boomer getting self boomed" countup title="Boomers Popped Self" value={user.boomer_mellos_self} />
-                            <LevelItem countup title="Clown Honks" value={user.clowns_honked} />
+                            <LevelItem tooltip="Killed boomer getting someone boomed" countup title="Boomers Popped Others" value={user.times_boomed_teammates} />
+                            <LevelItem tooltip="Killed boomer getting self boomed" countup title="Boomers Popped Self" value={user.times_boomed_self} />
+                            <LevelItem countup title="Clown Honks" value={user.honks} />
                             <LevelItem tooltip="Kits forgotten in saferoom" countup title="Kits Forgotten" value={user.forgot_kit_count} />
                             <LevelItem countup title="Kits Slapped" value={user.kits_slapped} />
                         </Level>

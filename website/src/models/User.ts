@@ -3,6 +3,7 @@ import cache from '@/db/cache.ts'
 import type { RowDataPacket } from "mysql2";
 import type { Player } from "@/db/types.ts";
 import assert from "assert";
+import type { CommonStats } from "./General.ts";
 
 export interface LeaderboardEntry {
     steamid: string,
@@ -85,84 +86,42 @@ export async function getLeaderboards(page: number = 1, itemsPerPage = 30): Prom
     return entries
 }
 
-export interface PlayerFull {
-  steamid: string;
-  last_alias: string;
-  last_join_date: number;
-  created_date: number;
-  connections: number;
-  country: string;
-  region: string;
-  points: number;
-  survivor_deaths: number;
-  infected_deaths: number;
-  survivor_damage_rec: number;
-  survivor_damage_give: number;
-  infected_damage_rec: number;
-  infected_damage_give: number;
-  pickups_molotov: number;
-  pickups_pipe_bomb: number;
-  survivor_incaps: number;
-  pills_used: number;
-  defibs_used: number;
-  adrenaline_used: number;
-  heal_self: number;
-  heal_others: number;
-  revived: number;
-  revived_others: number;
-  pickups_pain_pills: number;
-  kills_melee: number;
-  tanks_killed: number;
-  tanks_killed_solo: number;
-  tanks_killed_melee: number;
-  survivor_ff: number;
-  survivor_ff_rec: null;
-  kills_common: number;
-  common_headshots: number;
-  door_opens: number;
-  damage_to_tank: number;
-  damage_as_tank: number;
-  damage_witch: number;
-  minutes_played: number;
-  finales_won: number;
-  kills_smoker: number;
-  kills_boomer: number;
-  kills_hunter: number;
-  kills_spitter: number;
-  kills_jockey: number;
-  kills_charger: number;
-  kills_witch: number;
-  packs_used: number;
-  kills_ff: number;
-  throws_puke: number;
-  throws_molotov: number;
-  throws_pipe: number;
-  damage_molotov: number;
-  kills_molotov: number;
-  kills_pipe: number;
-  kills_minigun: number;
-  caralarms_activated: number;
-  witches_crowned: number;
-  witches_crowned_angry: number;
-  smokers_selfcleared: number;
-  rocks_hitby: number;
-  hunters_deadstopped: number;
-  cleared_pinned: number;
-  times_pinned: number;
-  clowns_honked: number;
-  minutes_idle: number;
-  boomer_mellos: number;
-  boomer_mellos_self: number;
-  forgot_kit_count: number;
-  total_distance_travelled: number;
-  kills_all_specials: number;
-  kits_slapped: number;
+export interface PlayerFull extends CommonStats {
+    steamid: string;
+    last_alias: string;
+    last_join_date: number;
+    created_date: number;
+    connections: number;
+    country: string;
+    region: string;
+
+    pickups_molotov: number,
+    pickups_bile: number,
+    pickups_pipebomb: number,
+    pickups_pills: number,
+    pickups_adrenaline: number,
+
+    kills_tank_solo: number,
+    kills_tank_melee: number,
+    kills_common_headshots: number,
+    door_opens: number,
+    finales_won: number,
+    kills_friendly: number,
+    used_ammo_packs: number,
+
+    witches_crowned_angry: number,
+    times_boomed_self: number,
+    forgot_kit_count: number,
+    kits_slapped: number,
 }
 export async function getUser(steamid: string): Promise<PlayerFull | null> {
     const cacheObj = await cache.get("user.getUser." + steamid)
     if(cacheObj) return cacheObj
 
-    const [rows] = await db.execute<RowDataPacket[]>("SELECT * FROM stats_users WHERE SUBSTRING(steamid, 11) = SUBSTRING(?, 11)", [steamid])
+    const [rows] = await db.execute<RowDataPacket[]>(
+        "SELECT * FROM stats_users WHERE SUBSTRING(steamid, 11) = SUBSTRING(?, 11)", 
+        [steamid]
+    )
     if(rows.length === 0) return null
 
     cache.set("user.getUser." + steamid, rows[0], 1000 * 60 * 30)

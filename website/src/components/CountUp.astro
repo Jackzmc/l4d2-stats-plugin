@@ -1,6 +1,6 @@
 ---
 interface Props {
-    number: number,
+    number: number | null,
     class?: any,
     precision?: number
 }
@@ -12,7 +12,8 @@ function formatNumber(number: number) {
 }
 ---
 
-<span data-count={number} class:list={[className]}>{formatNumber(number)}</span>
+{number != null && <span data-count={number} class:list={[className]}>{formatNumber(number)}</span>}
+{number == null && <span class:list={[className]}>-</span>}
 
 <script>
 import { CountUp }  from "countup.js";

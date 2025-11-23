@@ -308,8 +308,9 @@ export async function getUserGamemodeCounts(steamid: string, gamemode = 'coop'):
             SUM(IF(g.difficulty = 1, 1, 0)) AS normal,
             SUM(IF(g.difficulty = 2, 1, 0)) AS advanced,
             SUM(IF(g.difficulty = 3, 1, 0)) AS expert
-        FROM stats_games g
-        WHERE g.steamid = ? AND g.gamemode = ?
+        FROM stats_sessions s
+        LEFT JOIN stats_games g ON g.id = s.game_id
+        WHERE s.steamid = ? AND g.gamemode = ?
     `, [steamid, gamemode])
     
     return {
@@ -318,6 +319,5 @@ export async function getUserGamemodeCounts(steamid: string, gamemode = 'coop'):
         normal: Number(rows[0].normal ?? 0),
         advanced: Number(rows[0].advanced ?? 0),
         expert: Number(rows[0].expert ?? 0),
-
     }
 }

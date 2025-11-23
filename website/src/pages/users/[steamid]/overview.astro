@@ -4,7 +4,7 @@ const params = Astro.params
 if(!params.steamid) return new Response(null, { status: 404 })
 
 import SteamID from 'steamid'
-import { getUser, getUserTopStats } from '@/models/User.ts'
+import { getUser, getUserAverages, getUserTopStats } from '@/models/User.ts'
 import Button from '@/components/bulma/Button.astro'
 import BulmaIcon from '@/components/bulma/BulmaIcon.astro'
 import { formatRelUnixDate, formatUnixDate, formatDurationFromMinutes, formatHumanDuration } from '@/utils/date.ts'
@@ -19,7 +19,11 @@ import UserHero from '@/components/misc/UserHero.astro'
 
 const user = await getUser(params.steamid)
 if(!user) return Astro.rewrite(`/404?obj=user&id=${Astro.params.steamid}`)
-const topStats = (await getUserTopStats(params.steamid))!
+const [topStats, averages] = await Promise.all([
+    getUserTopStats(params.steamid), 
+    getUserAverages(params.steamid)
+])
+if(topStats == null) throw new Error("unreachable: top stats null") 
 const totalMaps = topStats.played_any.count
 const mapPercents = [ Number(topStats.played_official.count) / totalMaps * 100, Number(topStats.played_custom.count) / totalMaps * 100 ]
 
@@ -50,6 +54,7 @@ const steamid = new SteamID(user.steamid)
 const steamid64 = steamid.getSteamID64()
 
 const BANNER_SCALE = 0.5
+const AVERAGE_PRECISION = 3
 // TODO: split sections into components
 
 ---
@@ -132,8 +137,8 @@ const BANNER_SCALE = 0.5
                             <LevelItem countup title="Commons" value={user.kills_common} />
                             <LevelItem countup title="With Minigun" value={user.kills_minigun} />
                             <LevelItem countup title="With Melee" value={user.kills_melee} />
-                            <LevelItem countup title="Tank" value={user.tanks_killed} />
-                            <LevelItem countup title="Tank (Solo)" value={user.tanks_killed_solo} />
+                            <LevelItem countup title="Tank" value={user.kills_tank} />
+                            <LevelItem countup title="Tank (Solo)" value={user.kills_tank_solo} />
                             <LevelItem countup title="Witch" value={user.witches_crowned} />
                             <LevelItem countup title="Teammates :(" value={user.kills_friendly} />
                         </Level>
@@ -240,7 +245,15 @@ const BANNER_SCALE = 0.5
                                     </tr>
                                     <tr>
                                         <td>Revived Others</td>
-                                        <td class="tvalue"><CountUp number={user.times_revive_other} /></td>
+                                        <td class="tvalue"><CountUp number={user.times_revived_other} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Times Boomed</td>
+                                        <td class="tvalue"><CountUp number={user.times_boomed} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Times Hanging on Ledge</td>
+                                        <td class="tvalue"><CountUp number={user.times_hanging} /></td>
                                     </tr>
                                     </tbody>
                                 </table>
@@ -254,8 +267,9 @@ const BANNER_SCALE = 0.5
                             <LevelItem countup title="Witches Crowned" value={user.witches_crowned} />
                             <LevelItem countup title="Smokers Self-cleared" value={user.smokers_selfcleared} />
                             <LevelItem countup title="Hunters Deadstopped" value={user.hunters_deadstopped} />
-                            <LevelItem countup title="Helped Pinned teammate" value={user.cleared_pinned} />
-                            <LevelItem countup title="Hit By Rock" value={user.rocks_hitby} />
+                            <LevelItem countup title="Helped Pinned teammate" value={user.times_cleared_pinned} />
+                            <LevelItem countup title="Rocks Hit By" value={user.rocks_hitby} />
+                            <LevelItem countup title="Rocks Dodged" value={user.rocks_dodged} />
                         </Level>
                     </div>
 
@@ -271,22 +285,22 @@ const BANNER_SCALE = 0.5
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Molotov/Gascans</td>
+                                <td>Molotov & Gascan</td>
                                 <td align="center" class="tvalue"><CountUp number={user.damage_dealt_fire} /></td>
                                 <td align="center" class="tvalue"><CountUp number={user.kills_fire} /></td>
-                                <td align="center" class="tvalue"><CountUp number={user.throws_molotov } /></td>
+                                <td align="center" class="tvalue"><CountUp number={user.used_molotov } /></td>
                             </tr>
                             <tr>
                                 <td>Puke</td>
                                 <td align="center" >-</td>
                                 <td align="center" >-</td>
-                                <td align="center" class="tvalue"><CountUp number={user.throws_puke} /></td>
+                                <td align="center" class="tvalue"><CountUp number={user.used_bile} /></td>
                             </tr>
                             <tr>
                                 <td>Pipebomb</td>
                                 <td align="center" >-</td>
                                 <td align="center" class="tvalue"><CountUp number={user.kills_pipebomb} /></td>
-                                <td align="center" class="tvalue"><CountUp number={user.throws_pipe} /></td>
+                                <td align="center" class="tvalue"><CountUp number={user.used_pipebomb} /></td>
                             </tr>
                         </tbody>
                     </table>
@@ -305,49 +319,57 @@ const BANNER_SCALE = 0.5
                         <tbody>
                             <tr>
                                 <td>Deaths</td>
-                                <td align="center"><CountUp number={user.deaths} /></td>
-                                <!-- <td><CountUp number={(user.survivor_deaths / averages.totalSessions).toFixed(2)} /></td> -->
-                                <!-- <td><CountUp number={(user.survivor_deaths / hoursPlayed).toFixed(5)} /></td> -->
-                                <!-- <td><CountUp number={(user.survivor_deaths / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                                <td align="center" class="tvalue">
+                                    <CountUp number={user.deaths} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_game.deaths} precision={AVERAGE_PRECISION} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_hour.deaths} precision={AVERAGE_PRECISION} /></td>
                             </tr>
                             <tr>
                                 <td>Friendly Fire</td>
-                                <td align="center"><CountUp number={user.damage_dealt_friendly_count} /></td>
-                                <!-- <td><CountUp number={(averages.survivor_ff / averages.totalSessions).toFixed(2)} /></td> -->
-                                <!-- <td><CountUp number={(averages.survivor_ff / averages.minutes_played).toFixed(5)} /></td> -->
-                                <!-- <td><CountUp number={(averages.survivor_ff / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                                <td align="center" class="tvalue">
+                                    <CountUp number={user.damage_dealt_friendly_count} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_game.damage_dealt_friendly_count} precision={AVERAGE_PRECISION} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_hour.damage_dealt_friendly_count} precision={AVERAGE_PRECISION} /></td>
                             </tr>
                             <tr>
                                 <td>Healing Others</td>
-                                <td align="center"><CountUp number={user.used_kit_other} /></td>
-                                <!-- <td><CountUp number={(averages.heal_others / averages.totalSessions).toFixed(2)} /></td> -->
-                                <!-- <td><CountUp number={(averages.heal_others / hoursPlayed).toFixed(5)} /></td> -->
-                                <!-- <td><CountUp number={(averages.heal_others / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                                <td align="center" class="tvalue">
+                                    <CountUp number={user.used_kit_other} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_game.used_kit_other} precision={AVERAGE_PRECISION} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_hour.used_kit_other} precision={AVERAGE_PRECISION} /></td>
                             </tr>
                             <tr>
                                 <td>Revived Others</td>
-                                <td align="center"><CountUp number={user.times_revive_other} /></td>
-                                <!-- <td><CountUp number={(averages.revived_others / averages.totalSessions).toFixed(2)} /></td> -->
-                                <!-- <td><CountUp number={(averages.revived_others / hoursPlayed).toFixed(5)} /></td> -->
-                                <!-- <td><CountUp number={(averages.revived_others / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                                <td align="center" class="tvalue">
+                                    <CountUp number={user.times_revived_other} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_game.times_revived_other} precision={AVERAGE_PRECISION} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_hour.times_revived_other} precision={AVERAGE_PRECISION} /></td>
                             </tr>
                             <tr>
                                 <td>Incaps</td>
-                                <td align="center"><CountUp number={user.times_incapped} /></td>
-                                <!-- <td><CountUp number={(averages.survivor_incaps / averages.totalSessions).toFixed(2)} /></td> -->
-                                <!-- <td><CountUp number={(averages.survivor_incaps / hoursPlayed).toFixed(5)} /></td> -->
-                                <!-- <td><CountUp number={(averages.survivor_incaps / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                                <td align="center" class="tvalue">
+                                    <CountUp number={user.times_incapped} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_game.times_incapped} precision={AVERAGE_PRECISION} /></td>
+                                <td align="center" class="tvalue">
+                                    <CountUp number={averages.per_hour.times_incapped} precision={AVERAGE_PRECISION} /></td>
                             </tr>
                             <tr>
                                 <td>Time Spent Idle</td>
-                                <td align="center"><CountUp number={user.seconds_idle} />s</td>
-                                <!-- <td><CountUp number={(averages.minutes_idle / averages.totalSessions).toFixed(2)} /></td> -->
-                                <!-- <td><CountUp number={(averages.minutes_idle / hoursPlayed).toFixed(5)} /></td> -->
-                                <!-- <td><CountUp number={(averages.minutes_idle / averages.globalTotalSessions).toFixed(2)} /></td> -->
+                                <td align="center">{formatHumanDuration(user.seconds_idle, undefined, ["hour"])}</td>
+                                <td align="center">{averages.per_game.seconds_idle.toFixed(AVERAGE_PRECISION)}s</td>
+                                <td align="center">{averages.per_hour.seconds_idle.toFixed(AVERAGE_PRECISION)}s</td>
                             </tr>
                         </tbody>
                     </table>
-
                     <h5 class="title is-5" id="misc"><a href="#misc"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Miscellaneous</h5>
                     <div class="box has-background-success-light">
                         <Level>

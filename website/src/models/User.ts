@@ -321,3 +321,57 @@ export async function getUserGamemodeCounts(steamid: string, gamemode = 'coop'):
         expert: Number(rows[0].expert ?? 0),
     }
 }
+
+export interface UserAverages {
+    per_game: UserAverageFields,
+    per_hour: UserAverageFields
+}
+export interface UserAverageFields {
+    deaths: number,
+    damage_dealt_friendly_count: number,
+    used_kit_other: number,
+    times_revived_other: number,
+    times_incapped: number,
+    seconds_idle: number
+}
+const AVG_FIELDS = ["deaths", "damage_dealt_friendly_count", "used_kit_other", "times_revived_other", "seconds_idle", "times_incapped"]
+/**
+ * Returns avg of user for games and hours
+ * @param steamid steamid
+ */
+export async function getUserAverages(steamid: string): Promise<UserAverages> {
+    // deaths, friendly fire, healing other, revive other, incaps, idle
+    const [rows] = await db.execute<RowDataPacket[]>(`
+        SELECT
+            avg(deaths) deaths_per_game,
+            AVG(deaths / (seconds_total / 3600)) deaths_per_hour,
+            avg(damage_dealt_friendly_count) damage_dealt_friendly_count_per_game,
+            avg(damage_dealt_friendly_count / (seconds_total / 3600)) damage_dealt_friendly_count_per_hour,
+            avg(used_kit_other) used_kit_other_per_game,
+            avg(used_kit_other  / (seconds_total / 3600)) used_kit_other_per_hour,
+            avg(times_revived_other) times_revived_other_per_game,
+            avg(times_revived_other  / (seconds_total / 3600)) times_revived_other_per_hour,
+            avg(times_incapped) times_incapped_per_game,
+            avg(times_incapped  / (seconds_total / 3600)) times_incapped_per_hour,
+            avg(seconds_idle) seconds_idle_per_game,
+            avg(seconds_idle  / (seconds_total / 3600)) seconds_idle_per_hour
+        FROM stats_sessions s
+        LEFT JOIN stats_games g ON g.id = s.game_id
+        where steamid = ?
+    `, [steamid])
+    const row = rows[0]
+    return {
+        per_game: getFields(row, "per_game") as unknown as UserAverageFields,
+        per_hour: getFields(row, "per_hour") as unknown as UserAverageFields
+    }
+}
+
+function getFields(row: Record<string, string>, suffix: string): Record<string, number|null> {
+    const obj: Record<string, number|null> = {}
+    for(const key of AVG_FIELDS) {
+        // db returns floats as strings
+        const field = row[key + "_" + suffix]
+        obj[key] = field ? parseFloat(field) : null
+    }
+    return obj
+}

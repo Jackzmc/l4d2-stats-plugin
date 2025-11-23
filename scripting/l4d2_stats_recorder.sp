@@ -682,7 +682,7 @@ void Event_ItemUsed(Event event, const char[] name, bool dontBroadcast) {
 		} else if(StrEqual(name, "revive_success", true)) {
 			int subject = GetClientOfUserId(event.GetInt("subject"));
 			if(subject != client) {
-				g_players[client].user.common.times_revive_other++;
+				g_players[client].user.common.times_revived_other++;
 				g_players[client].RecordPoint(PType_ReviveOther);
 			}
 		} else if(StrEqual(name, "defibrillator_used", true)) {

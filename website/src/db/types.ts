@@ -66,7 +66,7 @@ export interface StatsGamesEntity {
   'used_pills'?: number;
   'ping'?: number | null;
   'used_pipebomb'?: number;
-  'times_revive_other'?: number;
+  'times_revived_other'?: number;
   'RocksDodged'?: any;
   'RocksHitBy'?: any;
   'server_tags'?: string | null;

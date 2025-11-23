@@ -47,7 +47,7 @@ alter table stats_sessions
     change AdrenalinesUsed used_adrenaline smallint(10) unsigned default 0 not null,
     change DefibrillatorsUsed used_defib smallint(10) unsigned default 0 not null,
     change DamageTaken damage_taken int unsigned default 0 not null,
-    change ReviveOtherCount times_revive_other smallint(10) unsigned default 0 not null,
+    change ReviveOtherCount times_revived_other smallint(10) unsigned default 0 not null,
     change Incaps times_incapped smallint(10) unsigned default 0 not null,
     change Deaths deaths tinyint(10) unsigned default 0 not null,
     change boomer_kills kills_boomer smallint(10) unsigned not null,
@@ -72,7 +72,7 @@ alter table stats_sessions
     change CarAlarmsActivated caralarms_activated tinyint unsigned default 0 not null,
     # new metrics
     add longest_shot_distance float null,
-    add times_hanging smallint unsigned default 0 null after times_revive_other,
+    add times_hanging smallint unsigned default 0 null after times_revived_other,
     add kills_tank smallint unsigned null after kills_all_specials,
     add kills_witch smallint unsigned null after kills_tank,
     add kills_fire smallint unsigned null comment 'gasca/molotov' after kills_witch,
@@ -111,7 +111,7 @@ alter table stats_users
     change survivor_incaps times_incapped int(11) unsigned default 0 not null,
     change pickups_pain_pills pickups_pills int(11) unsigned default 0 not null after pickups_pipebomb,
     add times_hanging int(11) unsigned default 0 not null comment 'ledge grabs' after times_incapped,
-    change revived_others times_revive_other int(11) unsigned default 0 not null,
+    change revived_others times_revived_other int(11) unsigned default 0 not null,
     change melee_kills kills_melee int(11) unsigned default 0 not null comment 'kils with melee',
     change tanks_killed kills_tank int unsigned default 0 not null,
     change tanks_killed_solo kils_tank_solo int unsigned default 0 not null,
@@ -125,7 +125,7 @@ alter table stats_users
     change damage_witch damage_dealt_witch int unsigned default 0 not null,
     change packs_used used_ammo_packs int unsigned default 0 not null,
     change ff_kills kills_friendly int unsigned default 0 not null comment 'teammates killed',
-        change damage_molotov damage_dealt_fire int unsigned default 0 not null comment 'gascan/molotov',
+    change damage_molotov damage_dealt_fire int unsigned default 0 not null comment 'gascan/molotov',
     change kills_molotov kills_fire int unsigned default 0 not null comment 'gascan/molotov',
     change kills_pipe kills_pipebomb int unsigned default 0 not null,
     change clowns_honked honks smallint unsigned default 0 not null comment 'clown honks',
@@ -139,10 +139,16 @@ alter table stats_users
     change pills_used used_pills int(11) unsigned default 0 not null,
     change adrenaline_used used_adrenaline int(11) unsigned default 0 not null after used_pills,
     change revived times_revived int(11) unsigned default 0 not null comment 'self got incapped',
+    change cleared_pinned times_cleared_pinned int unsigned default 0 not null comment 'helped survivor that was pinned',
+    add rocks_dodged int unsigned default 0 not null after rocks_hitby,
     add seconds_alive int unsigned not null,
     add seconds_idle int unsigned not null,
     add seconds_dead int unsigned default 0,
-    add seconds_total int unsigned as (seconds_alive + seconds_idle + seconds_dead);
+    add seconds_total int unsigned as (seconds_alive + seconds_idle + seconds_dead),
+    change throws_puke used_bile int unsigned default 0 not null comment 'throws',
+    change throws_molotov used_molotov int unsigned default 0 not null comment 'throws',
+    change throws_pipe used_pipebomb int unsigned default 0 not null comment 'throws';
+
 update stats_users
 set seconds_alive = minutes_played * 60, seconds_idle = minutes_idle * 60;
 alter table stats_users

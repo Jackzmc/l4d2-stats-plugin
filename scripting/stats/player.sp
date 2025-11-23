@@ -58,7 +58,7 @@ enum struct CommonPlayerStats {
     int used_bile;
     int used_pills;
     int used_adrenaline;
-    int times_revive_other;
+    int times_revived_other;
     int times_incapped;
     int times_hanging;
     int deaths;
@@ -345,7 +345,7 @@ void MergeUserToSession(PlayerDataContainer data) {
     data.session.common.used_bile += data.user.common.used_bile;
     data.session.common.used_pills += data.user.common.used_pills;
     data.session.common.used_adrenaline += data.user.common.used_adrenaline;
-    data.session.common.times_revive_other += data.user.common.times_revive_other;
+    data.session.common.times_revived_other += data.user.common.times_revived_other;
     data.session.common.times_incapped += data.user.common.times_incapped;
     data.session.common.times_hanging += data.user.common.times_hanging;
     data.session.common.deaths += data.user.common.deaths;

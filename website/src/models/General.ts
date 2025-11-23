@@ -36,8 +36,8 @@ export async function topStats(): Promise<PlayerTopStats> {
         (SELECT 'heal_others' type,steamid,last_alias,used_kit_other value FROM stats_users
                 WHERE used_kit_other > 0 ORDER BY stats_users.used_kit_other desc, stats_users.points desc limit 10)
         union all
-        (SELECT 'revived_others' type,steamid,last_alias,times_revive_other value FROM stats_users
-                WHERE times_revive_other > 0 ORDER BY stats_users.times_revive_other desc, stats_users.points desc limit 10)
+        (SELECT 'revived_others' type,steamid,last_alias,times_revived_other value FROM stats_users
+                WHERE times_revived_other > 0 ORDER BY stats_users.times_revived_other desc, stats_users.points desc limit 10)
         union all 
         (SELECT 'survivor_incaps' type,steamid,last_alias,times_incapped value FROM stats_users
                 WHERE times_incapped > 0 ORDER BY stats_users.times_incapped desc, stats_users.points desc limit 10 )
@@ -84,7 +84,7 @@ export interface CommonStats {
     used_bile: number,
     used_pills: number,
     used_adrenaline: number,
-    times_revive_other: number,
+    times_revived_other: number,
     times_incapped: number,
     times_hanging: number,
     deaths: number,
@@ -108,7 +108,7 @@ export interface CommonStats {
     hunters_deadstopped: number,
     times_pinned: number,
     times_cleared_pinned: number,
-    times_boomed_teammate: number,
+    times_boomed_teammates: number,
     times_boomed: number,
     damage_dealt_tank: number,
     damage_dealt_witch: number,

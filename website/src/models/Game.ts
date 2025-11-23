@@ -141,6 +141,7 @@ export interface Game {
     used_molotov: number;
     times_incapped: number;
     deaths: number;
+    damage_dealt: number;
     damage_taken: number;
 }
 
@@ -169,6 +170,7 @@ export async function getGame(id: string): Promise<Game | null> {
             SUM(s.used_molotov) used_molotov,
             SUM(s.times_incapped) times_incapped,
             SUM(s.deaths) deaths,
+            SUM(s.damage_dealt) damage_dealt,
             SUM(s.damage_taken) damage_taken
         FROM stats_games g
         LEFT JOIN stats_sessions s ON s.game_id = g.id

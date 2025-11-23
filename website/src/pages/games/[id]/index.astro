@@ -11,6 +11,7 @@ import { formatUnixDate } from "@/utils/date.ts";
 import { getGamemode } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
+import Hero from "@/components/bulma/Hero.astro";
 
 const game = await getGame(id)
 if(!game) return Astro.rewrite(`/404?obj=game&id=${Astro.params.id}`)
@@ -31,7 +32,7 @@ const honkMasterPlayer = totalHonks && sessions.reduce((pv, cv) => {
 }).steamid
 const mvpPlayer = sessions.reduce((pv, cv) => {
     return (cv.kills_all_specials > pv.kills_all_specials) ? cv : pv
-}).steamid
+})
 
 export const prerender = false
 ---
@@ -60,7 +61,8 @@ export const prerender = false
                         <Level>
                             <LevelItem class="has-text-white" title="Zombie Kills" value={game.commons_killed} />
                             <LevelItem class="has-text-white" title="Specials Killed" value={game.kills_all_specials} />
-                            <LevelItem class="has-text-white" title="Damage Taken" value={game.damage_taken} />
+                            <LevelItem class="has-text-white" title="Damage Dealt" value={game.damage_dealt} suffix=" HP" />
+                            <LevelItem class="has-text-white" title="Damage Taken" value={game.damage_taken} suffix=" HP" />
                             {totalHonks > 0 && <LevelItem class="has-text-white" title="Total Honks" value={totalHonks} />}
                         </Level>
                     </div>
@@ -71,7 +73,7 @@ export const prerender = false
         <div class="fixed-grid has-2-cols-mobile has-5-cols ">
             <div class="grid">
                 {sessions.map(sess =>{
-                    const isMvp = sess.steamid == mvpPlayer
+                    const isMvp = sess.steamid == mvpPlayer.steamid
                     const isHonkMaster = sess.steamid == honkMasterPlayer
                     return <div class="cell" style="width: 260">
                         <PlayerBox showHonks={ totalHonks > 0 } player={sess} mvp={isMvp} honkMaster={isHonkMaster} />
@@ -105,7 +107,7 @@ export const prerender = false
             <div class="column is-2">
                 <div class="box content">
                     <h4>Map Id</h4>
-                    <p>{game.map_id}</p>
+                    <p><a href={'/maps/' + game.map_id}>{game.map_id}</a></p>
                     <h4>Server Tags</h4>
                     <span class="tags">
                         {game.server_tags.map(tag => <span class="tag">{tag}</span>)}
@@ -113,12 +115,39 @@ export const prerender = false
                 </div>
             </div>
         </div>
-        <div class="block">
-            <p>Campaign ID <a href={`/games/${game.uuid}`}>{game.uuid}</a></p>
-            <p>Game ID <a href={`/games/${game.id}`}>{game.id}</a></p>
-        </div>
+                    <div class="block">
+                <p>Campaign ID <a href={`/games/${game.uuid}`}>{game.uuid}</a></p>
+                <p>Game ID <a href={`/games/${game.id}`}>{game.id}</a></p>
+            </div>
     </div>
+    <!--
+        TODO:
+        - MVP showcase
+        - stats
+        - best player: (pick N to show out of pool?)
+            - farthest distance shot
+            - most teammates boomed
+            - healer (top heals)
+            - most deaths + incaps
+            - rock dodges
+    -->
+        <!-- <Hero type="is-primary" class="my-6" style="min-height: 200px">
+            <div class="box my-6">
+                <article class="media">
+                    <figure class="media-left">
+                        <p class="image ">
+                            <img src="/img/fullbody/zoey.png" />
+                        </p>
+                    </figure>
+                    <div class="media-content">
+                        <h2 class="title is-2">Most Valuable Player</h2>
+                        <p class="subtitle is-3">{mvpPlayer.name}</p>
 
+                    </div>
+                </article>
+            </div>
+
+        </Hero> -->
 </Layout>
 
 <style>

@@ -17,8 +17,10 @@ const { title, subtitle, type, size, centered, class: extraClasses, includeSpaci
 
 <section class:list={["hero", extraClasses, type, size, { 'has-text-centered': centered } ]} {...any}>
     <div class="hero-body">
-        <p class="title">{title}</p>
-        <p class="subtitle pt-2" set:html={subtitle} />
+        <slot>
+            <p class="title">{title}</p>
+            <p class="subtitle pt-2" set:html={subtitle} />
+        </slot>
     </div>
 </section>
 {includeSpacing && <br />}

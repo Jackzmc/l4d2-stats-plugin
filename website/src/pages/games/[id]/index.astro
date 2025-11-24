@@ -8,7 +8,7 @@ id = id.substring(0, 8)
 import { getGame, getSessions, getGameTraits } from '../../../models/Game.ts'
 import { Difficulty } from "@/types/game.ts";
 import { formatUnixDate } from "@/utils/date.ts";
-import { getGamemode } from "@/utils/index.ts";
+import { getGamemode, getSurvivorFullBodyPath } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
 import Hero from "@/components/bulma/Hero.astro";
@@ -106,9 +106,10 @@ export const prerender = false
                 </div>
             </div>
             <div class="column is-2">
-                <div class="box content">
+                <div class="box content full-height">
                     <h4>Map Id</h4>
                     <p><a href={'/maps/' + game.map_id}>{game.map_id}</a></p>
+                    <br>
                     <h4>Server Tags</h4>
                     <span class="tags">
                         {game.server_tags.map(tag => <span class="tag">{tag}</span>)}
@@ -133,14 +134,16 @@ export const prerender = false
                 <article class="media">
                     <figure class="media-left mr-6">
                         <p class="image ">
-                            <img src="/img/fullbody/zoey.png" />
+                            {mvpPlayer.character_type != null && 
+                                <img src={getSurvivorFullBodyPath(mvpPlayer.character_type)} alt="Image of survivor" />
+                            }
                         </p>
                     </figure>
                     <div class="media-content px-6 py-6 ">
-                        <h2 class="title is-1 l4d2-text  has-text-white">Most Valuable Player</h2>
-                        <p class="subtitle is-2  has-text-white">{mvpPlayer.name}</p>
+                        <p class="subtitle is-2 has-text-white"><b>Most Valuable Player</b></p>
+                        <h1 class="title is-1 py-4 px-4 l4d2-text  has-text-white">{mvpPlayer.name}</h1>
                         
-                        <ul class="is-size-3 has-text-white">
+                        <ul class="is-size-3 has-text-white" style="list-style-type: square">
                             <li>{mvpPlayer.kills_all_specials} specials killed</li>
                             <li>{mvpPlayer.kills_common} commons killed</li>
                             <li>{mvpPlayer.damage_dealt_tank} hp of damage to tanks</li>
@@ -165,6 +168,7 @@ export const prerender = false
              <div class="block">
                 <p>Campaign ID <a href={`/games/${game.uuid}`}>{game.uuid}</a></p>
                 <p>Game ID <a href={`/games/${game.id}`}>{game.id}</a></p>
+                <p>Stat Version v{game.stat_version}</p>
             </div>
         </div>
 </Layout>

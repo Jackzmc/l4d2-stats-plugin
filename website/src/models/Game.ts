@@ -143,6 +143,7 @@ export interface Game {
     deaths: number;
     damage_dealt: number;
     damage_taken: number;
+    stat_version: number;
 }
 
 /**
@@ -171,7 +172,8 @@ export async function getGame(id: string): Promise<Game | null> {
             SUM(s.times_incapped) times_incapped,
             SUM(s.deaths) deaths,
             SUM(s.damage_dealt) damage_dealt,
-            SUM(s.damage_taken) damage_taken
+            SUM(s.damage_taken) damage_taken,
+            g.stat_version stat_version
         FROM stats_games g
         LEFT JOIN stats_sessions s ON s.game_id = g.id
         JOIN stats_map_info i ON i.mapid = g.map_id

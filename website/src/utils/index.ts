@@ -71,6 +71,26 @@ export const WEAPON_IMAGES: ImageMap = Object.fromEntries(Object.entries(import.
     }]
   }))
 
+export const SURVIVOR_FULLBODY_LINKS: Record<Survivor, string> = {
+  [Survivor.Nick]: '/img/fullbody/nick.png',
+  [Survivor.Rochelle]: '',
+  [Survivor.Ellis]: '',
+  [Survivor.Coach]: '',
+  [Survivor.Bill]: '',
+  [Survivor.Zoey]: '',
+  [Survivor.Francis]: '',
+  [Survivor.Louis]: ''
+}
+
+/**
+ * Returns the URL of the fullbody image file for survivor
+ * @param survivor 
+ */
+export function getSurvivorFullBodyPath(survivor: Survivor) {
+  const survivorDef = SURVIVOR_DEFS[survivor]
+  return `/img/fullbody/${survivorDef.name.toLowerCase()}.png`
+}
+
 
 import type { AstroGlobal } from 'astro';
 import DefaultMapImage from '@assets/maps/default.png'

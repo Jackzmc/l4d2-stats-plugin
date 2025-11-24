@@ -27,6 +27,6 @@ const traitConfig = TRAIT_CONFIG[trait.stat] ?? { format: (v) => v }
 ---
 <div class:list={["box px-4 py-6 full-height", traitConfig.class ?? "has-background-dark"]}>
     <p class:list={["subtitle is-2",traitConfig.textClass ?? "has-text-white"]}>{ traitConfig.label ?? trait.stat }</p>
-    <h2 class:list={["title is-1 my-6",traitConfig.textClass ?? "has-text-white"]}>{ trait.name }</h2>
+    <h2 class:list={["title l4d2-text is-1 my-6",traitConfig.textClass ?? "has-text-white"]}>{ trait.name }</h2>
     <p class:list={["subtitle is-2",traitConfig.textClass ?? "has-text-white"]}>{ traitConfig.format(trait.value, trait.stat) }</p>
 </div>

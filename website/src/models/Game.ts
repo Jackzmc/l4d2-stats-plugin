@@ -133,7 +133,7 @@ export interface Game {
     kills_all_specials: number;
     commons_killed: number;
     honks: number;
-    used_kit: number;
+    used_kit: number; // computed
     used_pills: number,
     used_adrenaline: number,
     used_bile: number;
@@ -162,7 +162,7 @@ export async function getGame(id: string): Promise<Game | null> {
             SUM(s.kills_all_specials) kills_all_specials,
             SUM(s.kills_common) commons_killed,
             SUM(s.honks) honks,
-            SUM(s.used_kit) used_kit,
+            SUM(s.used_kit_self + s.used_kit_other) used_kit,
             SUM(s.used_pills) used_pills,
             SUM(s.used_adrenaline) used_adrenaline,
             SUM(s.used_bile) used_bile,
@@ -279,7 +279,6 @@ export interface GameSession extends GameSessionPartial {
     damage_taken_friendly_count: number,
     damage_dealt_tank: number,
     damage_dealt_witch: number,
-    used_kit: number,
     used_kit_self: number,
     used_kit_other: number,
     used_defib: number,
@@ -344,7 +343,6 @@ export async function getSession(id: number | string): Promise<GameSession | nul
             s.damage_taken_friendly_count,
             s.damage_dealt_tank,
             s.damage_dealt_witch,
-            s.used_kit,
             s.used_kit_self,
             s.used_kit_other,
             s.used_pills,

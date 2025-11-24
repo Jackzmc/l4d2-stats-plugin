@@ -75,7 +75,6 @@ export interface CommonStats {
     damage_dealt_friendly: number,
     damage_dealt_friendly_count: number,
     damage_dealt_fire: number,
-    used_kit: number, // computed
     used_kit_self: number,
     used_kit_other: number,
     used_defib: number,

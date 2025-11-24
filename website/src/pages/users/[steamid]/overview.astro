@@ -144,7 +144,8 @@ const AVERAGE_PRECISION = 3
                         </Level>
                     </div>
 
-                    <h5 class="title is-5" id="survivor-stats"><a href="#survivor-stats"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Survivor Statistics</h5>
+                    <h5 class="title is-5" id="survivor-stats"><a href="#survivor-stats">
+                        <BulmaIcon name="iconoir:link"></BulmaIcon></a> Damages & Usages</h5>
                     <div class="block">
                         <div class="columns">
                             <div class="column">
@@ -153,7 +154,7 @@ const AVERAGE_PRECISION = 3
                                     <thead>
                                         <tr class="has-background-white-ter">
                                             <th>Type</th>
-                                            <th align="center">Damage</th>
+                                            <th align="center">Damage (HP)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -166,30 +167,26 @@ const AVERAGE_PRECISION = 3
                                             <td class="tvalue"><CountUp number={user.damage_taken} /></td>
                                         </tr>
                                         <tr>
-                                            <td>Damage To Tank</td>
+                                            <td>To Tank</td>
                                             <td class="tvalue"><CountUp number={user.damage_dealt_tank} /></td>
                                         </tr>
                                         <tr>
-                                            <td>Damage To Witch</td>
+                                            <td>To Witch</td>
                                             <td class="tvalue"><CountUp number={user.damage_dealt_witch} /></td>
                                         </tr>
                                         <tr>
-                                            <td>Friendly Fires</td>
-                                            <td class="tvalue"><CountUp number={user.damage_dealt_friendly_count} /></td>
+                                            <td>To Teammates</td>
+                                            <td class="tvalue"><CountUp number={user.damage_dealt_friendly} /></td>
                                         </tr>
                                         <tr>
-                                            <td>Incaps</td>
-                                            <td class="tvalue"><CountUp number={user.times_incapped} /></td>
-                                        </tr>
-                                        <tr>
-                                            <td>Deaths</td>
-                                            <td class="tvalue"><CountUp number={user.deaths } /></td>
+                                            <td>From Falls</td>
+                                            <td class="tvalue"><CountUp number={user.damage_taken_fall} /></td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
                             <div class="column">
-                                <h6 class="title is-6 has-text-centered">Item Uses</h6>
+                                <h6 class="title is-6 has-text-centered">Item Usages</h6>
                                 <table class="table is-bordered is-fullwidth">
                                     <thead>
                                     <tr class="has-background-white-ter">
@@ -211,8 +208,12 @@ const AVERAGE_PRECISION = 3
                                         <td class="tvalue"><CountUp number={user.used_defib} /></td>
                                     </tr>
                                     <tr>
-                                        <td>Ammo Packs</td>
-                                        <td class="tvalue"><CountUp number={user.used_ammo_packs} /></td>
+                                        <td>Fire Ammo Packs</td>
+                                        <td class="tvalue"><CountUp number={user.used_ammopack_fire} /></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Explosive Ammo Packs</td>
+                                        <td class="tvalue"><CountUp number={user.used_ammopack_explosive} /></td>
                                     </tr>
                                     <tr>
                                         <td>Kits <em>(Self)</em></td>
@@ -225,40 +226,39 @@ const AVERAGE_PRECISION = 3
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="column">
-                                <h6 class="title is-6 has-text-centered">Miscellaneous</h6>
-                                <table class="table is-bordered is-fullwidth">
-                                    <thead>
-                                    <tr class="has-background-white-ter">
-                                        <th>Stat</th>
-                                        <th align="center">Value</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <td>Doors Opened</td>
-                                        <td class="tvalue"><CountUp number={user.door_opens} /></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Finales Won</td>
-                                        <td class="tvalue"><CountUp number={user.finales_won} /></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Revived Others</td>
-                                        <td class="tvalue"><CountUp number={user.times_revived_other} /></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Times Boomed</td>
-                                        <td class="tvalue"><CountUp number={user.times_boomed} /></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Times Hanging on Ledge</td>
-                                        <td class="tvalue"><CountUp number={user.times_hanging} /></td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+
                         </div>
+
+                        <table class="table is-bordered is-fullwidth">
+                            <thead>
+                                <tr class="has-background-white-ter">
+                                    <th>Throwable</th>
+                                    <th align="center">Damage (HP)</th>
+                                    <th align="center">Kills</th>
+                                    <th align="center"># Thrown</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Molotov & Gascan</td>
+                                    <td align="center" class="tvalue"><CountUp number={user.damage_dealt_fire} /></td>
+                                    <td align="center" class="tvalue"><CountUp number={user.kills_fire} /></td>
+                                    <td align="center" class="tvalue"><CountUp number={user.used_molotov } /></td>
+                                </tr>
+                                <tr>
+                                    <td>Puke</td>
+                                    <td align="center" >-</td>
+                                    <td align="center" >-</td>
+                                    <td align="center" class="tvalue"><CountUp number={user.used_bile} /></td>
+                                </tr>
+                                <tr>
+                                    <td>Pipebomb</td>
+                                    <td align="center" >-</td>
+                                    <td align="center" class="tvalue"><CountUp number={user.kills_pipebomb} /></td>
+                                    <td align="center" class="tvalue"><CountUp number={user.used_pipebomb} /></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
                     <h5 class="title is-5" id="skills"><a href="#skills"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Skills</h5>
@@ -273,38 +273,6 @@ const AVERAGE_PRECISION = 3
                         </Level>
                     </div>
 
-                    <h5 class="title is-5" id="throwables"><a href="#throwables"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Throwables</h5>
-                    <table class="table is-bordered is-fullwidth">
-                        <thead>
-                            <tr class="has-background-white-ter">
-                                <th>Throwable</th>
-                                <th align="center">Damage</th>
-                                <th align="center">Kills</th>
-                                <th align="center">Thrown</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Molotov & Gascan</td>
-                                <td align="center" class="tvalue"><CountUp number={user.damage_dealt_fire} /></td>
-                                <td align="center" class="tvalue"><CountUp number={user.kills_fire} /></td>
-                                <td align="center" class="tvalue"><CountUp number={user.used_molotov } /></td>
-                            </tr>
-                            <tr>
-                                <td>Puke</td>
-                                <td align="center" >-</td>
-                                <td align="center" >-</td>
-                                <td align="center" class="tvalue"><CountUp number={user.used_bile} /></td>
-                            </tr>
-                            <tr>
-                                <td>Pipebomb</td>
-                                <td align="center" >-</td>
-                                <td align="center" class="tvalue"><CountUp number={user.kills_pipebomb} /></td>
-                                <td align="center" class="tvalue"><CountUp number={user.used_pipebomb} /></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
                     <h5 class="title is-5" id="averages"><a href="#averages"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Averages</h5>
                     <table class="table is-bordered is-fullwidth">
                         <thead>
@@ -370,15 +338,77 @@ const AVERAGE_PRECISION = 3
                             </tr>
                         </tbody>
                     </table>
-                    <h5 class="title is-5" id="misc"><a href="#misc"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Miscellaneous</h5>
-                    <div class="box has-background-success-light">
+
+                    <h5 class="title is-5" id="casualities"><a href="#casualities">
+                        <BulmaIcon name="iconoir:link"></BulmaIcon></a> Casualities</h5>
+                    <div class="box has-background-danger-light">
                         <Level>
+                            <LevelItem countup title="Deaths" value={user.deaths} />
+                            <LevelItem countup title="Incaps" value={user.times_incapped} />
+                            <LevelItem countup title="Ledges Grabbed" value={user.times_hanging} />
+                            <LevelItem countup title="Fall Damage Taken" value={user.damage_taken_fall} />
+
+                        </Level>
+                    </div>
+                     <div class="box has-background-danger-light">
+                        <Level>
+                            <LevelItem countup title="Incaps from Fire" value={user.times_incapped_fire} />
+                            <LevelItem countup title="Incaps from Acid" value={user.times_incapped_acid} />
+                            <LevelItem countup title="Incaps from Zombies" value={user.times_incapped_zombie} />
+                            <LevelItem countup title="Incaps from Specials" value={user.times_incapped_special} />
+                            <LevelItem countup title="Incaps from Tank" value={user.times_incapped_tank} />
+                            <LevelItem countup title="Incaps from Witches" value={user.times_incapped_witch} />
+
+                        </Level>
+                    </div>
+
+                    <h5 class="title is-5" id="misc"><a href="#misc"><BulmaIcon name="iconoir:link"></BulmaIcon></a> Miscellaneous</h5>
+
+                    <div class="box has-background-link-light">
+                        <Level>
+                            <LevelItem tooltip="" countup title="Kits Forgotten" value={user.forgot_kit_count} />
                             <LevelItem tooltip="Killed boomer getting someone boomed" countup title="Boomers Popped Others" value={user.times_boomed_teammates} />
+                            <LevelItem countup title="Times Boomed" value={user.times_boomed} />
                             <LevelItem tooltip="Killed boomer getting self boomed" countup title="Boomers Popped Self" value={user.times_boomed_self} />
-                            <LevelItem countup title="Clown Honks" value={user.honks} />
-                            <LevelItem tooltip="Kits forgotten in saferoom" countup title="Kits Forgotten" value={user.forgot_kit_count} />
                             <LevelItem countup title="Kits Slapped" value={user.kits_slapped} />
                         </Level>
+                    </div>
+
+                    <div class="column">
+                        <table class="table is-bordered is-fullwidth">
+                            <thead>
+                                <tr class="has-background-white-ter">
+                                    <th>Stat</th>
+                                    <th align="center">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Doors Opened</td>
+                                    <td class="tvalue"><CountUp number={user.door_opens} /></td>
+                                </tr>
+                                <tr>
+                                    <td>Finales Won</td>
+                                    <td class="tvalue"><CountUp number={user.finales_won} /></td>
+                                </tr>
+                                <tr>
+                                    <td>Revived Others</td>
+                                    <td class="tvalue"><CountUp number={user.times_revived_other} /></td>
+                                </tr>
+                                <tr>
+                                    <td>Jumps</td>
+                                    <td class="tvalue"><CountUp number={user.times_jumped} /></td>
+                                </tr>
+                                <tr>
+                                    <td>Car Alarms Activated</td>
+                                    <td class="tvalue"><CountUp number={user.caralarms_activated} /></td>
+                                </tr>
+                                <tr>
+                                    <td>Shoves</td>
+                                    <td class="tvalue"><CountUp number={user.times_shove} /></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

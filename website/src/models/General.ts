@@ -69,6 +69,7 @@ export interface CommonStats {
     kills_melee: number,
     damage_taken: number,
     damage_taken_count: number,
+    damage_taken_fall: number,
     damage_taken_friendly: number,
     damage_taken_friendly_count: number,
     damage_dealt: number,
@@ -113,4 +114,6 @@ export interface CommonStats {
     damage_dealt_witch: number,
     caralarms_activated: number,
 	longest_shot_distance: number,
+    times_jumped: number,
+    times_shove: number
 }

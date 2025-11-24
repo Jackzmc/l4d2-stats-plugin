@@ -107,12 +107,20 @@ export interface PlayerFull extends CommonStats {
     door_opens: number,
     finales_won: number,
     kills_friendly: number,
-    used_ammo_packs: number,
+    used_ammopack_fire: number,
+    used_ammopack_explosive: number
 
     witches_crowned_angry: number,
     times_boomed_self: number,
     forgot_kit_count: number,
     kits_slapped: number,
+
+    times_incapped_fire: number;
+    times_incapped_acid: number; 
+    times_incapped_zombie: number;
+    times_incapped_special: number;
+    times_incapped_tank: number;
+    times_incapped_witch: number;
 }
 export async function getUser(steamid: string): Promise<PlayerFull | null> {
     const cacheObj = await cache.get("user.getUser." + steamid)

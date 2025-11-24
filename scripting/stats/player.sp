@@ -46,6 +46,7 @@ enum struct CommonPlayerStats {
     int damage_taken_count;
     int damage_taken_friendly;
     int damage_taken_friendly_count;
+    float damage_taken_fall;
     int damage_dealt;
     int damage_dealt_friendly;
     int damage_dealt_friendly_count;
@@ -81,12 +82,14 @@ enum struct CommonPlayerStats {
     int hunters_deadstopped;
     int times_pinned;
     int times_cleared_pinned;
-    int times_boomed_teammate;
+    int times_boomed_teammates;
     int times_boomed;
     int damage_dealt_tank;
     int damage_dealt_witch;
     int caralarms_activated;
-	float longest_shot_distance;
+    int times_shove;
+    int times_jumped;
+    int bullets_fired;
 }
 
 // stats used for stats_users only
@@ -104,12 +107,26 @@ enum struct UserPlayerStats {
     int door_opens;
     int finales_won;
     int kills_friendly;
-    int used_ammo_packs;
+    int used_ammopack_fire;
+    int used_ammopack_explosive;
 
     int witches_crowned_angry;
     int times_boomed_self;
     int forgot_kit_count;
     int kits_slapped;
+
+    // don't want these in stats_games because it's too much
+    int times_incapped_fire;
+    int times_incapped_acid; 
+    int times_incapped_zombie;
+    int times_incapped_special;
+    int times_incapped_tank;
+    int times_incapped_witch;
+
+}
+
+enum struct SessionPlayerStats {
+	float longest_shot_distance;
 }
 
 // This is saved until end of game when player disconnects
@@ -118,6 +135,8 @@ enum struct SessionData {
     // 
     // increment user.common and then call MergeUserToSession()
     CommonPlayerStats common;
+    // stats_sessions specific columns
+    SessionPlayerStats session;
 
     int flags;
     char steamid[32];
@@ -173,12 +192,13 @@ enum struct PlayerDataContainer {
 
     void Load(int client, const char[] steamid) {
         this.userid = GetClientUserId(client);
+        LogTrace("Lood %d %d", this.userid, client);
+        this.LoadSession(); //writes over this.session
         strcopy(this.session.steamid, sizeof(this.session.steamid), steamid);
         strcopy(this.user.steamid, sizeof(this.user.steamid), steamid);
         if(this.session.join_time == 0) this.session.join_time = 0; // keep original join time
 
-        this.LoadSession();
-        this.Calculate(); // initalize time
+        this.Calculate(); // we call this to initalize time stuff
     }
 
     void CalculateTime(int client) {
@@ -208,6 +228,7 @@ enum struct PlayerDataContainer {
     // Calculates any values
     void Calculate() {
         int client = GetClientOfUserId(this.userid);
+        LogTrace("Calculate %d %d", this.userid, client);
         if(client > 0 ){ 
 		    this.session.lastSurvivorType = GetEntProp(client, Prop_Send, "m_survivorCharacter");
             this.CalculateTime(client);
@@ -323,6 +344,8 @@ PlayerDataContainer g_players[MAXPLAYERS+1];
 // 
 // MAKE SURE TO UPDATE THIS FOR NEW COLUMNS
 void MergeUserToSession(PlayerDataContainer data) {
+    LogDebug("MergeUserToSession userid=%d", data.userid);
+
     data.session.common.points += data.user.common.points;
     data.session.common.seconds_alive += data.user.common.seconds_alive;
     data.session.common.seconds_idle += data.user.common.seconds_idle;
@@ -368,22 +391,31 @@ void MergeUserToSession(PlayerDataContainer data) {
     data.session.common.hunters_deadstopped += data.user.common.hunters_deadstopped;
     data.session.common.times_pinned += data.user.common.times_pinned;
     data.session.common.times_cleared_pinned += data.user.common.times_cleared_pinned;
-    data.session.common.times_boomed_teammate += data.user.common.times_boomed_teammate;
+    data.session.common.times_boomed_teammates += data.user.common.times_boomed_teammates;
     data.session.common.times_boomed += data.user.common.times_boomed;
     data.session.common.damage_dealt_tank += data.user.common.damage_dealt_tank;
     data.session.common.damage_dealt_witch += data.user.common.damage_dealt_witch;
     data.session.common.caralarms_activated += data.user.common.caralarms_activated;
-    data.session.common.longest_shot_distance += data.user.common.longest_shot_distance;
+    data.session.common.damage_taken_fall += data.user.common.damage_taken_fall;
+    data.session.common.times_shove += data.user.common.times_shove;
+    data.session.common.times_jumped += data.user.common.times_jumped;
+    data.session.common.bullets_fired += data.user.common.bullets_fired;
 }
 
 // Updates user data, submits user points, weapon, heatmap data
 //
 // Then merges ontop of session data and clears user data
 void FlushPlayer(int client) {
-    RecordUserStats(g_players[client].user);
-    SubmitPoints(client);
-    SubmitWeaponStats(client);
-    SubmitHeatmaps(client);
+    LogDebug("Flush Player %d [u=%s] [s=%s]", client, g_players[client].session.steamid, g_players[client].user.steamid);
+    if(g_players[client].user.steamid[0] != '\0') {
+        // only flush if user is initalized.
+        // after a FlushPlayer, user.steamid is cleared
+        // only until Load() is called is it restored
+        RecordUserStats(g_players[client].user);
+        SubmitPoints(client);
+        SubmitWeaponStats(client);
+        SubmitHeatmaps(client);
+    }
 
     MergeUserToSession(g_players[client]);
     g_players[client].SaveSession();

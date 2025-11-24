@@ -33,8 +33,9 @@ export const prerender = false
     ), url("/img/maps/screenshots/${session.map_id}.jpeg"), url("/img/maps/default.png")`}}>
         <div class="hero-body">
             <!-- <Picture src={getMapPoster(session.map)} alt="map" /> -->
-            <p class="title">{session.name}'s Session #{session.id}</p>
-            <p class="subtitle pt-2">Played on <b>{mapName}</b></p>
+            <p class="title l4d2-text">#{session.id}</p>
+            <p class="subtitle is-3"><b>{session.name}</b></p>
+            <p class="subtitle is-3"><b>{mapName}</b></p>
         </div>
         <div class="hero-foot">
             <p class="subtitle mb-3">

@@ -38,11 +38,11 @@ void DBCT_CheckUserExistance(Handle db, DBResultSet results, const char[] error,
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
 		results.FetchRow();
 		char prevName[32];
-		// last_alias,points,connections,created_date,last_join_date
 		results.FetchString(0, prevName, sizeof(prevName));
-		g_players[client].connections = results.FetchInt(2);
-		g_players[client].firstJoinedTime = results.FetchInt(3);
-		g_players[client].lastJoinedTime = results.FetchInt(4);
+		//last_alias,connections,created_date,last_join_date
+		g_players[client].connections = results.FetchInt(1);
+		g_players[client].firstJoinedTime = results.FetchInt(2);
+		g_players[client].lastJoinedTime = results.FetchInt(3);
 
 		int connections_amount = g_lateLoaded ? 0 : 1;
 
@@ -92,7 +92,7 @@ void DBCT_CreateGame(Database db, DBResultSet results, const char[] error, int u
 	if(db == INVALID_HANDLE || results == INVALID_HANDLE) {
 		LogError("DBCT_CreateGame returned error: %s", error);
 	} else if(results.InsertId > 0) {
-		PrintToServer("[Stats] Game ID: %s", game.id);
 		game.id = results.InsertId
+		LogInfo("Game ID: %d", game.id);
 	}
 }

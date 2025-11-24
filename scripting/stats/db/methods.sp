@@ -10,6 +10,7 @@ enum queryType {
 	QUERY_MAP_RATE,
 	QUERY_UPDATE_USER_STATS,
 	QUERY_INSERT_SESSION,
+	QUERY_UPDATE_GAME,
 	_QUERY_MAX
 }
 char QUERY_TYPE_ID[_QUERY_MAX][] = {
@@ -23,7 +24,8 @@ char QUERY_TYPE_ID[_QUERY_MAX][] = {
 	"MAP_INFO",
 	"MAP_RATE",
 	"UPDATE_USER_STATS",
-	"INSERT_SESSION_STATS"
+	"INSERT_SESSION_STATS",
+	"UPDATE_GAME",
 };
 
 //Setups a user, this tries to fetch user by steamid
@@ -152,11 +154,13 @@ void UpdateGame() {
 	if(!game.id) ThrowError("game.id missing");
 	char query[256];
 	g_db.Format(query, sizeof(query), 
-		"UPDATE stats_games SET date_end=%d WHERE id=%d",
+		"UPDATE stats_games SET date_end=%d,difficulty=%d,gamemode='%s' WHERE id=%d",
 		GetTime(), 				//date_end
+		game.difficulty,		//difficulty
+		game.gamemode,			//gamemode
 		game.id 				//id
 	);
-	g_db.Query(DBCT_CreateGame, query, _);
+	g_db.Query(DBCT_Generic, query, QUERY_UPDATE_GAME);
 }
 
 
@@ -165,7 +169,7 @@ void SubmitMapInfo() {
 	char title[128];
 	InfoEditor_GetString(0, "DisplayTitle", title, sizeof(title));
 	int chapters = L4D_GetMaxChapters();
-	char query[128];
+	char query[256];
 	g_db.Format(query, sizeof(query), "INSERT IGNORE INTO stats_map_info (mapid,name,chapter_count) VALUES ('%s','%s',%d)", game.mapId, title, chapters);
 	g_db.Query(DBCT_Generic, query, QUERY_MAP_INFO, DBPrio_Low);
 }
@@ -188,10 +192,11 @@ void RecordSessionStats() {
 // 
 // Called at end of every chapter, for all users, and then is reset.
 void RecordUserStats(UserData user) {
-	char query[1024];
+	if(user.steamid[0] == '\0') ThrowError("steamid is empty");
+	char query[4096];
 	g_db.Format(query, sizeof(query), 
 		"UPDATE stats_users SET " ...
-		"points=points+%d,deaths=deaths+%d,damage_taken=damage_taken+%d,damage_dealt=damage_dealt+%d,pickups_bile=pickups_bile+%d,pickups_molotov=pickups_molotov+%d,pickups_pipebomb=pickups_pipebomb+%d,pickups_pills=pickups_pills+%d,pickups_adrenaline=pickups_adrenaline+%d,used_kit_self=used_kit_self+%d,used_kit_other=used_kit_other+%d,used_defib=used_defib+%d,used_pills=used_pills+%d,used_adrenaline=used_adrenaline+%d,times_incapped=times_incapped+%d,times_hanging=times_hanging+%d,times_revive_other=times_revive_other+%d,kills_melee=kills_melee+%d,kills_tank=kills_tank+%d,kills_tank_solo=kills_tank_solo+%d,kills_tank_melee=kills_tank_melee+%d,damage_dealt_friendly=damage_dealt_friendly+%d,damage_taken_friendly=damage_taken_friendly+%d,kills_common=kills_common+%d,kills_common_headshots=kills_common_headshots+%d,door_opens=door_opens+%d,damage_dealt_tank=damage_dealt_tank+%d,damage_dealt_witch=damage_dealt_witch+%d,finales_won=finales_won+%d,kills_smoker=kills_smoker+%d,kills_boomer=kills_boomer+%d,kills_hunter=kills_hunter+%d,kills_spitter=kills_spitter+%d,kills_jockey=kills_jockey+%d,kills_charger=kills_charger+%d,kills_witch=kills_witch+%d,used_ammo_packs=used_ammo_packs+%d,kills_friendly=kills_friendly+%d,used_bile=used_bile+%d,used_molotov=used_molotov+%d,used_pipebomb=used_pipebomb+%d,damage_dealt_fire=damage_dealt_fire+%d,kills_fire=kills_fire+%d,kills_pipebomb=kills_pipebomb+%d,kills_minigun=kills_minigun+%d,caralarms_activated=caralarms_activated+%d,witches_crowned=witches_crowned+%d,witches_crowned_angry=witches_crowned_angry+%d,smokers_selfcleared=smokers_selfcleared+%d,rocks_hitby=rocks_hitby+%d,hunters_deadstopped=hunters_deadstopped+%d,times_cleared_pinned=times_cleared_pinned+%d,times_pinned=times_pinned+%d,honks=honks+%d,seconds_alive=seconds_alive+%d,seconds_idle=seconds_idle+%d,seconds_dead=seconds_dead+%d,times_boomed_teammate=times_boomed_teammate+%d,times_boomed_self=times_boomed_self+%d,times_boomed=times_boomed+%d,forgot_kit_count=forgot_kit_count+%d,kits_slapped=kits_slapped+%d" 
+		"points=points+%d,deaths=deaths+%d,damage_taken=damage_taken+%d,damage_dealt=damage_dealt+%d,pickups_bile=pickups_bile+%d,pickups_molotov=pickups_molotov+%d,pickups_pipebomb=pickups_pipebomb+%d,pickups_pills=pickups_pills+%d,pickups_adrenaline=pickups_adrenaline+%d,used_kit_self=used_kit_self+%d,used_kit_other=used_kit_other+%d,used_defib=used_defib+%d,used_pills=used_pills+%d,used_adrenaline=used_adrenaline+%d,times_incapped=times_incapped+%d,times_hanging=times_hanging+%d,times_revived_other=times_revived_other+%d,kills_melee=kills_melee+%d,kills_tank=kills_tank+%d,kills_tank_solo=kills_tank_solo+%d,kills_tank_melee=kills_tank_melee+%d,damage_dealt_friendly=damage_dealt_friendly+%d,damage_taken_friendly=damage_taken_friendly+%d,kills_common=kills_common+%d,kills_common_headshots=kills_common_headshots+%d,door_opens=door_opens+%d,damage_dealt_tank=damage_dealt_tank+%d,damage_dealt_witch=damage_dealt_witch+%d,finales_won=finales_won+%d,kills_smoker=kills_smoker+%d,kills_boomer=kills_boomer+%d,kills_hunter=kills_hunter+%d,kills_spitter=kills_spitter+%d,kills_jockey=kills_jockey+%d,kills_charger=kills_charger+%d,kills_witch=kills_witch+%d,used_ammopack_fire=used_ammopack_fire+%d,used_ammopack_explosive=used_ammopack_explosive+%d,kills_friendly=kills_friendly+%d,used_bile=used_bile+%d,used_molotov=used_molotov+%d,used_pipebomb=used_pipebomb+%d,damage_dealt_fire=damage_dealt_fire+%d,kills_fire=kills_fire+%d,kills_pipebomb=kills_pipebomb+%d,kills_minigun=kills_minigun+%d,caralarms_activated=caralarms_activated+%d,witches_crowned=witches_crowned+%d,witches_crowned_angry=witches_crowned_angry+%d,smokers_selfcleared=smokers_selfcleared+%d,rocks_hitby=rocks_hitby+%d,hunters_deadstopped=hunters_deadstopped+%d,times_cleared_pinned=times_cleared_pinned+%d,times_pinned=times_pinned+%d,honks=honks+%d,seconds_alive=seconds_alive+%d,seconds_idle=seconds_idle+%d,seconds_dead=seconds_dead+%d,times_boomed_teammates=times_boomed_teammates+%d,times_boomed_self=times_boomed_self+%d,times_boomed=times_boomed+%d,forgot_kit_count=forgot_kit_count+%d,kits_slapped=kits_slapped+%d,times_shove=times_shove+%d,times_jumped=times_jumped+%d,bullets_fired=bullets_fired+%d,times_incapped_fire=times_incapped_fire+%d,times_incapped_acid=times_incapped_acid+%d,times_incapped_zombie=times_incapped_zombie+%d,times_incapped_special=times_incapped_special+%d,times_incapped_tank=times_incapped_tank+%d,times_incapped_witch=times_incapped_witch+%d" 
 		... " WHERE steamid = '%s'",
 		user.common.points,
 		user.common.deaths,
@@ -229,7 +234,8 @@ void RecordUserStats(UserData user) {
 		user.common.kills_jockey,
 		user.common.kills_charger,
 		user.common.kills_witch,
-		user.user.used_ammo_packs,
+		user.user.used_ammopack_fire,
+		user.user.used_ammopack_explosive,
 		user.user.kills_friendly,
 		user.common.used_bile,
 		user.common.used_molotov,
@@ -250,27 +256,38 @@ void RecordUserStats(UserData user) {
 		user.common.seconds_alive,
 		user.common.seconds_idle,
 		user.common.seconds_dead,
-		user.common.times_boomed_teammate,
+		user.common.times_boomed_teammates,
 		user.user.times_boomed_self,
 		user.common.times_boomed,
 		user.user.forgot_kit_count,
 		user.user.kits_slapped,
+		user.common.times_shove,
+		user.common.times_jumped,
+		user.common.bullets_fired,
+		user.user.times_incapped_fire,
+		user.user.times_incapped_acid,
+		user.user.times_incapped_zombie,
+		user.user.times_incapped_special,
+		user.user.times_incapped_tank,
+		user.user.times_incapped_witch,
 		user.steamid
 	);
+	LogDebug("UPDATE_USER_STATS for %s", user.steamid);
 	g_db.Query(DBCT_Generic, query, QUERY_UPDATE_USER_STATS);
 }
 
 // creates new stats_sessions for game.id
 void RecordPlayerSession(SessionData session) {
 	if(!game.id) ThrowError("game id missing");
+	if(session.steamid[0] == '\0') ThrowError("steamid is empty");
 	// size of just INSERT (...) VALUES (...) template is ~811 characters
 	// steamid is +32 char, every int is maybe 4-8 chars
 	char query[1024];
 	g_db.Format(query, sizeof(query), 
-		"INSERT INTO " ... 
-		"(game_id,steamid,flags,join_time,character_type,ping,kills_common,kills_melee,damage_dealt, damage_taken,damage_dealt_friendly_count,damage_taken_friendly_count,damage_dealt_friendly,damage_taken_friendly,used_kit_self,used_kit_other,used_defib,used_molotov,used_pipebomb,used_bile,used_pills,used_adrenaline,times_revived_other,times_incapped,times_hanging,deaths,kills_boomer,kills_smoker, kills_jockey,kills_hunter,kills_spitter,kills_charger,kills_tank,kills_witch,kills_fire,kills_pipebomb,kills_minigun,honks,top_weapon,seconds_alive,witches_crowned,smokers_selfcleared,rocks_hitby,rocks_dodged,hunters_deadstopped,times_pinned,times_cleared_pinned,times_boomed_teammates,times_boomed,damage_dealt_tank,damage_dealt_witch, caralarms_activated)" ...
+		"INSERT INTO stats_sessions" ... 
+		"(game_id,steamid,flags,join_time,character_type,ping,kills_common,kills_melee,damage_dealt,damage_taken,damage_dealt_friendly_count,damage_taken_friendly_count,damage_dealt_friendly,damage_taken_friendly,used_kit_self,used_kit_other,used_defib,used_molotov,used_pipebomb,used_bile,used_pills,used_adrenaline,times_revived_other,times_incapped,times_hanging,deaths,kills_boomer,kills_smoker,kills_jockey,kills_hunter,kills_spitter,kills_charger,kills_tank,kills_witch,kills_fire,kills_pipebomb,kills_minigun,honks,top_weapon,seconds_alive,seconds_idle,seconds_dead,witches_crowned,smokers_selfcleared,rocks_hitby,rocks_dodged,hunters_deadstopped,times_pinned,times_cleared_pinned,times_boomed_teammates,times_boomed,damage_dealt_tank,damage_dealt_witch,caralarms_activated,longest_shot_distance,times_shove,times_jumped,bullets_fired)" ...
 		" VALUES " ...
-		"(%d,'%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		"(%d,'%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
 		game.id,
 		session.steamid,
 		session.flags,
@@ -320,12 +337,16 @@ void RecordPlayerSession(SessionData session) {
 		session.common.hunters_deadstopped,
 		session.common.times_pinned,
 		session.common.times_cleared_pinned,
-		session.common.times_boomed_teammate,
+		session.common.times_boomed_teammates,
 		session.common.times_boomed,
 		session.common.damage_dealt_tank,
 		session.common.damage_dealt_witch,
 		session.common.caralarms_activated,
-		session.common.longest_shot_distance
+		session.session.longest_shot_distance,
+		session.common.times_shove,
+		session.common.times_jumped,
+		session.common.bullets_fired
 	);
 	g_db.Query(DBCT_Generic, query, QUERY_INSERT_SESSION);
+	LogDebug("QUERY_INSERT_SESSION for %s", session.steamid);
 }

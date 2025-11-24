@@ -215,7 +215,16 @@ export interface GameSessionPartial extends Player {
   rocks_dodged: number,
   rocks_hitby: number,
   times_revived_other: number,
-  used_kit_other: number
+  used_kit_other: number,
+  times_hanging: number,
+  damage_taken_fall: number
+  bullets_fired: number
+  times_shove: number,
+  times_jumped: number,
+  seconds_alive: number,
+  seconds_idle: number,
+  seconds_dead: number,
+  seconds_total: number
 }
 
 /**
@@ -250,7 +259,16 @@ export async function getSessions(id: string): Promise<GameSessionPartial[]> {
             s.rocks_hitby,
             s.rocks_dodged,
             s.times_revived_other,
-            s.used_kit_other
+            s.used_kit_other,
+            s.times_hanging,
+            s.damage_taken_fall,
+            s.bullets_fired,
+            s.times_shove,
+            s.times_jumped,
+            s.seconds_alive,
+            s.seconds_idle,
+            s.seconds_dead,
+            s.seconds_total
         FROM stats_sessions s
         INNER JOIN stats_users u ON u.steamid = s.steamid
         LEFT JOIN stats_games g ON g.id = s.game_id
@@ -277,6 +295,7 @@ export interface GameSession extends GameSessionPartial {
     damage_dealt_friendly: number,
     damage_dealt_friendly_count: number,
     damage_taken: number,
+    damage_taken_fall: number,
     damage_taken_friendly: number,
     damage_taken_friendly_count: number,
     damage_dealt_tank: number,
@@ -341,6 +360,7 @@ export async function getSession(id: number | string): Promise<GameSession | nul
             s.damage_dealt_friendly,
             s.damage_dealt_friendly_count,
             s.damage_taken,
+            s.damage_taken_fall,
             s.damage_taken_friendly,
             s.damage_taken_friendly_count,
             s.damage_dealt_tank,

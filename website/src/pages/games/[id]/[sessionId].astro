@@ -8,6 +8,7 @@ import { Difficulty } from "@/types/game.ts";
 import { getGamemode, replaceRoute, trimText } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
+import { formatHumanDuration } from "@/utils/date.ts";
 
 
 const session = await getSession(sessionId)
@@ -50,17 +51,8 @@ export const prerender = false
                 <Level>
                     <LevelItem countup title="Zombie Kills" value={session.kills_common} />
                     <LevelItem countup title="Melee Kills" value={session.kills_melee} />
-                    <LevelItem countup title="Tank Kills" value={session.kills_tank} />
-                    <LevelItem countup title="Witch Kills" value={session.kills_witch} />
+                    <LevelItem countup title="Bullets Fired" value={session.bullets_fired} />
                     {session.honks > 0 && <LevelItem countup title="Clowns Honked" value={session.honks} />}
-                </Level>
-                <Level>
-                    <LevelItem countup title="Damage Dealt" value={session.damage_dealt} suffix=" HP" />
-                    <LevelItem countup title="Damage Taken" value={session.damage_taken} suffix=" HP" />
-                    <LevelItem countup title="Friendly Fires" value={session.damage_dealt_friendly_count} />
-                    <LevelItem countup title="Times Friendly Fired" value={session.damage_taken_friendly_count} />
-                    <LevelItem countup title="Friendly Damage Dealt" value={session.damage_dealt_friendly} suffix=" HP" />
-                    <LevelItem countup title="Friendly Damage Taken" value={session.damage_taken_friendly} suffix=" HP" />
                 </Level>
                 <div class="columns">
                     <div class="column is-6">
@@ -82,9 +74,12 @@ export const prerender = false
                                 <LevelItem class="has-text-white" title="Hunter Kills" value={session.kills_hunter} />
                                 <LevelItem class="has-text-white" title="Charger Kills" value={session.kills_charger} />
                             </Level>
+                            <Level>
+                                <LevelItem class="has-text-white" title="Witches Kiled" value={session.kills_witch} />
+                                <LevelItem class="has-text-white" title="Witches Crowned" value={session.witches_crowned} />
+                                <LevelItem class="has-text-white" title="Tanks Killed" value={session.kills_tank} />
+                            </Level>
                         </div>
-                        <p>Campaign ID <a href={`/games/${session.game_uuid}`}>{session.game_uuid}</a></p>
-                        <p>Game ID <a href={`/games/${session.game_id}`}>{session.game_id}</a></p>
                     </div>
                     <div class="column">
                         <div class="box has-background-warning">
@@ -99,15 +94,16 @@ export const prerender = false
                         </div>
                         <div class="box has-background-danger">
                             <Level>
-                                <LevelItem title="Incaps" value={session.times_incapped} />
-                                <LevelItem title="Deaths" value={session.deaths} />
+                                <LevelItem countup title="Deaths" value={session.deaths} />
+                                <LevelItem countup title="Ledges Grabbed" value={session.times_hanging} />
+                            </Level>
+                            <Level>
+                                <LevelItem countup title="Incaps" value={session.times_incapped} />
+                                <LevelItem countup title="Fall Damage" value={session.damage_taken_fall} suffix=" HP" />
                             </Level>
                         </div>
                     </div>
                 </div>
-                <!-- TODO: add longest_shot_distance, times_boomed, times_boomed_teammate, caralarms_activated, hunters_deadstopped, witches_crowned, rocks_hitby, rocks_dodged, smokers_slefcleared, times_pinned, etc... -->
-                <!-- TODO: maybe add: kills_minigun, kills_fire, kills_pipebomb -->
-                 <!-- TODO: add: seconds_alive, seconds_idle, seconds_dead -->
             </div>
             <div class="column is-3">
                 <div class="box">
@@ -116,7 +112,7 @@ export const prerender = false
                         {otherSessions.map(player => (
                             <li>
                                 <b>
-                                    <a href={`/users/${player.steamid}/overview`}>
+                                    <a href={`/sessions/${player.steamid}/overview`}>
                                         {trimText(player.name, 23)}
                                     </a>
                                 </b>
@@ -152,6 +148,60 @@ export const prerender = false
                 </div>
             </div>
         </div>
+        <div class="columns">
+            <div class="column">
+                <h4 class="title is-4">Skills</h4>
+                <div class="box has-background-info">
+                    <Level>
+                        <LevelItem countup title="Smokers Self-cleared" value={session.smokers_selfcleared} />
+                        <LevelItem countup title="Hunters Deadstopped" value={session.hunters_deadstopped} />
+                        <LevelItem countup title="Helped Pinned teammate" value={session.times_cleared_pinned} />
+                        <LevelItem countup title="Rocks Hit By" value={session.rocks_hitby} />
+                        <LevelItem countup title="Rocks Dodged" value={session.rocks_dodged} />
+                    </Level>
+                </div>
+                <h4 class="title is-4">Damages</h4>
+                <div class="box">
+                    <Level>
+                        <LevelItem countup title="Damage Dealt" value={session.damage_dealt} suffix=" HP" />
+                        <LevelItem countup title="Damage Taken" value={session.damage_taken} suffix=" HP" />
+                        <LevelItem countup title="To Tank" value={session.damage_dealt} suffix=" HP" />
+                        <LevelItem countup title="To Witch" value={session.damage_taken} suffix=" HP" />
+                    </Level>
+                    <Level>
+                        <LevelItem countup title="Friendly Fires" value={session.damage_dealt_friendly_count} />
+                        <LevelItem countup title="Times Friendly Fired" value={session.damage_taken_friendly_count} />
+                        <LevelItem countup title="Friendly Damage Dealt" value={session.damage_dealt_friendly} suffix=" HP" />
+                        <LevelItem countup title="Friendly Damage Taken" value={session.damage_taken_friendly} suffix=" HP" />
+                    </Level>
+                </div>
+                
+                <h4 class="title is-4">Time</h4>
+                <div class="box has-background-link-light">
+                    <Level>
+                        <LevelItem title="Total" value={formatHumanDuration(session.seconds_total)} />
+                        <LevelItem title="Time Alive"value={formatHumanDuration(session.seconds_alive)}  />
+                        <LevelItem title="Time Idle" value={formatHumanDuration(session.seconds_idle)} />
+                        <LevelItem title="Time Dead"value={formatHumanDuration(session.seconds_dead)}  />
+                    </Level>
+                </div>
+
+                <h4 class="title is-4">Other</h4>
+                <div class="box has-background-warning">
+                    <Level>
+                        <LevelItem countup title="Times Boomed" value={session.times_boomed} />
+                        <LevelItem countup title="Teammates Boomed" value={session.times_boomed_teammates} />
+                        <LevelItem countup title="Car Alarms Activated" value={session.caralarms_activated} />
+                        <LevelItem countup title="Shoves" value={session.times_shove} />
+                        <LevelItem countup title="Jumps" value={session.times_jumped} />
+                        <LevelItem countup title="Longest Distance Shot" value={session.longest_shot_distance*0.0254} suffix=" meters" />
+
+                    </Level>
+                </div>
+            </div>
+        </div>
+        <p>Campaign ID <a href={`/games/${session.game_uuid}`}>{session.game_uuid}</a></p>
+        <p>Game ID <a href={`/games/${session.game_id}`}>{session.game_id}</a></p>
     </div>
 </Layout>
 

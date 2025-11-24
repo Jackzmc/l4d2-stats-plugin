@@ -5,7 +5,7 @@ if(!gameId || !sessionId) return new Response(null, { status: 404 })
 
 import { getSession, getSessionPlayers } from '../../../models/Game.ts'
 import { Difficulty } from "@/types/game.ts";
-import { getGamemode, replaceRoute, trimText } from "@/utils/index.ts";
+import { getGamemode, replaceRoute, trimText, UNITS_TO_METERS } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
 import { formatHumanDuration } from "@/utils/date.ts";
@@ -194,7 +194,7 @@ export const prerender = false
                         <LevelItem countup title="Car Alarms Activated" value={session.caralarms_activated} />
                         <LevelItem countup title="Shoves" value={session.times_shove} />
                         <LevelItem countup title="Jumps" value={session.times_jumped} />
-                        <LevelItem countup title="Longest Distance Shot" value={session.longest_shot_distance*0.0254} suffix=" meters" />
+                        <LevelItem countup title="Longest Distance Shot" value={session.longest_shot_distance*UNITS_TO_METERS} suffix=" meters" />
 
                     </Level>
                 </div>

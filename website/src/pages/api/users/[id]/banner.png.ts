@@ -5,6 +5,7 @@ import { Canvas, FontLibrary, Image, loadImage, type CanvasRenderingContext2D } 
 import path from "path";
 import { formatHumanDuration } from "@/utils/date.ts";
 import { Survivor, SURVIVOR_DEFS } from "@/types/game.ts";
+import { UNITS_TO_METERS } from "@/utils/index.ts";
 
 const WATERMARK_TEXT = import.meta.env.USER_WATERMARK_TEXT || process.env.USER_WATERMARK_TEXT
 
@@ -150,6 +151,8 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   startPos[1] += lineHeight
   drawText(ctx, `${stats?.kills_common.toLocaleString() ?? 0} zombies killed`, startPos[0], startPos[1], { font: statFont })  
   startPos[1] += lineHeight
+  drawText(ctx, `Farthest Shot of ${topStats?.longest_shot_distance.value ? parseFloat(topStats.longest_shot_distance.value)*UNITS_TO_METERS : 0} meters`, startPos[0], startPos[1], { font: statFont })  
+  startPos[1] += lineHeight
 
   // TODO: calculate best stats (highest number for them )
   // or/and add a 'playstyle' thats more simplistic such as "Pill Popper" if pills best stat
@@ -166,8 +169,8 @@ export const GET: APIRoute = async ({ params, request, url }) => {
 }
 
 function drawWatermark(ctx: CanvasRenderingContext2D, text: string) {
-  ctx.restore()
-  ctx.font = 'light 6pt futurot'
+  ctx.save()
+  ctx.font = 'light 6px '
   ctx.fillStyle = '#737578'
 
   const waterMarkDim = ctx.measureText(text)

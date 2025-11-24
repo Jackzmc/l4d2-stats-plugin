@@ -148,6 +148,7 @@ export interface UserTopStats extends Player {
     played_official: TopStat,
     played_custom: TopStat,
     played_any: TopStat
+    longest_shot_distance: TopStat,
 }
 export async function getUserTopStats(steamid: string): Promise<UserTopStats | null> {
     const cacheObj = await cache.get("user.getUserTopStats." + steamid)
@@ -190,7 +191,14 @@ export async function getUserTopStats(steamid: string): Promise<UserTopStats | n
         (SELECT 'played_any' name, '' id, '' value, COUNT(*) count
         FROM stats_sessions s
         WHERE steamid = :steamid
-        LIMIT 1)`,
+        LIMIT 1)
+            UNION ALL
+        (SELECT 'longest_shot_distance' name, '' id, MAX(s.longest_shot_distance) value, '' count
+        FROM stats_sessions s
+        WHERE steamid = :steamid
+        LIMIT 1)
+        
+        `,
         { steamid }
     )
     if(rows.length === 0) return null

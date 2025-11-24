@@ -1,3 +1,6 @@
+/** Multiply hammer units to get meters */
+export const UNITS_TO_METERS = 0.0254
+
 export function formatSize(bytes: number, si = false, dp = 1) {
   const thresh = si ? 1000 : 1024;
 

@@ -113,7 +113,6 @@ export interface CommonStats {
     damage_dealt_tank: number,
     damage_dealt_witch: number,
     caralarms_activated: number,
-	longest_shot_distance: number,
     times_jumped: number,
     times_shove: number
 }

@@ -13,7 +13,7 @@ import Level from '@/components/bulma/Level.astro'
 import LevelItem from '@/components/bulma/LevelItem.astro'
 import CountUp from '@/components/CountUp.astro'
 import { Survivor } from '@/types/game.ts'
-import { getMapPoster, getPortrait, getWeaponImage } from '@/utils/index.ts'
+import { getMapPoster, getPortrait, getWeaponImage, UNITS_TO_METERS } from '@/utils/index.ts'
 import { BANNER_SIZE } from '@/pages/api/users/[id]/banner.png.ts' 
 import UserHero from '@/components/misc/UserHero.astro'
 
@@ -455,6 +455,12 @@ const AVERAGE_PRECISION = 3
                     <Image src={getWeaponImage(topStats.top_weapon.id!) as any} alt={`Weapon image for ${topStats.top_weapon.id}`} style="border: 4px solid black" />
                     <p>{ topStats!.top_weapon.value }</p>
                     <p class="subtitle is-6 has-text-white">{topStats.top_weapon.count.toLocaleString()} times</p>
+                </div>}
+                {topStats.longest_shot_distance?.value && <div class="box has-background-link has-text-white has-text-centered">
+                    <h4 class="title is-4 has-text-white">Longest Shot Distance</h4>
+                    <p  class="subtitle is-5 my-3 has-text-white">
+                        {(parseFloat(topStats!.longest_shot_distance.value) * UNITS_TO_METERS).toFixed(1) } meters away
+                    </p>
                 </div>}
             </div>
         </div>

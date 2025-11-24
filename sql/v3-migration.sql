@@ -161,8 +161,13 @@ alter table stats_users
     add damage_taken_fall float,
     add times_shove mediumint,
     add times_jumped mediumint,
-    add bullets_fired mediumint;
-
+    add bullets_fired mediumint
+    add times_incapped_fire mediumint unsigned,
+    add times_incapped_acid mediumint unsigned,
+    add times_incapped_zombie mediumint unsigned,
+    add times_incapped_special mediumint unsigned,
+    add times_incapped_tank mediumint unsigned,
+    add times_incapped_witch mediumint unsigned;
 
 update stats_users
 set seconds_alive = minutes_played * 60, seconds_idle = minutes_idle * 60;

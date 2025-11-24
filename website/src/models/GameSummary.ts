@@ -19,8 +19,8 @@ export async function getTotals(): Promise<Summary> {
     if(cacheObj) return cacheObj
 
     const [totals] = await db.execute<RowDataPacket[]>(`SELECT
-        (select count(distinct campaignID) from stats_games) AS total_games, 
-        (SELECT COUNT(*) FROM stats_games) AS total_sessions
+        (select count(*) from stats_games) total_games,
+        (select count(*) from stats_sessions) total_sessions
     `);
     const summary = {
         totalSessions: totals[0].total_sessions,
@@ -57,34 +57,35 @@ export async function getSummaryTotals(): Promise<Record<string, number>>{
     if(cacheObj) return cacheObj
 
     const [totals] = await db.execute<RowDataPacket[]>(`SELECT 
-        sum(nullif(finale_time,0)) as finale_time, 
-        sum(date_end - date_start) as game_duration,
-        sum(nullif(zombie_kills,0)) as zombie_kills, 
-        sum(nullif(SurvivorDamage,0)) as survivor_ff, 
-        sum(MedkitsUsed) as MedkitsUsed, 
-        sum(FirstAidShared) as FirstAidShared,
-        sum(PillsUsed) as PillsUsed, 
-        sum(AdrenalinesUsed) as AdrenalinesUsed,
-        sum(MolotovsUsed) as MolotovsUsed, 
-        sum(PipebombsUsed) as PipebombsUsed, 
-        sum(BoomerBilesUsed) as BoomerBilesUsed, 
-        sum(DamageTaken) as DamageTaken, 
-        sum(melee_kills) as melee_kills, 
-        sum(ReviveOtherCount) as ReviveOtherCount, 
-        sum(DefibrillatorsUsed) as DefibrillatorsUsed,
-        sum(Deaths) as Deaths, 
-        sum(Incaps) as Incaps, 
-        sum(nullif(boomer_kills,0)) as boomer_kills, 
-        sum(nullif(jockey_kills,0)) as jockey_kills, 
-        sum(nullif(smoker_kills,0)) as smoker_kills, 
-        sum(nullif(spitter_kills,0)) as spitter_kills, 
-        sum(nullif(hunter_kills,0)) as hunter_kills,
-        sum(nullif(charger_kills,0)) as charger_kills,
-        (SELECT COUNT(*) FROM \`stats_games\`) AS total_sessions,
-        (SELECT COUNT(distinct(campaignID)) from stats_games) AS total_games,
-        (SELECT COUNT(*) FROM \`stats_users\`) AS total_users
-        FROM stats_games WHERE date_start > 0`
-    )
+            sum(g.duration_game) as game_duration,
+            sum(nullif(kills_common,0)) as kills_common,
+            sum(nullif(damage_dealt_friendly,0)) as survivor_ff,
+            sum(used_kit_self) as used_kit_self,
+            sum(used_kit_other) as used_kit_other,
+            sum(used_defib) as used_defib,
+            sum(used_pills) as used_pills,
+            sum(used_adrenaline) as used_adrenaline,
+            sum(used_molotov) as used_molotov,
+            sum(used_pipebomb) as used_pipebomb,
+            sum(used_bile) as used_bile,
+            sum(damage_taken) as damage_taken,
+            sum(kills_melee) as kills_melee,
+            sum(times_revived_other) as times_revived_other,
+            sum(deaths) as deaths,
+            sum(times_incapped) as times_incapped,
+            sum(nullif(kills_boomer,0)) as kills_boomer,
+            sum(nullif(kills_jockey,0)) as kills_jockey,
+            sum(nullif(kills_smoker,0)) as kills_smoker,
+            sum(nullif(kills_spitter,0)) as kills_spitter,
+            sum(nullif(kills_hunter,0)) as kills_hunter,
+            sum(nullif(kills_charger,0)) as kills_charger,
+            COUNT(*) AS total_sessions,
+            COUNT(distinct game_id) AS total_games,
+            (SELECT COUNT(*) FROM stats_users) AS total_users
+        FROM stats_sessions s
+        RIGHT JOIN stats_games g ON g.id = s.game_id
+        WHERE g.date_start > 0
+    `)
     cache.set("gameSummary.getSummaryTotals", totals[0], 1000 * 60 * 60) // 1 hour
     return totals[0]
 }
@@ -95,35 +96,41 @@ export async function getSummaryAverages(): Promise<Record<string, number>> {
     if(cacheObj) return cacheObj
 
     const [averages] = await db.execute<RowDataPacket[]>(`SELECT 
-        avg(nullif(finale_time,0)) as finale_time, 
-        avg(date_end - date_start) as game_duration,
-        avg(nullif(zombie_kills,0)) as zombie_kills, 
-        avg(nullif(SurvivorDamage,0)) as survivor_ff, 
-        avg(MedkitsUsed) as MedkitsUsed, 
-        avg(FirstAidShared) as FirstAidShared,
-        avg(PillsUsed) as PillsUsed, 
-        avg(AdrenalinesUsed) as AdrenalinesUsed,
-        avg(MolotovsUsed) as MolotovsUsed, 
-        avg(PipebombsUsed) as PipebombsUsed, 
-        avg(BoomerBilesUsed) as BoomerBilesUsed, 
-        avg(DamageTaken) as DamageTaken, 
-        avg(difficulty) as difficulty, 
-        avg(melee_kills) as melee_kills, 
-        avg(ping) as ping, 
-        avg(ReviveOtherCount) as ReviveOtherCount, 
-        avg(DefibrillatorsUsed) as DefibrillatorsUsed,
-        avg(Deaths) as Deaths, 
-        avg(Incaps) as Incaps, 
-        avg(nullif(boomer_kills,0)) as boomer_kills, 
-        avg(nullif(jockey_kills,0)) as jockey_kills, 
-        avg(nullif(smoker_kills,0)) as smoker_kills, 
-        avg(nullif(spitter_kills,0)) as spitter_kills, 
-        avg(nullif(hunter_kills,0)) as hunter_kills,
-        avg(nullif(charger_kills,0)) as charger_kills,
-        (SELECT avg(games.players) 
-            FROM (SELECT COUNT(campaignID) as players FROM stats_games GROUP BY campaignID) as games) as avgPlayers
-        FROM stats_games WHERE date_start > 0`
-    )
+            avg(g.duration_game) as game_duration,
+            avg(nullif(kills_common,0)) as kills_common,
+            avg(nullif(damage_dealt_friendly,0)) as damage_dealt_friendly,
+            avg(ping) as ping,
+            avg(used_kit_self) as used_kit_self,
+            avg(used_kit_other) as used_kit_other,
+            avg(used_defib) as used_defib,
+            avg(used_pills) as used_pills,
+            avg(used_adrenaline) as used_adrenaline,
+            avg(used_molotov) as used_molotov,
+            avg(used_pipebomb) as used_pipebomb,
+            avg(used_bile) as used_bile,
+            avg(damage_taken) as damage_taken,
+            avg(kills_melee) as kills_melee,
+            avg(times_revived_other) as times_revived_other,
+            avg(deaths) as deaths,
+            avg(times_incapped) as times_incapped,
+            avg(nullif(kills_boomer,0)) as kills_boomer,
+            avg(nullif(kills_jockey,0)) as kills_jockey,
+            avg(nullif(kills_smoker,0)) as kills_smoker,
+            avg(nullif(kills_spitter,0)) as kills_spitter,
+            avg(nullif(kills_hunter,0)) as kills_hunter,
+            avg(nullif(kills_charger,0)) as kills_charger,
+            (
+                SELECT AVG(cnt)
+                FROM (
+                    SELECT COUNT(*) AS cnt
+                    FROM stats_sessions
+                    GROUP BY game_id
+                ) x
+            ) AS avg_players
+        FROM stats_games g
+        RIGHT JOIN stats_sessions s ON g.id = s.game_id
+        WHERE g.date_start > 0
+    `)
 
     const avgs = averages[0] as Record<string, number>
     Object.keys(avgs).forEach(key => avgs[key] = Number(avgs[key]))

@@ -1,209 +1,92 @@
+enum queryType {
+	QUERY_ANY,
+	QUERY_HEATMAPS,
+	QUERY_WEAPON_STATS,
+	QUERY_UPDATE_STAT,
+	QUERY_POINTS,
+	QUERY_UPDATE_USER,
+	QUERY_UPDATE_NAME_HISTORY,
+	QUERY_MAP_INFO,
+	QUERY_MAP_RATE,
+	QUERY_UPDATE_USER_STATS,
+	QUERY_INSERT_SESSION,
+	QUERY_UPDATE_GAME,
+	_QUERY_MAX
+}
+char QUERY_TYPE_ID[_QUERY_MAX][] = {
+	"-any-",
+	"HEATMAPS",
+	"WEAPON_STATS",
+	"UPDATE_STAT",
+	"POINTS",
+	"UPDATE_USER",
+	"UPDATE_USER_NAME_HISTORY",
+	"MAP_INFO",
+	"MAP_RATE",
+	"UPDATE_USER_STATS",
+	"INSERT_SESSION_STATS",
+	"UPDATE_GAME",
+};
+
 //Setups a user, this tries to fetch user by steamid
 void SetupUserInDB(int client, const char steamid[32]) {
 	if(client > 0 && !IsFakeClient(client)) {
-		players[client].ResetFull();
-
-		strcopy(players[client].steamid, 32, steamid);
-		players[client].startedPlaying = GetTime();
+		strcopy(g_players[client].user.steamid, 32, steamid);
 		char query[128];
 		
 
 		// TODO: 	connections, first_join last_join
-		Format(query, sizeof(query), "SELECT last_alias,points,connections,created_date,last_join_date FROM stats_users WHERE steamid='%s'", steamid);
+		Format(query, sizeof(query), "SELECT last_alias,connections,created_date,last_join_date FROM stats_users WHERE steamid='%s'", steamid);
 		SQL_TQuery(g_db, DBCT_CheckUserExistance, query, GetClientUserId(client));
-	}
-}
-//Increments a statistic by X amount
-void IncrementStat(int client, const char[] name, int amount = 1, bool lowPriority = true) {
-	if(client > 0 && !IsFakeClient(client) && IsClientConnected(client)) {
-		//Only run if client valid client, AND has steamid. Not probably necessarily anymore.
-		if (players[client].steamid[0]) {
-			if(g_db == INVALID_HANDLE) {
-				LogError("Database handle is invalid.");
-				return;
-			}
-			int escaped_name_size = 2*strlen(name)+1;
-			char[] escaped_name = new char[escaped_name_size];
-			char query[255];
-			g_db.Escape(name, escaped_name, escaped_name_size);
-			Format(query, sizeof(query), "UPDATE stats_users SET `%s`=`%s`+%d WHERE steamid='%s'", escaped_name, escaped_name, amount, players[client].steamid);
-			#if defined DEBUG
-			PrintToServer("[Debug] Updating Stat %s (+%d) for %N (%d) [%s]", name, amount, client, client, players[client].steamid);
-			#endif 
-			SQL_TQuery(g_db, DBCT_Generic, query, QUERY_UPDATE_STAT, lowPriority ? DBPrio_Low : DBPrio_Normal);
-		}
-	}
-}
-
-void RecordCampaign(int client) {
-	if (client > 0 && IsClientInGame(client)) {
-		char query[1023];
-
-		if(players[client].m_checkpointZombieKills == 0) {
-			PrintToServer("Warn: Client %N for %s | 0 zombie kills", client, game.uuid);
-		}
-
-		char model[64];
-		GetClientModel(client, model, sizeof(model));
-
-		// unused now:
-		char topWeapon[1];
-
-		int ping = GetEntProp(GetPlayerResourceEntity(), Prop_Send, "m_iPing", _, client);
-		if(ping < 0) ping = 0;
-
-		int finaleTimeTotal = (game.finaleStartTime > 0) ? GetTime() - game.finaleStartTime : 0;
-		Format(query, sizeof(query), "INSERT INTO stats_games (`steamid`, `map`, `gamemode`,`campaignID`, `finale_time`, `join_time`,`date_start`,`date_end`, `zombie_kills`, `survivorDamage`, `MedkitsUsed`, `PillsUsed`, `MolotovsUsed`, `PipebombsUsed`, `BoomerBilesUsed`, `AdrenalinesUsed`, `DefibrillatorsUsed`, `DamageTaken`, `ReviveOtherCount`, `FirstAidShared`, `Incaps`, `Deaths`, `melee_kills`, `difficulty`, `ping`,`boomer_kills`,`smoker_kills`,`jockey_kills`,`hunter_kills`,`spitter_kills`,`charger_kills`,`server_tags`,`character_type`,`honks`,`top_weapon`, `SurvivorFFCount`, `SurvivorFFTakenCount`, `SurvivorFFDamage`, `SurvivorFFTakenDamage`) VALUES ('%s','%s','%s','%s',%d,%d,%d,UNIX_TIMESTAMP(),%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,'%s',%d,%d,'%s',%d,%d,%d,%d)",
-			players[client].steamid,
-			game.mapId,
-			gamemode,
-			game.uuid,
-			finaleTimeTotal,
-			players[client].joinedGameTime,
-			game.startTime > 0 ? game.startTime : game.finaleStartTime, //incase iGameStartTime not set: use finaleTimeStart
-			//unix_timestamp(),
-			players[client].m_checkpointZombieKills,
-			players[client].m_checkpointSurvivorDamage,
-			players[client].m_checkpointMedkitsUsed,
-			players[client].m_checkpointPillsUsed,
-			players[client].m_checkpointMolotovsUsed,
-			players[client].m_checkpointPipebombsUsed,
-			players[client].m_checkpointBoomerBilesUsed,
-			players[client].m_checkpointAdrenalinesUsed,
-			players[client].m_checkpointDefibrillatorsUsed,
-			players[client].m_checkpointDamageTaken,
-			players[client].m_checkpointReviveOtherCount,
-			players[client].m_checkpointFirstAidShared,
-			players[client].m_checkpointIncaps,
-			players[client].m_checkpointDeaths,
-			players[client].m_checkpointMeleeKills,
-			game.difficulty,
-			ping, //record user ping
-			players[client].sBoomerKills,
-			players[client].sSmokerKills,
-			players[client].sJockeyKills,
-			players[client].sHunterKills,
-			players[client].sSpitterKills,
-			players[client].sChargerKills,
-			serverTags,
-			GetSurvivorType(model),
-			players[client].clownsHonked,
-			topWeapon,
-			players[client].damageSurvivorFFCount, //SurvivorFFCount
-			players[client].damageFFTakenCount, //SurvivorFFTakenCount
-			players[client].damageSurvivorFF, //SurvivorFFDamage
-			players[client].damageFFTaken //SurvivorFFTakenDamage
-		);
-		SQL_LockDatabase(g_db);
-		bool result = SQL_FastQuery(g_db, query);
-		SQL_UnlockDatabase(g_db);
-		if(!result) {
-			char error[128];
-			SQL_GetError(g_db, error, sizeof(error));
-			LogError("[l4d2_stats_recorder] RecordCampaign for %d failed. UUID %s | Query: `%s` | Error: %s", game.uuid, client, query, error);
-		}
-	}
-}
-//Flushes all the tracked statistics, and runs UPDATE SQL query on user. Then resets the variables to 0
-void FlushQueuedStats(int client, bool disconnect) {
-	//Update stats (don't bother checking if 0.)
-	int minutes_played = (GetTime() - players[client].startedPlaying) / 60;
-	//Incase somehow startedPlaying[client] not set (plugin reloaded?), defualt to 0
-	if(minutes_played >= 2147483645) {
-		players[client].startedPlaying = GetTime();
-		minutes_played = 0;
-	}
-	//Prevent points from being reset by not recording until user has gotten a point. 
-	if(players[client].points > 0) {
-		char query[1023];
-		Format(query, sizeof(query), "UPDATE stats_users SET survivor_damage_give=survivor_damage_give+%d,survivor_damage_rec=survivor_damage_rec+%d, infected_damage_give=infected_damage_give+%d,infected_damage_rec=infected_damage_rec+%d,survivor_ff=survivor_ff+%d,survivor_ff_rec=survivor_ff_rec+%d,common_kills=common_kills+%d,common_headshots=common_headshots+%d,melee_kills=melee_kills+%d,door_opens=door_opens+%d,damage_to_tank=damage_to_tank+%d, damage_witch=damage_witch+%d,minutes_played=minutes_played+%d, kills_witch=kills_witch+%d,points=%d,packs_used=packs_used+%d,damage_molotov=damage_molotov+%d,kills_molotov=kills_molotov+%d,kills_pipe=kills_pipe+%d,kills_minigun=kills_minigun+%d,clowns_honked=clowns_honked+%d,total_distance_travelled=total_distance_travelled+%d WHERE steamid='%s'",
-			//VARIABLE													//COLUMN NAME
-			players[client].damageSurvivorGiven, 						//survivor_damage_give
-			GetEntProp(client, Prop_Send, "m_checkpointDamageTaken"),   //survivor_damage_rec
-			players[client].damageInfectedGiven,  						//infected_damage_give
-			players[client].damageInfectedRec,   						//infected_damage_rec
-			players[client].damageSurvivorFF,    						//survivor_ff
-			players[client].damageFFTaken,								//survivor_ff_rec
-			GetEntProp(client, Prop_Send, "m_checkpointZombieKills"), 	//common_kills
-			GetEntProp(client, Prop_Send, "m_checkpointHeadshots"),   	//common_headshots
-			GetEntProp(client, Prop_Send, "m_checkpointMeleeKills"),  	//melee_kills
-			players[client].doorOpens, 									//door_opens
-			GetEntProp(client, Prop_Send, "m_checkpointDamageToTank"),  //damage_to_tank
-			GetEntProp(client, Prop_Send, "m_checkpointDamageToWitch"), //damage_witch
-			minutes_played, 											//minutes_played
-			players[client].witchKills, 								//kills_witch
-			players[client].points, 									//points
-			players[client].upgradePacksDeployed, 						//packs_used
-			players[client].molotovDamage, 								//damage_molotov
-			players[client].pipeKills, 									//kills_pipe,
-			players[client].molotovKills,								//kills_molotov
-			players[client].minigunKills,								//kills_minigun
-			players[client].clownsHonked,								//clowns_honked
-			players[client].distance.accumulation,						//total_distance_travelled
-			players[client].steamid[0]
-		);
-		
-		//If disconnected, can't put on another thread for some reason: Push it out fast
-		if(disconnect) {
-			SQL_LockDatabase(g_db);
-			SQL_FastQuery(g_db, query);
-			SQL_UnlockDatabase(g_db);
-			ResetInternal(client, true);
-		}else{
-			SQL_TQuery(g_db, DBCT_FlushQueuedStats, query, GetClientUserId(client));
-			SubmitPoints(client);
-			SubmitWeaponStats(client);
-			SubmitHeatmaps(client);
-		}
 	}
 }
 
 void SubmitPoints(int client) {
-	if(players[client].pointsQueue.Length > 0) {
+	if(g_players[client].pointsQueue.Length > 0) {
 		char query[4098];
 		Format(query, sizeof(query), "INSERT INTO stats_points (steamid,type,amount,timestamp,multiplier) VALUES ");
 		// TODO; merge
-		for(int i = 0; i < players[client].pointsQueue.Length; i++) {
-			int type = players[client].pointsQueue.Get(i, 0);
-			int amount = players[client].pointsQueue.Get(i, 1);
-			int timestamp = players[client].pointsQueue.Get(i, 2);
-			int multiplier = players[client].pointsQueue.Get(i, 3);
+		for(int i = 0; i < g_players[client].pointsQueue.Length; i++) {
+			int type = g_players[client].pointsQueue.Get(i, 0);
+			int amount = g_players[client].pointsQueue.Get(i, 1);
+			int timestamp = g_players[client].pointsQueue.Get(i, 2);
+			int multiplier = g_players[client].pointsQueue.Get(i, 3);
 			Format(query, sizeof(query), "%s('%s',%d,%d,%d,%d)%c",
 				query,
 
-				players[client].steamid,
+				g_players[client].user.steamid,
 				type,
 				amount,
 				timestamp,
 				multiplier,
 
-				i == players[client].pointsQueue.Length - 1 ? ' ' : ',' // No trailing comma on last entry
+				i == g_players[client].pointsQueue.Length - 1 ? ' ' : ',' // No trailing comma on last entry
 			);
 		}
 		SQL_TQuery(g_db, DBCT_Generic, query, QUERY_POINTS, DBPrio_Low);
-		players[client].pointsQueue.Clear();
+		g_players[client].pointsQueue.Clear();
 	}
 }
 
 void SubmitWeaponStats(int client) {
-	if(players[client].steamid[0] == '\0') {
+	if(g_players[client].user.steamid[0] == '\0') {
 		LogError("SubmitWeaponStats: Steamid is empty");
 		return;
 	} 
-	if(players[client].wpn.pendingStats != null && players[client].wpn.pendingStats.Size > 0) {
+	if(g_players[client].wpn.pendingStats != null && g_players[client].wpn.pendingStats.Size > 0) {
 		// Force save weapon stats, instead of waiting for player to switch weapon
 		char query[512], weapon[64];
 		
-		StringMapSnapshot snapshot = players[client].wpn.pendingStats.Snapshot();
+		StringMapSnapshot snapshot = g_players[client].wpn.pendingStats.Snapshot();
 		WeaponStatistics stats;
 		for(int i = 0; i < snapshot.Length; i++) {
 			snapshot.GetKey(i, weapon, sizeof(weapon));
 			if(weapon[0] == '\0') continue;
-			players[client].wpn.pendingStats.GetArray(weapon, stats, sizeof(stats));
+			g_players[client].wpn.pendingStats.GetArray(weapon, stats, sizeof(stats));
 			if(stats.minutesUsed == 0) continue;
 			g_db.Format(query, sizeof(query), 
 				"INSERT INTO stats_weapon_usages (steamid,weapon,minutesUsed,totalDamage,kills,headshots) VALUES ('%s','%s',%f,%d,%d,%d) ON DUPLICATE KEY UPDATE minutesUsed=minutesUsed+%f,totalDamage=totalDamage+%d,kills=kills+%d,headshots=headshots+%d",
-				players[client].steamid,
+				g_players[client].user.steamid,
 				weapon,
 				stats.minutesUsed,
 				stats.totalDamage,
@@ -220,21 +103,21 @@ void SubmitWeaponStats(int client) {
 } 
 
 void SubmitHeatmaps(int client) {
-	if(players[client].pendingHeatmaps != null && players[client].pendingHeatmaps.Length > 0) {
+	if(g_players[client].pendingHeatmaps != null && g_players[client].pendingHeatmaps.Length > 0) {
 		PendingHeatMapData hmd;
 		char query[2048];
 		Format(query, sizeof(query), "INSERT INTO stats_heatmaps (steamid,map,timestamp,type,x,y,z) VALUES ");
-		int length = players[client].pendingHeatmaps.Length;
+		int length = g_players[client].pendingHeatmaps.Length;
 		char commaChar = ',';
 		for(int i = 0; i < length; i++) {
-			players[client].pendingHeatmaps.GetArray(i, hmd);
+			g_players[client].pendingHeatmaps.GetArray(i, hmd);
 			// Add commas to every entry but trailing
 			if(i == length - 1) {
 				commaChar = ' ';
 			}
 			Format(query, sizeof(query), "%s('%s','%s',%d,%d,%d,%d,%d)%c", 
 				query,
-				players[client].steamid,
+				g_players[client].user.steamid,
 				game.mapId, //map nam
 				hmd.timestamp,
 				hmd.type,
@@ -247,15 +130,223 @@ void SubmitHeatmaps(int client) {
 
 		SQL_TQuery(g_db, DBCT_Generic, query, QUERY_HEATMAPS, DBPrio_Low);
 		// Resize using the new length - old length, incase new data shows up.
-		players[client].pendingHeatmaps.Erase(length-1);
+		g_players[client].pendingHeatmaps.Erase(length-1);
 	}
 }
 
+// Creates a new game entry and populates game.id
+void CreateGame() {
+	char query[256];
+	g_db.Format(query, sizeof(query), 
+		"INSERT INTO stats_games (date_start,date_start_finale,map_id,gamemode,difficulty,server_tags,stat_version) VALUES (%d,%d,'%s','%s',%d,'%s',%d)",
+		game.startTime, 		//date_start
+		GetTime(), 				//date_start_finale
+		game.mapId, 			//map_id
+		game.gamemode, 			//gamemode
+		game.difficulty, 		//difficulty
+		serverTags, 			//server_tags
+		STAT_METRIC_VERSION     //stat_version
+	);
+	g_db.Query(DBCT_CreateGame, query, _, DBPrio_Low);
+}
+
+void UpdateGame() {
+	if(!game.id) ThrowError("game.id missing");
+	char query[256];
+	g_db.Format(query, sizeof(query), 
+		"UPDATE stats_games SET date_end=%d,difficulty=%d,gamemode='%s' WHERE id=%d",
+		GetTime(), 				//date_end
+		game.difficulty,		//difficulty
+		game.gamemode,			//gamemode
+		game.id 				//id
+	);
+	g_db.Query(DBCT_Generic, query, QUERY_UPDATE_GAME);
+}
+
+
+// Submits map info, ignoring any duplicate errors
 void SubmitMapInfo() {
 	char title[128];
 	InfoEditor_GetString(0, "DisplayTitle", title, sizeof(title));
 	int chapters = L4D_GetMaxChapters();
-	char query[128];
-	g_db.Format(query, sizeof(query), "INSERT INTO stats_map_info (mapid,name,chapter_count) VALUES ('%s','%s',%d)", game.mapId, title, chapters);
+	char query[256];
+	g_db.Format(query, sizeof(query), "INSERT IGNORE INTO stats_map_info (mapid,name,chapter_count) VALUES ('%s','%s',%d)", game.mapId, title, chapters);
 	g_db.Query(DBCT_Generic, query, QUERY_MAP_INFO, DBPrio_Low);
+}
+
+// Creates new game sessions for every stored user
+void RecordSessionStats() {
+	AnyMapSnapshot snapshot = g_sessionDataStorage.Snapshot();
+	SessionData saveData;
+	for(int i = 0; i < snapshot.Length; i++) {
+		int key = snapshot.GetKey(i);
+		g_sessionDataStorage.GetArray(key, saveData, sizeof(saveData));
+		saveData.flags |= view_as<int>(Session_PresentInfinale);
+		RecordPlayerSession(saveData);
+	} 
+
+	delete snapshot;
+}
+
+// Updates stats_user with new data
+// 
+// Called at end of every chapter, for all users, and then is reset.
+void RecordUserStats(UserData user) {
+	if(user.steamid[0] == '\0') ThrowError("steamid is empty");
+	char query[4096];
+	g_db.Format(query, sizeof(query), 
+		"UPDATE stats_users SET " ...
+		"points=points+%d,deaths=deaths+%d,damage_taken=damage_taken+%d,damage_dealt=damage_dealt+%d,pickups_bile=pickups_bile+%d,pickups_molotov=pickups_molotov+%d,pickups_pipebomb=pickups_pipebomb+%d,pickups_pills=pickups_pills+%d,pickups_adrenaline=pickups_adrenaline+%d,used_kit_self=used_kit_self+%d,used_kit_other=used_kit_other+%d,used_defib=used_defib+%d,used_pills=used_pills+%d,used_adrenaline=used_adrenaline+%d,times_incapped=times_incapped+%d,times_hanging=times_hanging+%d,times_revived_other=times_revived_other+%d,kills_melee=kills_melee+%d,kills_tank=kills_tank+%d,kills_tank_solo=kills_tank_solo+%d,kills_tank_melee=kills_tank_melee+%d,damage_dealt_friendly=damage_dealt_friendly+%d,damage_taken_friendly=damage_taken_friendly+%d,kills_common=kills_common+%d,kills_common_headshots=kills_common_headshots+%d,door_opens=door_opens+%d,damage_dealt_tank=damage_dealt_tank+%d,damage_dealt_witch=damage_dealt_witch+%d,finales_won=finales_won+%d,kills_smoker=kills_smoker+%d,kills_boomer=kills_boomer+%d,kills_hunter=kills_hunter+%d,kills_spitter=kills_spitter+%d,kills_jockey=kills_jockey+%d,kills_charger=kills_charger+%d,kills_witch=kills_witch+%d,used_ammopack_fire=used_ammopack_fire+%d,used_ammopack_explosive=used_ammopack_explosive+%d,kills_friendly=kills_friendly+%d,used_bile=used_bile+%d,used_molotov=used_molotov+%d,used_pipebomb=used_pipebomb+%d,damage_dealt_fire=damage_dealt_fire+%d,kills_fire=kills_fire+%d,kills_pipebomb=kills_pipebomb+%d,kills_minigun=kills_minigun+%d,caralarms_activated=caralarms_activated+%d,witches_crowned=witches_crowned+%d,witches_crowned_angry=witches_crowned_angry+%d,smokers_selfcleared=smokers_selfcleared+%d,rocks_hitby=rocks_hitby+%d,hunters_deadstopped=hunters_deadstopped+%d,times_cleared_pinned=times_cleared_pinned+%d,times_pinned=times_pinned+%d,honks=honks+%d,seconds_alive=seconds_alive+%d,seconds_idle=seconds_idle+%d,seconds_dead=seconds_dead+%d,times_boomed_teammates=times_boomed_teammates+%d,times_boomed_self=times_boomed_self+%d,times_boomed=times_boomed+%d,forgot_kit_count=forgot_kit_count+%d,kits_slapped=kits_slapped+%d,times_shove=times_shove+%d,times_jumped=times_jumped+%d,bullets_fired=bullets_fired+%d,times_incapped_fire=times_incapped_fire+%d,times_incapped_acid=times_incapped_acid+%d,times_incapped_zombie=times_incapped_zombie+%d,times_incapped_special=times_incapped_special+%d,times_incapped_tank=times_incapped_tank+%d,times_incapped_witch=times_incapped_witch+%d" 
+		... " WHERE steamid = '%s'",
+		user.common.points,
+		user.common.deaths,
+		user.common.damage_taken,
+		user.common.damage_dealt,
+		user.user.pickups_bile,
+		user.user.pickups_molotov,
+		user.user.pickups_pipebomb,
+		user.user.pickups_pills,
+		user.user.pickups_adrenaline,
+		user.common.used_kit_self,
+		user.common.used_kit_other,
+		user.common.used_defib,
+		user.common.used_pills,
+		user.common.used_adrenaline,
+		user.common.times_incapped,
+		user.common.times_hanging,
+		user.common.times_revived_other,
+		user.common.kills_melee,
+		user.common.kills_tank,
+		user.user.kills_tank_solo,
+		user.user.kills_tank_melee,
+		user.common.damage_dealt_friendly,
+		user.common.damage_taken_friendly,
+		user.common.kills_common,
+		user.user.kills_common_headshots,
+		user.user.door_opens,
+		user.common.damage_dealt_tank,
+		user.common.damage_dealt_witch,
+		user.user.finales_won,
+		user.common.kills_smoker,
+		user.common.kills_boomer,
+		user.common.kills_hunter,
+		user.common.kills_spitter,
+		user.common.kills_jockey,
+		user.common.kills_charger,
+		user.common.kills_witch,
+		user.user.used_ammopack_fire,
+		user.user.used_ammopack_explosive,
+		user.user.kills_friendly,
+		user.common.used_bile,
+		user.common.used_molotov,
+		user.common.used_pipebomb,
+		user.common.damage_dealt_fire,
+		user.common.kills_fire,
+		user.common.kills_pipebomb,
+		user.common.kills_minigun,
+		user.common.caralarms_activated,
+		user.common.witches_crowned,
+		user.user.witches_crowned_angry,
+		user.common.smokers_selfcleared,
+		user.common.rocks_hitby,
+		user.common.hunters_deadstopped,
+		user.common.times_cleared_pinned,
+		user.common.times_pinned,
+		user.common.honks,
+		user.common.seconds_alive,
+		user.common.seconds_idle,
+		user.common.seconds_dead,
+		user.common.times_boomed_teammates,
+		user.user.times_boomed_self,
+		user.common.times_boomed,
+		user.user.forgot_kit_count,
+		user.user.kits_slapped,
+		user.common.times_shove,
+		user.common.times_jumped,
+		user.common.bullets_fired,
+		user.user.times_incapped_fire,
+		user.user.times_incapped_acid,
+		user.user.times_incapped_zombie,
+		user.user.times_incapped_special,
+		user.user.times_incapped_tank,
+		user.user.times_incapped_witch,
+		user.steamid
+	);
+	LogDebug("UPDATE_USER_STATS for %s", user.steamid);
+	g_db.Query(DBCT_Generic, query, QUERY_UPDATE_USER_STATS);
+}
+
+// creates new stats_sessions for game.id
+void RecordPlayerSession(SessionData session) {
+	if(!game.id) ThrowError("game id missing");
+	if(session.steamid[0] == '\0') ThrowError("steamid is empty");
+	// size of just INSERT (...) VALUES (...) template is ~811 characters
+	// steamid is +32 char, every int is maybe 4-8 chars
+	char query[1024];
+	g_db.Format(query, sizeof(query), 
+		"INSERT INTO stats_sessions" ... 
+		"(game_id,steamid,flags,join_time,character_type,ping,kills_common,kills_melee,damage_dealt,damage_taken,damage_dealt_friendly_count,damage_taken_friendly_count,damage_dealt_friendly,damage_taken_friendly,used_kit_self,used_kit_other,used_defib,used_molotov,used_pipebomb,used_bile,used_pills,used_adrenaline,times_revived_other,times_incapped,times_hanging,deaths,kills_boomer,kills_smoker,kills_jockey,kills_hunter,kills_spitter,kills_charger,kills_tank,kills_witch,kills_fire,kills_pipebomb,kills_minigun,honks,top_weapon,seconds_alive,seconds_idle,seconds_dead,witches_crowned,smokers_selfcleared,rocks_hitby,rocks_dodged,hunters_deadstopped,times_pinned,times_cleared_pinned,times_boomed_teammates,times_boomed,damage_dealt_tank,damage_dealt_witch,caralarms_activated,longest_shot_distance,times_shove,times_jumped,bullets_fired)" ...
+		" VALUES " ...
+		"(%d,'%s',%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)",
+		game.id,
+		session.steamid,
+		session.flags,
+		session.join_time,
+		session.lastSurvivorType,   //character_type
+		0, 						     //ping TODO: 
+		session.common.kills_common, 
+		session.common.kills_melee,  
+		session.common.damage_dealt,
+		session.common.damage_taken,
+		session.common.damage_dealt_friendly_count,
+		session.common.damage_taken_friendly_count,
+		session.common.damage_dealt_friendly,
+		session.common.damage_taken_friendly,
+		session.common.used_kit_self,
+		session.common.used_kit_other,
+		session.common.used_defib,
+		session.common.used_molotov,
+		session.common.used_pipebomb,
+		session.common.used_molotov,
+		session.common.used_pills,
+		session.common.used_adrenaline,
+		session.common.times_revived_other,
+		session.common.times_incapped,
+		session.common.times_hanging,
+		session.common.deaths,
+		session.common.kills_boomer,
+		session.common.kills_smoker,
+		session.common.kills_jockey,
+		session.common.kills_hunter,
+		session.common.kills_spitter,
+		session.common.kills_charger,
+		session.common.kills_tank,
+		session.common.kills_witch,
+		session.common.kills_fire,
+		session.common.kills_pipebomb,
+		session.common.kills_minigun,
+		session.common.honks,
+		"", // top _weapon TODO: 
+		session.common.seconds_alive,
+		session.common.seconds_idle,
+		session.common.seconds_dead,
+		session.common.witches_crowned,
+		session.common.smokers_selfcleared,
+		session.common.rocks_hitby,
+		session.common.rocks_dodged,
+		session.common.hunters_deadstopped,
+		session.common.times_pinned,
+		session.common.times_cleared_pinned,
+		session.common.times_boomed_teammates,
+		session.common.times_boomed,
+		session.common.damage_dealt_tank,
+		session.common.damage_dealt_witch,
+		session.common.caralarms_activated,
+		session.session.longest_shot_distance,
+		session.common.times_shove,
+		session.common.times_jumped,
+		session.common.bullets_fired
+	);
+	g_db.Query(DBCT_Generic, query, QUERY_INSERT_SESSION);
+	LogDebug("QUERY_INSERT_SESSION for %s", session.steamid);
 }

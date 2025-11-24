@@ -30,3 +30,11 @@ stock int GetSurvivorCount() {
 	}
 	return count;
 }
+
+// get the distance between two entities
+float GetEntityDistance(int entityA, int entityB, bool squared = false) {
+	float pos1[3], pos2[3];
+	GetEntPropVector(entityA, Prop_Send, "m_vecOrigin", pos1);
+	GetEntPropVector(entityB, Prop_Send, "m_vecOrigin", pos2);
+	return GetVectorDistance(pos1, pos2, squared);
+}

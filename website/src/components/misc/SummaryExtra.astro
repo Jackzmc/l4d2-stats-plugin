@@ -12,37 +12,37 @@ const { values } = Astro.props
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Boomers Killed</p>
-            <p class="title"><CountUp number={values.boomer_kills} /></p>
+            <p class="title"><CountUp number={values.kills_boomer} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Jockeys Killed</p>
-            <p class="title"><CountUp number={values.jockey_kills} /></p>
+            <p class="title"><CountUp number={values.kills_jockey} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Smokers Killed</p>
-            <p class="title"><CountUp number={values.smoker_kills} /></p>
+            <p class="title"><CountUp number={values.kills_smoker} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Spitters Killed</p>
-            <p class="title"><CountUp number={values.spitter_kills} /></p>
+            <p class="title"><CountUp number={values.kills_spitter} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Hunters Killed</p>
-            <p class="title"><CountUp number={values.hunter_kills} /></p>
+            <p class="title"><CountUp number={values.kills_hunter} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Chargers Killed</p>
-            <p class="title"><CountUp number={values.charger_kills} /></p>
+            <p class="title"><CountUp number={values.kills_charger} /></p>
             </div>
         </div>
     </nav>
@@ -50,25 +50,25 @@ const { values } = Astro.props
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Pills Used</p>
-            <p class="title"><CountUp number={values.PillsUsed} /></p>
+            <p class="title"><CountUp number={values.used_pills} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Adrenalines Used</p>
-            <p class="title"><CountUp number={values.AdrenalinesUsed} /></p>
+            <p class="title"><CountUp number={values.used_adrenaline} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Kits Used (Self)</p>
-            <p class="title"><CountUp number={values.MedkitsUsed - values.FirstAidShared} /></p>
+            <p class="title"><CountUp number={values.used_kit_self} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Kits Used (Shared)</p>
-            <p class="title"><CountUp number={values.FirstAidShared} /></p>
+            <p class="title"><CountUp number={values.used_kit_other} /></p>
             </div>
         </div>
     </nav>
@@ -76,19 +76,19 @@ const { values } = Astro.props
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Incaps</p>
-            <p class="title"><CountUp number={values.Incaps} /></p>
+            <p class="title"><CountUp number={values.times_incapped} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Deaths</p>
-            <p class="title"><CountUp number={values.Deaths} /></p>
+            <p class="title"><CountUp number={values.deaths} /></p>
             </div>
         </div>
         <div class="level-item has-text-centered">
             <div>
             <p class="heading">Revives (Others)</p>
-            <p class="title"><CountUp number={values.ReviveOtherCount} /></p>
+            <p class="title"><CountUp number={values.times_revived_other} /></p>
             </div>
         </div>
     </nav>

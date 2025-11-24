@@ -18,19 +18,19 @@ export interface MapRatingsEntity {
   'value': number;
 }
 export interface StatsGamesEntity {
-  'AdrenalinesUsed'?: number;
+  'used_adrenaline'?: number;
   'BoomedTeammates'?: number;
-  'boomer_kills'?: number | null;
-  'BoomerBilesUsed'?: number;
+  'kills_boomer'?: number | null;
+  'used_bile'?: number;
   
   /* unique campaign session id */
   'campaignID': string;
   'CarAlarmsActivated'?: number;
   'character_type'?: number | null;
-  'charger_kills'?: number | null;
+  'kills_charger'?: number | null;
   'ClearedPinned'?: any | null;
   'DamageDealt'?: number;
-  'DamageTaken'?: number;
+  'damage_taken'?: number;
   'DamageToTank'?: any;
   'DamageToWitch'?: any;
   'date_end': string;
@@ -38,48 +38,48 @@ export interface StatsGamesEntity {
   /* when campaign started */
   'date_start'?: string | null;
   'Deaths'?: number;
-  'DefibrillatorsUsed'?: number;
+  'used_defib'?: number;
   'difficulty'?: number;
   
   /* in minutes */
   'duration'?: number | null;
   'finale_time': number;
-  'FirstAidShared'?: number;
+  'used_kit_other'?: number;
   'flags'?: number;
   'gamemode'?: string | null;
   'honks'?: number | null;
-  'hunter_kills'?: number | null;
+  'kills_hunter'?: number | null;
   'HuntersDeadstopped'?: any;
   'id'?: string;
   'Incaps'?: number;
-  'jockey_kills'?: number | null;
+  'kills_jockey'?: number | null;
   
   /* when user first joined game */
   'join_time': string;
   
   /* the map id */
   'map': string;
-  'MedkitsUsed'?: number;
-  'melee_kills'?: number;
+  'used_kit_self'?: number;
+  'kills_melee'?: number;
   'minutes_idle'?: any;
-  'MolotovsUsed'?: number;
-  'PillsUsed'?: number;
+  'used_molotov'?: number;
+  'used_pills'?: number;
   'ping'?: number | null;
-  'PipebombsUsed'?: number;
-  'ReviveOtherCount'?: number;
+  'used_pipebomb'?: number;
+  'times_revived_other'?: number;
   'RocksDodged'?: any;
   'RocksHitBy'?: any;
   'server_tags'?: string | null;
-  'smoker_kills'?: number | null;
+  'kills_smoker'?: number | null;
   'SmokersSelfCleared'?: any;
   'SpecialInfectedKills'?: number | null;
-  'spitter_kills'?: number | null;
+  'kills_spitter'?: number | null;
   'steamid': string;
-  'SurvivorDamage'?: number;
-  'SurvivorFFCount'?: any;
-  'SurvivorFFDamage'?: number | null;
-  'SurvivorFFTakenCount'?: number | null;
-  'SurvivorFFTakenDamage'?: number | null;
+  'damage_dealt_friendly'?: number;
+  'damage_dealt_friendly_count'?: any;
+  'damage_dealt_friendly'?: number | null;
+  'damage_taken_friendly_count'?: number | null;
+  'damage_taken_friendly'?: number | null;
   'TimesBoomed'?: any;
   'TimesPinned'?: any;
   'top_weapon'?: string | null;
@@ -113,7 +113,7 @@ export interface StatsUsersEntity {
   'cleared_pinned'?: number;
   'clowns_honked'?: number;
   'common_headshots'?: number;
-  'common_kills'?: number | null;
+  'kills_common'?: number | null;
   'connections'?: number;
   'country': string;
   'created_date': string;
@@ -123,7 +123,7 @@ export interface StatsUsersEntity {
   'damage_witch'?: number;
   'defibs_used'?: number;
   'door_opens'?: number;
-  'ff_kills'?: number;
+  'kills_ff'?: number;
   'finales_won'?: number;
   'forgot_kit_count'?: number;
   'heal_others'?: number;
@@ -146,7 +146,7 @@ export interface StatsUsersEntity {
   'kits_slapped'?: number;
   'last_alias': string;
   'last_join_date': string;
-  'melee_kills'?: number | null;
+  'kills_melee'?: number | null;
   'minutes_idle'?: any;
   'minutes_played'?: number;
   'packs_used'?: number;

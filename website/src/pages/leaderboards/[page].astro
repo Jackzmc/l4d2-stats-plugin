@@ -4,7 +4,7 @@ import Table, { type TableColumn } from "@/components/bulma/Table.astro";
 import Layout, { type PageInfo } from "@/layouts/Layout.astro";
 import UserSearch from "@/components/UserSearch.astro";
 import Pagination from "@/components/bulma/Pagination.astro";
-import { formatRelUnixDate, formatHumanDuration } from "@/utils/date.ts";
+import { formatRelUnixDate, formatHumanDuration, unixDateToDuration } from "@/utils/date.ts";
 
 let { page = 0 } = Astro.params
 page = parseInt(page as string)
@@ -30,7 +30,13 @@ const COLUMNS: TableColumn[] = [
 	)},
 	{ name: "Points", key: "points", format: { number: { formatToLocale: true } }, class: "has-text-link" },
 	{ name: "Last Played", formatFunction: (row) => formatRelUnixDate(row["last_join_date"]) },
-	{ name: "Total Playtime", formatFunction: (row) => formatHumanDuration(row["minutes_played"] * 60)}
+	{ name: "Total Playtime", 
+		// TODO: if < 60s, show something else?
+		formatFunction: (row) => formatHumanDuration(
+			row["seconds_total"],
+			',',
+			["days", "hours", "minutes"]
+		)}
 ]
 
 // Load data

@@ -24,15 +24,15 @@ void CVC_ClownModeChanged(ConVar convar, const char[] oldValue, const char[] new
 Action Timer_HonkCounter(Handle h) { 
 	int honks, honker = -1;
 	for(int j = 1; j <= MaxClients; j++) {
-		if(players[j].clownsHonked > 0 && (players[j].clownsHonked > honks || honker == -1) && !IsFakeClient(j)) {
+		if(g_players[j].user.common.honks > 0 && (g_players[j].user.common.honks > honks || honker == -1) && !IsFakeClient(j)) {
 			honker = j;
-			honks = players[j].clownsHonked;
+			honks = g_players[j].user.common.honks;
 		}
 	}
 	if(honker > 0) {
 		for(int i = 1; i <= MaxClients; i++) {
-			if(players[i].clownsHonked > 0 && IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && GetClientTeam(i) == 2) {
-				PrintHintText(i, "Top Honker: %N (%d honks)\nYou: %d honks", honker, honks, players[i].clownsHonked);
+			if(g_players[i].user.common.honks > 0 && IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && GetClientTeam(i) == 2) {
+				PrintHintText(i, "Top Honker: %N (%d honks)\nYou: %d honks", honker, honks, g_players[i].user.common.honks);
 			}
 		}
 	}

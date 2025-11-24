@@ -139,16 +139,16 @@ export const GET: APIRoute = async ({ params, request, url }) => {
 
   drawText(ctx, `${topStats.played_any.count.toLocaleString()} game${topStats.played_any.count > 1 ? 's' : ''} played`, startPos[0], startPos[1], { font: statFont })
   startPos[1] += lineHeight
-  const durationText = user.minutes_played > 60 ? formatHumanDuration(user.minutes_played * 60, "", ["day", "hour", "minute"]) : ` < 1 min`
+  const durationText = user.seconds_total > 60 ? formatHumanDuration(user.seconds_total, "", ["day", "hour", "minute"]) : ` < 1 min`
   drawText(ctx, `${durationText} played`, startPos[0] - 10, startPos[1], { font: statFont})
   startPos[1] += lineHeight
   drawText(ctx, `Favorite map: ${topStats.top_map?.value ?? "None"}`, startPos[0], startPos[1], { font: statFont })  
   startPos[1] += lineHeight
   drawText(ctx, `Favorite weapon: ${topStats.top_weapon?.value ?? "None"}`, startPos[0], startPos[1], { font: statFont })  
   startPos[1] += lineHeight
-  drawText(ctx, `${stats?.clowns_honked.toLocaleString() ?? 0} clowns honked`, startPos[0], startPos[1], { font: statFont })  
+  drawText(ctx, `${stats?.honks.toLocaleString() ?? 0} clowns honked`, startPos[0], startPos[1], { font: statFont })  
   startPos[1] += lineHeight
-  drawText(ctx, `${stats?.common_kills.toLocaleString() ?? 0} zombies killed`, startPos[0], startPos[1], { font: statFont })  
+  drawText(ctx, `${stats?.kills_common.toLocaleString() ?? 0} zombies killed`, startPos[0], startPos[1], { font: statFont })  
   startPos[1] += lineHeight
 
   // TODO: calculate best stats (highest number for them )

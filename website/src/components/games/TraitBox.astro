@@ -1,0 +1,32 @@
+---
+import type { Trait } from '@/models/Game.ts'
+
+interface Props {
+    trait: Trait
+}
+
+interface TraitConfig {
+    label: string,
+    class?: string,
+    textClass?: string
+    format: (value: number, key: string) => string
+}
+
+const TRAIT_CONFIG: Record<string, TraitConfig> = {
+    deaths: { label: "Most Deaths", class: "has-background-danger", format: (value) => `${value} deaths` },
+    damage_taken: { label: "Least Damage Taken", class: "has-background-success", format: (value) => `${value} hp`},
+    rocks_hitby: { label: "Most Rocks Hitby", class: "has-background-primary", format: (value) => `${value} rocks`},
+    rocks_dodged: { label: "Most Rocks Dodged", class: "has-background-success", format: (value) => `${value} rocks`},
+    kills_common: { label: "Most Commons Killed", class: "has-background-info", format: (value) => `${value} zombies killed`, textClass: "has-text-black"},
+    kills_all_specials: { label: "Most Specials Killed", class: "has-background-info", format: (value) => `${value} specials killed`, textClass: "has-text-black"},
+    longest_shot_distance: { label: "Farthest Kill Distance", class: "has-background-success", format: (value) => `${value} units away`}
+}
+
+const { trait } = Astro.props
+const traitConfig = TRAIT_CONFIG[trait.stat] ?? { format: (v) => v }
+---
+<div class:list={["box px-4 py-6 full-height", traitConfig.class ?? "has-background-dark"]}>
+    <p class:list={["subtitle is-2",traitConfig.textClass ?? "has-text-white"]}>{ traitConfig.label ?? trait.stat }</p>
+    <h2 class:list={["title is-1 my-6",traitConfig.textClass ?? "has-text-white"]}>{ trait.name }</h2>
+    <p class:list={["subtitle is-2",traitConfig.textClass ?? "has-text-white"]}>{ traitConfig.format(trait.value, trait.stat) }</p>
+</div>

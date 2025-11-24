@@ -19,7 +19,12 @@ void DBCT_CheckUserExistance(Handle db, DBResultSet results, const char[] error,
 	char query[255]; 
 	if(results.RowCount == 0) {
 		//user does not exist in db, create now
-		Format(query, sizeof(query), "INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`) VALUES ('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", players[client].steamid, safe_alias, country_name);
+		Format(query, sizeof(query), 
+			"INSERT INTO `stats_users` (`steamid`, `last_alias`, `last_join_date`,`created_date`,`country`)" ... 
+			" VALUES " ...
+			"('%s', '%s', UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), '%s')", 
+			g_players[client].user.steamid, safe_alias, country_name
+		);
 		g_db.Query(DBCT_Generic, query, QUERY_UPDATE_USER);
 
 		Format(query, sizeof(query), "%N is joining for the first time", client);
@@ -28,28 +33,34 @@ void DBCT_CheckUserExistance(Handle db, DBResultSet results, const char[] error,
 				PrintToChat(i, query);
 			}
 		}
-		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, players[client].steamid);
+		PrintToServer("[l4d2_stats_recorder] Created new database entry for %N (%s)", client, g_players[client].user.steamid);
 	} else {
 		//User does exist, check if alias is outdated and update some columns (last_join_date, country, connections, or last_alias)
 		results.FetchRow();
 		char prevName[32];
-		// last_alias,points,connections,created_date,last_join_date
 		results.FetchString(0, prevName, sizeof(prevName));
-		players[client].points = results.FetchInt(1);
-		players[client].connections = results.FetchInt(2);
-		players[client].firstJoinedTime = results.FetchInt(3);
-		players[client].lastJoinedTime = results.FetchInt(4);
+		//last_alias,connections,created_date,last_join_date
+		g_players[client].connections = results.FetchInt(1);
+		g_players[client].firstJoinedTime = results.FetchInt(2);
+		g_players[client].lastJoinedTime = results.FetchInt(3);
 
-		if(players[client].points == 0) {
-			PrintToServer("[l4d2_stats_recorder] Warning: Existing player %N (%d) has no points", client, client);
-		}
 		int connections_amount = g_lateLoaded ? 0 : 1;
 
-		Format(query, sizeof(query), "UPDATE `stats_users` SET `last_alias`='%s', `last_join_date`=UNIX_TIMESTAMP(), `country`='%s', connections=connections+%d WHERE `steamid`='%s'", safe_alias, country_name, connections_amount, players[client].steamid);
+		Format(query, sizeof(query), 
+			"UPDATE stats_users"
+			... " SET last_alias='%s', last_join_date=UNIX_TIMESTAMP(), country='%s', connections=connections+%d"
+			... " WHERE `steamid`='%s'", 
+			safe_alias, country_name, connections_amount, g_players[client].user.steamid
+		);
 		g_db.Query(DBCT_Generic, query, QUERY_UPDATE_USER);
 		if(!StrEqual(prevName, alias)) {
 			// Add prev name to history
-			g_db.Format(query, sizeof(query), "INSERT INTO stats_names_history (steamid, name, created) VALUES ('%s','%s', UNIX_TIMESTAMP())", players[client].steamid, alias);
+			g_db.Format(query, sizeof(query), 
+				"INSERT INTO stats_names_history (steamid, name, created)" 
+				... " VALUES" 
+				... " ('%s','%s', UNIX_TIMESTAMP())", 
+				g_players[client].user.steamid, alias
+			);
 			g_db.Query(DBCT_Generic, query, QUERY_UPDATE_NAME_HISTORY);
 		}
 	}
@@ -76,39 +87,12 @@ void DBCT_RateMap(Handle db, Handle child, const char[] error, int userid) {
 	}
 }
 
-#define MAX_UUID_RETRY_ATTEMPTS 1
-void DBCT_GetUUIDForCampaign(Handle db, DBResultSet results, const char[] error, int attempt) {
-	if(results != INVALID_HANDLE) {
-		if(results.FetchRow()) {
-			results.FetchString(0, game.uuid, sizeof(game.uuid));
-			DBResult result;
-			bool hasData = results.FetchInt(1, result) && result == DBVal_Data;
-			// PrintToServer("mapinfo: %d. result: %d. hasData:%b", results.FetchInt(1), result, hasData);
-			if(!hasData) {
-				SubmitMapInfo();
-			}
-			PrintToServer("UUID for campaign: %s | Difficulty: %d", game.uuid, game.difficulty);
-			return;
-		} else {
-			game.uuid[0] = '\0';
-			LogError("RecordCampaign, failed to get UUID: no data was returned");
-		}
-	} else {
-		LogError("RecordCampaign, failed to get UUID: %s", error);
-	}
-	// Error
-	game.uuid[0] = '\0';
-	if(attempt < MAX_UUID_RETRY_ATTEMPTS) {
-		FetchUUID(attempt + 1);
-	}
-}
-//After a user's stats were flushed, reset any statistics needed to zero.
-void DBCT_FlushQueuedStats(Handle db, Handle child, const char[] error, int userid) {
-	if(db == INVALID_HANDLE || child == INVALID_HANDLE) {
-		LogError("DBCT_FlushQueuedStats returned error: %s", error);
-	}else{
-		int client = GetClientOfUserId(userid);
-		if(client > 0)
-			ResetInternal(client, false);
+//After game created, get id
+void DBCT_CreateGame(Database db, DBResultSet results, const char[] error, int userid) {
+	if(db == INVALID_HANDLE || results == INVALID_HANDLE) {
+		LogError("DBCT_CreateGame returned error: %s", error);
+	} else if(results.InsertId > 0) {
+		game.id = results.InsertId
+		LogInfo("Game ID: %d", game.id);
 	}
 }

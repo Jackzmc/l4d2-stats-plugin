@@ -17,7 +17,7 @@ int MapVoteHandler(Menu menu, MenuAction action, int param1, int param2) {
 		static char info[2];
 		menu.GetItem(param2, info, sizeof(info));
 		int value = StringToInt(info);
-		if(players[param1].steamid[0] == '\0') return 0;
+		if(g_players[param1].user.steamid[0] == '\0') return 0;
 		
 		SubmitMapRating(param1, value);
 	} else if (action == MenuAction_End) {
@@ -63,7 +63,7 @@ void SubmitMapRating(int client, int rating, const char[] comment = "") {
 	char query[1024];
 	g_db.Format(query, sizeof(query), "INSERT INTO stats_map_ratings (map_id,steamid,value,comment) VALUES ('%s','%s',%d,'%s') ON DUPLICATE KEY UPDATE value = %d, comment = '%s'",
 		game.mapId,
-		players[client].steamid,
+		g_players[client].user.steamid,
 		rating,
 		comment,
 		rating,

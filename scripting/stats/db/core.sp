@@ -1,6 +1,6 @@
+#include "methods.sp"
 #include "callbacks.sp"
 #include "migrations.sp"
-#include "methods.sp"
 
 #define DB_CONFIG_NAME "stats"
 

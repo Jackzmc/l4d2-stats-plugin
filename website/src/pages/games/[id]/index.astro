@@ -5,19 +5,22 @@ let { id } = Astro.params;
 if(!id) return new Response(null, { status: 404 })
 id = id.substring(0, 8)
 
-import { getGame, getSessions } from '../../../models/Game.ts'
+import { getGame, getSessions, getGameTraits } from '../../../models/Game.ts'
 import { Difficulty } from "@/types/game.ts";
 import { formatUnixDate } from "@/utils/date.ts";
 import { getGamemode } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
+import Hero from "@/components/bulma/Hero.astro";
+import TraitBox from "@/components/games/TraitBox.astro";
 
 const game = await getGame(id)
 if(!game) return Astro.rewrite(`/404?obj=game&id=${Astro.params.id}`)
 const sessions = await getSessions(id)
+const traits = await getGameTraits(id, 4)
 
 
-const mapName = game.map_name ?? game.map
+const mapName = game.map_name ?? game.map_id
 const meta: PageInfo = {
 	title: `${mapName} - Game ${id}`,
 	description: "",
@@ -30,18 +33,17 @@ const honkMasterPlayer = totalHonks && sessions.reduce((pv, cv) => {
     return (cv.honks > pv.honks) ? cv : pv
 }).steamid
 const mvpPlayer = sessions.reduce((pv, cv) => {
-    return (cv.SpecialInfectedKills > pv.SpecialInfectedKills) ? cv : pv
-}).steamid
-
+    return (cv.kills_all_specials > pv.kills_all_specials) ? cv : pv
+})
 export const prerender = false
 ---
 <Layout meta={meta}>
     <section slot="hero" class="hero has-text-centered is-dark hero-map-bg" style={{'background-image': `linear-gradient(
       rgba(0, 0, 0, 0.5),
       rgba(0, 0, 0, 0.5)
-    ), url("/img/maps/screenshots/${game.map}.jpeg"), url("/img/maps/default.png")`}}>
+    ), url("/img/maps/screenshots/${game.map_id}.jpeg"), url("/img/maps/default.png")`}}>
         <div class="hero-body">
-            <p class="title">{meta.hero!.title}</p>
+            <p class="title l4d2-text">{meta.hero!.title}</p>
             <p class="subtitle pt-2">
                 Played {formatUnixDate(game.date)}
             </p>
@@ -49,7 +51,7 @@ export const prerender = false
         </div>
         <div class="hero-foot mb-3">
             <p class="subtitle pt-2">
-                {getGamemode(game.gamemode)} • {Difficulty[game.difficulty]} • {game.duration} minutes long
+                {getGamemode(game.gamemode)} • {Difficulty[game.difficulty]} • {Math.round(game.duration_game/60)} minutes long
             </p>
         </div>
     </section>
@@ -59,8 +61,9 @@ export const prerender = false
                     <div class="container">
                         <Level>
                             <LevelItem class="has-text-white" title="Zombie Kills" value={game.commons_killed} />
-                            <LevelItem class="has-text-white" title="Specials Killed" value={game.specials_killed} />
-                            <LevelItem class="has-text-white" title="Damage Taken" value={game.damage_taken} />
+                            <LevelItem class="has-text-white" title="Specials Killed" value={game.kills_all_specials} />
+                            <LevelItem class="has-text-white" title="Damage Dealt" value={game.damage_dealt} suffix=" HP" />
+                            <LevelItem class="has-text-white" title="Damage Taken" value={game.damage_taken} suffix=" HP" />
                             {totalHonks > 0 && <LevelItem class="has-text-white" title="Total Honks" value={totalHonks} />}
                         </Level>
                     </div>
@@ -71,7 +74,7 @@ export const prerender = false
         <div class="fixed-grid has-2-cols-mobile has-5-cols ">
             <div class="grid">
                 {sessions.map(sess =>{
-                    const isMvp = sess.steamid == mvpPlayer
+                    const isMvp = sess.steamid == mvpPlayer.steamid
                     const isHonkMaster = sess.steamid == honkMasterPlayer
                     return <div class="cell" style="width: 260">
                         <PlayerBox showHonks={ totalHonks > 0 } player={sess} mvp={isMvp} honkMaster={isHonkMaster} />
@@ -87,25 +90,25 @@ export const prerender = false
             <div class="column">
                 <div class="box has-background-danger has-text-white">
                     <Level>
-                        <LevelItem class="has-text-white" title="Incaps" value={game.incaps} />
+                        <LevelItem class="has-text-white" title="Incaps" value={game.times_incapped} />
                         <LevelItem class="has-text-white" title="Deaths" value={game.deaths} />
-                        <LevelItem class="has-text-white" title="Kits Used" value={game.medkits_used} />
-                        <LevelItem class="has-text-white" title="Pills Used" value={game.pills_used} />
-                        <LevelItem class="has-text-white" title="Adrenalines Used" value={game.adrenalines_used} />
+                        <LevelItem class="has-text-white" title="Kits Used" value={game.used_kit} />
+                        <LevelItem class="has-text-white" title="Pills Used" value={game.used_pills} />
+                        <LevelItem class="has-text-white" title="Adrenalines Used" value={game.used_adrenaline} />
                     </Level>
                 </div>
                 <div class="box has-background-link has-text-white">
                     <Level>
-                        <LevelItem class="has-text-white" title="Biles Thrown" value={game.biles_used} />
-                        <LevelItem class="has-text-white" title="Pipes Thrown" value={game.pipes_used} />
-                        <LevelItem class="has-text-white" title="Molotovs Thrown" value={game.molotovs_used} />
+                        <LevelItem class="has-text-white" title="Biles Thrown" value={game.used_bile} />
+                        <LevelItem class="has-text-white" title="Pipes Thrown" value={game.used_pipebomb} />
+                        <LevelItem class="has-text-white" title="Molotovs Thrown" value={game.used_molotov} />
                     </Level>
                 </div>
             </div>
             <div class="column is-2">
                 <div class="box content">
                     <h4>Map Id</h4>
-                    <p>{game.map}</p>
+                    <p><a href={'/maps/' + game.map_id}>{game.map_id}</a></p>
                     <h4>Server Tags</h4>
                     <span class="tags">
                         {game.server_tags.map(tag => <span class="tag">{tag}</span>)}
@@ -113,11 +116,57 @@ export const prerender = false
                 </div>
             </div>
         </div>
-        <div class="block">
-            Campaign ID {game.campaignID}
-        </div>
     </div>
-
+    <!--
+        TODO:
+        - MVP showcase
+        - stats
+        - best player: (pick N to show out of pool?)
+            - farthest distance shot
+            - most teammates boomed
+            - healer (top heals)
+            - most deaths + incaps
+            - rock dodges
+-->
+        <Hero style="min-height: 200px">
+            <div class="box my-4 has-background-link px-6">
+                <article class="media">
+                    <figure class="media-left mr-6">
+                        <p class="image ">
+                            <img src="/img/fullbody/zoey.png" />
+                        </p>
+                    </figure>
+                    <div class="media-content px-6 py-6 ">
+                        <h2 class="title is-1 l4d2-text  has-text-white">Most Valuable Player</h2>
+                        <p class="subtitle is-2  has-text-white">{mvpPlayer.name}</p>
+                        
+                        <ul class="is-size-3 has-text-white">
+                            <li>{mvpPlayer.kills_all_specials} specials killed</li>
+                            <li>{mvpPlayer.kills_common} commons killed</li>
+                            <li>{mvpPlayer.damage_dealt_tank} hp of damage to tanks</li>
+                            <li>{mvpPlayer.damage_dealt_tank} hp of damage to tanks</li>
+                            <li>{mvpPlayer.times_revived_other} teammate revived</li>
+                            <li>{mvpPlayer.used_kit_other} teammates healed</li>
+                        </ul>
+                    </div>
+                </article>
+            </div>
+        </Hero>
+        <div class="container is-fluid">
+            {traits.length > 0 && 
+            <h2 class="title is-2 has-text-centered">Player Traits</h2>
+            <div class="columns has-text-centered is-multiline">
+                {traits.map(trait => 
+                    <div class="column is-6">
+                        <TraitBox trait={trait} />
+                    </div>
+                )}
+            </div>}
+             <div class="block">
+                <p>Campaign ID <a href={`/games/${game.uuid}`}>{game.uuid}</a></p>
+                <p>Game ID <a href={`/games/${game.id}`}>{game.id}</a></p>
+            </div>
+        </div>
 </Layout>
 
 <style>

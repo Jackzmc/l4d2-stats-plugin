@@ -44,7 +44,7 @@ if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, ma
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Zombies Killed</p>
-                <p class="title"><CountUp number={totals.zombie_kills} /></p>
+                <p class="title"><CountUp number={totals.kills_common} /></p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
@@ -68,19 +68,19 @@ if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, ma
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Average Zombies Killed</p>
-                <p class="title"><CountUp number={averages.zombie_kills} /></p>
+                <p class="title"><CountUp number={averages.kills_common} /></p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Players per Game</p>
-                <p class="title"><CountUp number={averages.avgPlayers} /></p>
+                <p class="title"><CountUp number={averages.avg_players} precision={1} /></p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
                 <div>
                 <p class="heading">Average FF Damage</p>
-                <p class="title"><CountUp number={averages.survivor_ff} /> HP</p>
+                <p class="title"><CountUp number={averages.damage_dealt_friendly} /> HP</p>
                 </div>
             </div>
             <div class="level-item has-text-centered">
@@ -96,14 +96,14 @@ if(import.meta.env.PROD) Astro.response.headers.set('Cache-Control', 'public, ma
             <div class="column">
                 <p class="title is-6">Most Played Official Map</p>
                 <figure class="image is-4by3">
-                    <Picture alt={`Poster for ${bestMap.name}`} src={getMapPoster(bestMap.map) as any} />
+                    <Picture alt={`Poster for ${bestMap.name}`} src={getMapPoster(bestMap.map_id) as any} />
                 </figure>
                 <p class="is-family-sans-serif is-size-4">{bestMap.name}</p>
             </div>
             <div class="column">
                 <p class="title is-6">Least Played Official Map</p>
                 <figure class="image is-4by3">
-                    <Picture alt={`Poster for ${worstMap.name}`} src={getMapPoster(worstMap.map) as any} />
+                    <Picture alt={`Poster for ${worstMap.name}`} src={getMapPoster(worstMap.map_id) as any} />
                 </figure>
                 <p class="is-family-sans-serif is-size-4">{worstMap.name}</p>
             </div>

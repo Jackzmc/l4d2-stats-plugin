@@ -1,24 +1,28 @@
 ---
 interface Props {
-    number: number,
-    class?: any
+    number: number | null,
+    class?: any,
+    precision?: number
 }
+const { number, class: className, precision = 0 } = Astro.props
 function formatNumber(number: number) {
     return Number(number).toLocaleString(undefined, {
-        maximumFractionDigits: 0
+        minimumFractionDigits: precision,
+        maximumFractionDigits: precision
     })
 }
-const { number, class: className } = Astro.props
 ---
 
-<span data-count={number} class:list={[className]}>{formatNumber(number)}</span>
+{number != null && <span data-count={number} data-precision={precision} class:list={[className]}>{formatNumber(number)}</span>}
+{number == null && <span class:list={[className]}>-</span>}
 
 <script>
 import { CountUp }  from "countup.js";
 
 const countersElems = document.querySelectorAll<HTMLElement>("span[data-count]")
 for(const counterElem of countersElems) {
-    const counter = new CountUp(counterElem, Number(counterElem.dataset.count))
+    const decimalPlaces = Number(counterElem.dataset.precision) || 0
+    const counter = new CountUp(counterElem, Number(counterElem.dataset.count), { decimalPlaces })
     counter.start()
 }
 </script>

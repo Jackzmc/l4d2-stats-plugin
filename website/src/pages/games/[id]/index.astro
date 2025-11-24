@@ -5,17 +5,19 @@ let { id } = Astro.params;
 if(!id) return new Response(null, { status: 404 })
 id = id.substring(0, 8)
 
-import { getGame, getSessions } from '../../../models/Game.ts'
+import { getGame, getSessions, getGameTraits } from '../../../models/Game.ts'
 import { Difficulty } from "@/types/game.ts";
 import { formatUnixDate } from "@/utils/date.ts";
 import { getGamemode } from "@/utils/index.ts";
 import Level from "@/components/bulma/Level.astro";
 import LevelItem from "@/components/bulma/LevelItem.astro";
 import Hero from "@/components/bulma/Hero.astro";
+import TraitBox from "@/components/games/TraitBox.astro";
 
 const game = await getGame(id)
 if(!game) return Astro.rewrite(`/404?obj=game&id=${Astro.params.id}`)
 const sessions = await getSessions(id)
+const traits = await getGameTraits(id, 4)
 
 
 const mapName = game.map_name ?? game.map_id
@@ -33,7 +35,6 @@ const honkMasterPlayer = totalHonks && sessions.reduce((pv, cv) => {
 const mvpPlayer = sessions.reduce((pv, cv) => {
     return (cv.kills_all_specials > pv.kills_all_specials) ? cv : pv
 })
-
 export const prerender = false
 ---
 <Layout meta={meta}>
@@ -42,7 +43,7 @@ export const prerender = false
       rgba(0, 0, 0, 0.5)
     ), url("/img/maps/screenshots/${game.map_id}.jpeg"), url("/img/maps/default.png")`}}>
         <div class="hero-body">
-            <p class="title">{meta.hero!.title}</p>
+            <p class="title l4d2-text">{meta.hero!.title}</p>
             <p class="subtitle pt-2">
                 Played {formatUnixDate(game.date)}
             </p>
@@ -115,10 +116,6 @@ export const prerender = false
                 </div>
             </div>
         </div>
-                    <div class="block">
-                <p>Campaign ID <a href={`/games/${game.uuid}`}>{game.uuid}</a></p>
-                <p>Game ID <a href={`/games/${game.id}`}>{game.id}</a></p>
-            </div>
     </div>
     <!--
         TODO:
@@ -130,24 +127,46 @@ export const prerender = false
             - healer (top heals)
             - most deaths + incaps
             - rock dodges
-    -->
-        <!-- <Hero type="is-primary" class="my-6" style="min-height: 200px">
-            <div class="box my-6">
+-->
+        <Hero style="min-height: 200px">
+            <div class="box my-4 has-background-link px-6">
                 <article class="media">
-                    <figure class="media-left">
+                    <figure class="media-left mr-6">
                         <p class="image ">
                             <img src="/img/fullbody/zoey.png" />
                         </p>
                     </figure>
-                    <div class="media-content">
-                        <h2 class="title is-2">Most Valuable Player</h2>
-                        <p class="subtitle is-3">{mvpPlayer.name}</p>
-
+                    <div class="media-content px-6 py-6 ">
+                        <h2 class="title is-1 l4d2-text  has-text-white">Most Valuable Player</h2>
+                        <p class="subtitle is-2  has-text-white">{mvpPlayer.name}</p>
+                        
+                        <ul class="is-size-3 has-text-white">
+                            <li>{mvpPlayer.kills_all_specials} specials killed</li>
+                            <li>{mvpPlayer.kills_common} commons killed</li>
+                            <li>{mvpPlayer.damage_dealt_tank} hp of damage to tanks</li>
+                            <li>{mvpPlayer.damage_dealt_tank} hp of damage to tanks</li>
+                            <li>{mvpPlayer.times_revived_other} teammate revived</li>
+                            <li>{mvpPlayer.used_kit_other} teammates healed</li>
+                        </ul>
                     </div>
                 </article>
             </div>
-
-        </Hero> -->
+        </Hero>
+        <div class="container is-fluid">
+            {traits.length > 0 && 
+            <h2 class="title is-2 has-text-centered">Player Traits</h2>
+            <div class="columns has-text-centered is-multiline">
+                {traits.map(trait => 
+                    <div class="column is-6">
+                        <TraitBox trait={trait} />
+                    </div>
+                )}
+            </div>}
+             <div class="block">
+                <p>Campaign ID <a href={`/games/${game.uuid}`}>{game.uuid}</a></p>
+                <p>Game ID <a href={`/games/${game.id}`}>{game.id}</a></p>
+            </div>
+        </div>
 </Layout>
 
 <style>

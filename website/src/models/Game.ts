@@ -197,6 +197,8 @@ export interface GameSessionPartial extends Player {
   kills_common: number;
   kills_melee: number;
   damage_dealt_friendly_count: number;
+  damage_dealt_tank: number,
+  damage_dealt_witch: number,
   used_kit_self: number;
   used_pills: number;
   used_molotov: number;
@@ -208,6 +210,10 @@ export interface GameSessionPartial extends Player {
   deaths: number;
   kills_all_specials: number;
   honks: number;
+  rocks_dodged: number,
+  rocks_hitby: number,
+  times_revived_other: number,
+  used_kit_other: number
 }
 
 /**
@@ -225,6 +231,8 @@ export async function getSessions(id: string): Promise<GameSessionPartial[]> {
             character_type,
             s.kills_common,
             s.damage_dealt_friendly_count,
+            s.damage_dealt_tank,
+            s.damage_dealt_witch,
             s.used_kit_self,
             s.used_pills,
             s.used_molotov,
@@ -235,7 +243,12 @@ export async function getSessions(id: string): Promise<GameSessionPartial[]> {
             s.times_incapped,
             s.deaths,
             s.kills_all_specials,
-            s.honks
+            s.honks,
+            s.caralarms_activated,
+            s.rocks_hitby,
+            s.rocks_dodged,
+            s.times_revived_other,
+            s.used_kit_other
         FROM stats_sessions s
         INNER JOIN stats_users u ON u.steamid = s.steamid
         LEFT JOIN stats_games g ON g.id = s.game_id
@@ -458,4 +471,81 @@ export async function getServerTags(): Promise<string[]> {
     cache.set("game.getServerTags", sortList, 1000 * 60 * 5)
 
     return sortList
+}
+
+export interface Trait {
+    steamid: string,
+    name: string,
+    stat: string,
+    value: number
+}
+
+export async function getGameTraits(gameId: string, limit: number): Promise<Trait[]> {
+    // TODO: calculate MVP from value https://app.plane.so/jackz/browse/SM-104/
+    // TODO: add new game traits https://app.plane.so/jackz/browse/SM-105/
+    // TODO: 
+    const cacheObj = await cache.get("game.getGameTraits." + gameId)
+    if(cacheObj) return cacheObj
+    const [rows] = await db.execute<RowDataPacket[]>(`
+    # load columns 
+        WITH stats AS (
+            SELECT s.steamid,
+                u.last_alias name,
+                s.rocks_dodged,
+                s.rocks_hitby,
+                s.damage_taken,
+                s.kills_common,
+                s.kills_all_specials,
+                s.deaths,
+                s.longest_shot_distance
+            FROM stats_sessions s
+            LEFT JOIN stats_games g ON g.id = s.game_id
+            LEFT JOIN stats_users u ON s.steamid = u.steamid
+            WHERE left(g.uuid, 8) = ? OR CAST(g.id AS CHAR) = ?
+        ),
+    # convert rows
+        flattened AS (
+            SELECT steamid, name, 'rocks_dodged' AS stat, rocks_dodged AS value FROM stats
+            UNION ALL
+            SELECT steamid, name, 'rocks_hitby', rocks_hitby FROM stats
+            UNION ALL
+            SELECT steamid, name, 'damage_taken', damage_taken FROM stats
+            UNION ALL
+            SELECT steamid, name, 'kills_common', kills_common FROM stats
+            UNION ALL
+            SELECT steamid, name, 'kills_all_specials', kills_all_specials FROM stats
+            UNION ALL
+            SELECT steamid, name, 'deaths', deaths FROM stats
+            UNION ALL
+            SELECT steamid, name, 'longest_shot_distance', longest_shot_distance FROM stats
+
+        ),
+    # rank them by max / min
+        ranked AS (
+            SELECT *,
+                RANK() OVER (
+                    PARTITION BY stat
+                    ORDER BY
+                        CASE WHEN stat = 'damage_taken' THEN value ELSE -value END
+                ) AS r
+            FROM flattened
+            WHERE value > 0
+        ),
+    # get number of rows in top slot for stat
+        top_counts AS (
+            SELECT stat, COUNT(*) AS cnt
+            FROM ranked
+            WHERE r = 1
+            GROUP BY stat
+        )
+    # filter out N amount, excluding any ties from results
+        SELECT r.steamid, r.stat, r.name, r.value
+        FROM ranked r
+        JOIN top_counts t ON t.stat = r.stat
+        WHERE r.r = 1 AND t.cnt = 1
+        LIMIT ?`,
+        [gameId.substring(0, 8), gameId, limit]
+    )
+    cache.set("game.getGameTraits." + gameId, rows, 1000 * 60 * 30)
+    return rows as Trait[]
 }

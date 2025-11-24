@@ -1,7 +1,8 @@
 ---
 import type { ColorType } from '@/types/bulma.ts'
+import type { HTMLAttributes } from 'astro/types'
 
-interface Props {
+interface Props extends HTMLAttributes<'div'> {
     title?: string,
     subtitle?: string,
     

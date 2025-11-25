@@ -181,7 +181,9 @@ void RecordSessionStats() {
 	for(int i = 0; i < snapshot.Length; i++) {
 		int key = snapshot.GetKey(i);
 		g_sessionDataStorage.GetArray(key, saveData, sizeof(saveData));
-		saveData.flags |= view_as<int>(Session_PresentInfinale);
+		// mark player if they still in game
+		if(GetClientOfUserId(saveData.userid) > 0) 
+			saveData.flags |= view_as<int>(Session_PresentInfinale);
 		RecordPlayerSession(saveData);
 	} 
 

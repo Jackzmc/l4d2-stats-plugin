@@ -142,6 +142,7 @@ enum struct SessionData {
     char steamid[32];
     int lastSurvivorType;
     int join_time;
+    int userid;
 }
 
 // This holds data that only lasts as long as player
@@ -192,6 +193,7 @@ enum struct PlayerDataContainer {
 
     void Load(int client, const char[] steamid) {
         this.userid = GetClientUserId(client);
+        this.session.userid = this.userid;
         LogTrace("Lood %d %d", this.userid, client);
         this.LoadSession(); //writes over this.session
         strcopy(this.session.steamid, sizeof(this.session.steamid), steamid);

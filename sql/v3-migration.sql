@@ -86,7 +86,10 @@ alter table stats_sessions
     add damage_taken_fall float,
     add times_shove mediumint,
     add times_jumped mediumint,
-    add bullets_fired mediumint;
+    add bullets_fired mediumint,
+    add unique index stats_sessions_game_id_steamid_uindex
+    (game_id, steamid)
+    comment 'ensure no duplicate sessions';
 # get new game id, update seconds_* (not perfect but whatever), mark as in finale
 update stats_sessions s
 join stats_games g on g.uuid = s.campaignID

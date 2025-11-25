@@ -482,7 +482,10 @@ create table stats_sessions
             on delete cascade,
     constraint stats_sessions_stats_games_id_fk
         foreign key (game_id) references stats_games (id)
-            on update cascade on delete cascade
+            on update cascade on delete cascade,
+    add unique index stats_sessions_game_id_steamid_uindex
+        (game_id, steamid)
+        comment 'ensure no duplicate sessions'
 );
 
 

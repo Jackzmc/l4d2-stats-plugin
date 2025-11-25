@@ -76,7 +76,6 @@ export interface StatsGamesEntity {
   'steamid': string;
   'damage_dealt_friendly'?: number;
   'damage_dealt_friendly_count'?: any;
-  'damage_dealt_friendly'?: number | null;
   'damage_taken_friendly_count'?: number | null;
   'damage_taken_friendly'?: number | null;
   'TimesBoomed'?: any;

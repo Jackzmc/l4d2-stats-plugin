@@ -32,12 +32,15 @@ const { map } = Astro.props
     <ul class="has-text-right">
         <li><b>{map.deaths}</b> deaths</li>
         <li><b>{map.num_players}</b> players</li>
+        <li><b>{map.damage_dealt_friendly_count}</b> friendly fires</li>
         <li><b>{map.duration_mins}</b> minutes long</li>
         <li><b>{map.kills_common}</b> commons killed</li>
-        <li><b>{map.damage_dealt_friendly_count}</b> friendly fires</li>
         <li>
-            <BulmaIcon iconProps={{class: 'is-pulled-right is-inline'}} name="iconoir:clock" 
-                textRight={"Played " + formatRelUnixDate(map.date_end)}/>
+            {map.date_end && <BulmaIcon iconProps={{class: 'is-pulled-right is-inline'}} name="iconoir:clock" 
+                textRight={"Finished " + formatRelUnixDate(map.date_end)}/>}
+            <!-- Incase game did not end -->
+            {!map.date_end && <BulmaIcon iconProps={{class: 'is-pulled-right is-inline'}} name="iconoir:clock" 
+                textRight={"Started " + formatRelUnixDate(map.date_start)}/>}
         </li>
     </ul>
     <br>

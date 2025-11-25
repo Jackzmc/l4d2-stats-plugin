@@ -87,10 +87,10 @@ alter table stats_sessions
     add times_shove mediumint,
     add times_jumped mediumint,
     add bullets_fired mediumint;
-# get new game id, update seconds_* (not perfect but whatever)
-update stats_sessions u
-join stats_games g on g.uuid = u.campaignID
-SET u.game_id=g.id, u.seconds_alive=duration*60, u.seconds_idle=u.minutes_idle*60;
+# get new game id, update seconds_* (not perfect but whatever), mark as in finale
+update stats_sessions s
+join stats_games g on g.uuid = s.campaignID
+SET s.game_id=g.id, s.seconds_alive=duration*60, s.seconds_idle=s.minutes_idle*60, s.flags=4;
 # drop rest of columns and add fk
 alter table stats_sessions
     drop duration,

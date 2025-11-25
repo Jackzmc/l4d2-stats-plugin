@@ -11,6 +11,7 @@ export interface RecentGame {
   uuid: string,
   map_id: string,
   map_name: string;
+  date_start: number,
   date_end: number;
   duration_mins: number;
   difficulty: number;
@@ -36,6 +37,7 @@ export async function getRecentGames(page: number = 1, limit = 8): Promise<Recen
             g.uuid uuid,
             g.map_id map_id,
             i.name as map_name,
+            g.date_start date_start,
             g.date_end date_end,
             COUNT(*) as num_players,
             (g.duration_game / 60) duration_mins,
@@ -50,6 +52,7 @@ export async function getRecentGames(page: number = 1, limit = 8): Promise<Recen
         FROM stats_sessions as s
         JOIN stats_games g ON g.id = s.game_id
         LEFT JOIN stats_map_info i ON i.mapid = g.map_id
+        WHERE g.date_end IS NOT NULL
         GROUP BY g.id
         ORDER BY g.date_end DESC
         LIMIT ?, ?
@@ -87,7 +90,8 @@ export async function getFilteredGames(opts: FilterOptions = {}, page = 1, limit
 
     const [games] = await db.execute<RowDataPacket[]>(`
         SELECT
-            g.uuid map_uuid,
+            g.id id,
+            g.uuid uuid,
             g.map_id map_id,
             i.name as map_name,
             g.date_end date_end,

@@ -550,13 +550,15 @@ void Event_InfectedDeath(Event event, const char[] name, bool dontBroadcast) {
 void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast) {
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
-	int victimTeam = GetClientTeam(victim);
+	int victimTeam = victim > 0 ? GetClientTeam(victim) : 0;
 	int dmg = event.GetInt("dmg_health");
 	if(dmg <= 0) return;
 	if(attacker > 0 && !IsFakeClient(attacker)) {
 		int attackerTeam = GetClientTeam(attacker);
 		g_players[attacker].wpn.damage += dmg;
 		g_players[attacker].user.common.damage_dealt += dmg;
+
+
 
 		if(attackerTeam == 2) {
 			if(victimTeam == 2) {
@@ -575,6 +577,10 @@ void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast) {
 				}
 			}
 		}
+	}
+	
+	if(victim > 0 && !IsFakeClient(victim) && victimTeam == 2) {
+		g_players[victim].user.common.damage_taken += dmg;
 	}
 }
 void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast) {

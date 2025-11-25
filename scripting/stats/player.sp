@@ -198,7 +198,7 @@ enum struct PlayerDataContainer {
         this.LoadSession(); //writes over this.session
         strcopy(this.session.steamid, sizeof(this.session.steamid), steamid);
         strcopy(this.user.steamid, sizeof(this.user.steamid), steamid);
-        if(this.session.join_time == 0) this.session.join_time = 0; // keep original join time
+        if(this.session.join_time == 0) this.session.join_time = GetTime(); // keep original join time
 
         this.Calculate(); // we call this to initalize time stuff
     }
@@ -235,6 +235,7 @@ enum struct PlayerDataContainer {
             this.CalculateTime(client);
             this.MeasureDistance(client);
         }
+        // TODO: calculate ping and weapons
     }
 
 

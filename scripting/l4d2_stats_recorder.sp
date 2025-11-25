@@ -792,7 +792,7 @@ public void OnEntityCreated(int entity, const char[] classname) {
 }
 void EntityCreateCallback(int entity) {
 	if(!HasEntProp(entity, Prop_Send, "m_hOwnerEntity") || !IsValidEntity(entity)) return;
-	char class[16];
+	char class[32];
 
 	GetEntityClassname(entity, class, sizeof(class));
 	int entOwner = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");

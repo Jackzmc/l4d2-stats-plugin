@@ -338,8 +338,6 @@ enum struct PlayerDataContainer {
 	}
 }
 
-PlayerDataContainer g_players[MAXPLAYERS+1];
-
 // This is moved out of enum struct because it's ugly and messy
 // 
 // MAKE SURE TO UPDATE THIS FOR NEW COLUMNS
@@ -402,34 +400,14 @@ void MergeUserToSession(PlayerDataContainer data) {
     data.session.common.bullets_fired += data.user.common.bullets_fired;
 }
 
-// Updates user data, submits user points, weapon, heatmap data
-//
-// Then merges ontop of session data and clears user data
-void FlushPlayer(int client) {
-    LogDebug("Flush Player %d [u=%s] [s=%s]", client, g_players[client].session.steamid, g_players[client].user.steamid);
-    if(g_players[client].user.steamid[0] != '\0') {
-        // only flush if user is initalized.
-        // after a FlushPlayer, user.steamid is cleared
-        // only until Load() is called is it restored
-        RecordUserStats(g_players[client].user);
-        SubmitPoints(client);
-        SubmitWeaponStats(client);
-        SubmitHeatmaps(client);
-    }
-
-    MergeUserToSession(g_players[client]);
-    g_players[client].SaveSession();
-    g_players[client].ClearUser();
-}
-
 //Record a special kill to local variable
-void IncrementSpecialKill(int client, int special) {
+void IncrementSpecialKill(UserData user, int special) {
 	switch(special) {
-		case 1: g_players[client].user.common.kills_smoker++;
-		case 2: g_players[client].user.common.kills_boomer++;
-		case 3: g_players[client].user.common.kills_hunter++;
-		case 4: g_players[client].user.common.kills_spitter++;
-		case 5: g_players[client].user.common.kills_jockey++;
-		case 6: g_players[client].user.common.kills_charger++;
+		case 1: user.common.kills_smoker++;
+		case 2: user.common.kills_boomer++;
+		case 3: user.common.kills_hunter++;
+		case 4: user.common.kills_spitter++;
+		case 5: user.common.kills_jockey++;
+		case 6: user.common.kills_charger++;
 	}
 }

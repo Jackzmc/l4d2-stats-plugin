@@ -84,7 +84,6 @@ enum struct Game {
 		this.clownHonks = 0;
 		this.submitted = false;
 
-		CreateGame();
 		LogInfo("Started recording statistics for new session");
 	}
 
@@ -113,6 +112,7 @@ enum struct Game {
 #include "stats/player.sp"
 
 Game game;
+PlayerDataContainer g_players[MAXPLAYERS+1];
 
 #include "stats/db/core.sp"
 #include "stats/timers.sp"
@@ -294,6 +294,8 @@ public void OnClientDisconnect(int client) {
 		} else {
 			// Record user stats, merge to session, and save session
 			FlushPlayer(client);
+			// clear out session data, it gets loaded
+			g_players[client].Reset();
 		}
 
 	}
@@ -605,7 +607,7 @@ void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast) {
 				g_players[attacker].wpn.kills++;
 
 				if(GetInfectedClassName(infectedClass, class, sizeof(class))) {
-					IncrementSpecialKill(attacker, infectedClass);
+					IncrementSpecialKill(g_players[attacker].user, infectedClass);
 					g_players[attacker].RecordPoint(PType_SpecialKill, .allowMerging = true);
 				}
 				char wpnName[16];
@@ -845,6 +847,7 @@ finale_win: Record all stats (game + user)
 void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
 	game.finaleStartTime = GetTime();
 	game.difficulty = GetDifficultyInt();
+	CreateGame();
 	SubmitMapInfo();
 }
 void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast) {
@@ -859,7 +862,6 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	if(!L4D_IsMissionFinalMap() || game.submitted) return;
 
 	game.difficulty = event.GetInt("difficulty");
-	game.finished = false;
 
 	for(int i = 1; i <= MaxClients; i++) {
 		if(IsClientInGame(i) && GetClientTeam(i) == 2) {

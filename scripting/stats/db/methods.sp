@@ -282,7 +282,7 @@ void RecordPlayerSession(SessionData session) {
 	if(session.steamid[0] == '\0') ThrowError("steamid is empty");
 	// size of just INSERT (...) VALUES (...) template is ~811 characters
 	// steamid is +32 char, every int is maybe 4-8 chars
-	char query[1024];
+	char query[2048];
 	g_db.Format(query, sizeof(query), 
 		"INSERT INTO stats_sessions" ... 
 		"(game_id,steamid,flags,join_time,character_type,ping,kills_common,kills_melee,damage_dealt,damage_taken,damage_dealt_friendly_count,damage_taken_friendly_count,damage_dealt_friendly,damage_taken_friendly,used_kit_self,used_kit_other,used_defib,used_molotov,used_pipebomb,used_bile,used_pills,used_adrenaline,times_revived_other,times_incapped,times_hanging,deaths,kills_boomer,kills_smoker,kills_jockey,kills_hunter,kills_spitter,kills_charger,kills_tank,kills_witch,kills_fire,kills_pipebomb,kills_minigun,honks,top_weapon,seconds_alive,seconds_idle,seconds_dead,witches_crowned,smokers_selfcleared,rocks_hitby,rocks_dodged,hunters_deadstopped,times_pinned,times_cleared_pinned,times_boomed_teammates,times_boomed,damage_dealt_tank,damage_dealt_witch,caralarms_activated,longest_shot_distance,times_shove,times_jumped,bullets_fired)" ...
@@ -349,4 +349,25 @@ void RecordPlayerSession(SessionData session) {
 	);
 	g_db.Query(DBCT_Generic, query, QUERY_INSERT_SESSION);
 	LogDebug("QUERY_INSERT_SESSION for %s", session.steamid);
+}
+
+// Updates user data, submits user points, weapon, heatmap data
+//
+// Then merges ontop of session data and clears user data
+void FlushPlayer(int client) {
+    if(game.finished) return; // game over, don't record
+    LogDebug("Flush Player %d [u=%s] [s=%s]", client, g_players[client].session.steamid, g_players[client].user.steamid);
+    if(g_players[client].user.steamid[0] != '\0') {
+        // only flush if user is initalized.
+        // after a FlushPlayer, user.steamid is cleared
+        // only until Load() is called is it restored
+        RecordUserStats(g_players[client].user);
+        SubmitPoints(client);
+        SubmitWeaponStats(client);
+        SubmitHeatmaps(client);
+    }
+
+    MergeUserToSession(g_players[client]);
+    g_players[client].SaveSession();
+    g_players[client].ClearUser();
 }

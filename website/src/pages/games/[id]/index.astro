@@ -62,8 +62,8 @@ export const prerender = false
                         <Level>
                             <LevelItem class="has-text-white" title="Zombie Kills" value={game.commons_killed} />
                             <LevelItem class="has-text-white" title="Specials Killed" value={game.kills_all_specials} />
-                            <LevelItem class="has-text-white" title="Damage Dealt" value={game.damage_dealt} suffix=" HP" />
-                            <LevelItem class="has-text-white" title="Damage Taken" value={game.damage_taken} suffix=" HP" />
+                            <LevelItem class="has-text-white" title="Damage Dealt" value={game.damage_dealt.toLocaleString()} suffix=" HP" />
+                            <LevelItem class="has-text-white" title="Damage Taken" value={game.damage_taken.toLocaleString()} suffix=" HP" />
                             {totalHonks > 0 && <LevelItem class="has-text-white" title="Total Honks" value={totalHonks} />}
                         </Level>
                     </div>

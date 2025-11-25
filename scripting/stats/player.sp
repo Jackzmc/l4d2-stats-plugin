@@ -240,6 +240,7 @@ enum struct PlayerDataContainer {
 
     // Calculates values and saves
     void SaveSession() {
+        if(this.userid == 0 || this.session.steamid[0] == '\0') return; // refuse to save an invalid session
         this.Calculate();
 
         g_sessionDataStorage.SetArray(this.userid, this.session, sizeof(this.session));

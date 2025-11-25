@@ -7,8 +7,9 @@ import type { Player } from '@/db/types.ts';
 
 export interface RecentGame {
   num_players: number;
-  campaign_id: string;
-  map_id: string;
+  id: number,
+  uuid: string,
+  map_id: string,
   map_name: string;
   date_end: number;
   duration_mins: number;
@@ -29,10 +30,10 @@ export interface RecentGame {
  */
 export async function getRecentGames(page: number = 1, limit = 8): Promise<RecentGame[]> {
     const offset = (page - 1) * limit
-    // const [total] = await db.execute("SELECT COUNT(DISTINCT campaignID) as total FROM `stats_games`")
     const [recents] = await db.execute<RowDataPacket[]>(`
         SELECT
-            g.uuid campaign_id,
+            g.id id,
+            g.uuid uuid,
             g.map_id map_id,
             i.name as map_name,
             g.date_end date_end,
@@ -74,7 +75,6 @@ export async function getFilteredGames(opts: FilterOptions = {}, page = 1, limit
     if(page < 1) page = 1
     const offset = (page - 1) * limit
 
-    // const [total] = await db.execute("SELECT COUNT(DISTINCT campaignID) as total FROM `stats_games`")
     const builder = new QueryConditionBuilder()
     if(opts.gamemode) builder.push("gamemode = ?", opts.gamemode)
     if(opts.difficulty != undefined) builder.push("difficulty = ?", opts.difficulty)
@@ -87,7 +87,7 @@ export async function getFilteredGames(opts: FilterOptions = {}, page = 1, limit
 
     const [games] = await db.execute<RowDataPacket[]>(`
         SELECT
-            g.uuid campaign_id,
+            g.uuid map_uuid,
             g.map_id map_id,
             i.name as map_name,
             g.date_end date_end,

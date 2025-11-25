@@ -24,7 +24,6 @@ export interface StatsGamesEntity {
   'used_bile'?: number;
   
   /* unique campaign session id */
-  'campaignID': string;
   'CarAlarmsActivated'?: number;
   'character_type'?: number | null;
   'kills_charger'?: number | null;

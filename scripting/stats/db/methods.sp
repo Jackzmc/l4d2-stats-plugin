@@ -136,6 +136,10 @@ void SubmitHeatmaps(int client) {
 
 // Creates a new game entry and populates game.id
 void CreateGame() {
+	if(!game.startTime) {
+		LogWarn("not creating game: game was never initalized");
+		return;
+	}
 	char query[256];
 	g_db.Format(query, sizeof(query), 
 		"INSERT INTO stats_games (date_start,date_start_finale,map_id,gamemode,difficulty,server_tags,stat_version) VALUES (%d,%d,'%s','%s',%d,'%s',%d)",
@@ -151,6 +155,10 @@ void CreateGame() {
 }
 
 void UpdateGame() {
+	if(!game.startTime) {
+		LogWarn("not updating game: game was never initalized");
+		return;
+	}
 	if(!game.id) ThrowError("game.id missing");
 	char query[256];
 	g_db.Format(query, sizeof(query), 
@@ -275,7 +283,7 @@ void RecordUserStats(UserData user) {
 		user.common.damage_taken_fall,
 		user.steamid
 	);
-	LogDebug("UPDATE_USER_STATS for %s", user.steamid);
+	LogTrace("QUERY_USER_STATS %s %s", user.steamid, query);
 	g_db.Query(DBCT_Generic, query, QUERY_UPDATE_USER_STATS);
 }
 
@@ -351,8 +359,8 @@ void RecordPlayerSession(SessionData session) {
 		session.common.times_jumped,
 		session.common.bullets_fired
 	);
+	LogTrace("QUERY_INSERT_SESSION %s %s", session.steamid, query);
 	g_db.Query(DBCT_Generic, query, QUERY_INSERT_SESSION);
-	LogDebug("QUERY_INSERT_SESSION for %s", session.steamid);
 }
 
 // Updates user data, submits user points, weapon, heatmap data

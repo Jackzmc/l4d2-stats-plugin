@@ -194,7 +194,7 @@ enum struct PlayerDataContainer {
     void Load(int client, const char[] steamid) {
         this.userid = GetClientUserId(client);
         this.session.userid = this.userid;
-        LogTrace("Lood %d %d", this.userid, client);
+        LogTrace("Load %d %d", this.userid, client);
         this.LoadSession(); //writes over this.session
         strcopy(this.session.steamid, sizeof(this.session.steamid), steamid);
         strcopy(this.user.steamid, sizeof(this.user.steamid), steamid);
@@ -230,7 +230,6 @@ enum struct PlayerDataContainer {
     // Calculates any values
     void Calculate() {
         int client = GetClientOfUserId(this.userid);
-        LogTrace("Calculate %d %d", this.userid, client);
         if(client > 0 ){ 
 		    this.session.lastSurvivorType = GetEntProp(client, Prop_Send, "m_survivorCharacter");
             this.CalculateTime(client);

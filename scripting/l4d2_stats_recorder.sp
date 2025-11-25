@@ -37,7 +37,7 @@ ConVar hServerTags, hZDifficulty, hStatsUrl;
 ConVar hHeatmapInterval;
 ConVar hHeatmapActive;
 Database g_db;
-char gamemode[32], serverTags[255], websiteUrlPrefix[128];
+char serverTags[255], websiteUrlPrefix[128];
 bool g_lateLoaded; //Has finale started?
 bool isTransition = false;
 
@@ -102,7 +102,7 @@ enum struct Game {
 			strcopy(this.mapTitle, sizeof(this.mapTitle), OFFICIAL_MAP_NAMES[mapIndex]);
 		}
 		InfoEditor_GetString(0, "Name", this.missionId, sizeof(this.missionId));
-		LogDebug("[Stats] %s \"%s\" %s (c=%b)", this.mapId, this.mapTitle, this.missionId, this.isCustomMap);
+		LogDebug("%s \"%s\" %s (custom=%b)", this.mapId, this.mapTitle, this.missionId, this.isCustomMap);
 	}
 }
 
@@ -169,7 +169,7 @@ public void OnPluginStart() {
 	hStatsUrl.AddChangeHook(CVC_UrlChanged);
 
 	ConVar hGamemode = FindConVar("mp_gamemode");
-	hGamemode.GetString(gamemode, sizeof(gamemode));
+	hGamemode.GetString(game.gamemode, sizeof(game.gamemode));
 	hGamemode.AddChangeHook(CVC_GamemodeChange);
 
 	hZDifficulty = FindConVar("z_difficulty");
@@ -260,7 +260,6 @@ public void OnPluginEnd() {
 /////////////////////////////////
 void CVC_GamemodeChange(ConVar convar, const char[] oldValue, const char[] newValue) {
 	strcopy(game.gamemode, sizeof(game.gamemode), newValue);
-	strcopy(gamemode, sizeof(gamemode), newValue);
 }
 void CVC_TagsChanged(ConVar convar, const char[] oldValue, const char[] newValue) {
 	strcopy(serverTags, sizeof(serverTags), newValue);

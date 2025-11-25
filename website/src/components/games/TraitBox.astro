@@ -19,7 +19,7 @@ const TRAIT_CONFIG: Record<string, TraitConfig> = {
     rocks_dodged: { label: "Most Rocks Dodged", class: "has-background-success", format: (value) => `${value} rocks`},
     kills_common: { label: "Most Commons Killed", class: "has-background-info", format: (value) => `${value} zombies killed`, textClass: "has-text-black"},
     kills_all_specials: { label: "Most Specials Killed", class: "has-background-info", format: (value) => `${value} specials killed`, textClass: "has-text-black"},
-    longest_shot_distance: { label: "Farthest Kill Distance", class: "has-background-success", format: (value) => `${value} units away`}
+    longest_shot_distance: { label: "Farthest Kill Distance", class: "has-background-success", format: (value) => `${value.toFixed(1)} units away`}
 }
 
 const { trait } = Astro.props

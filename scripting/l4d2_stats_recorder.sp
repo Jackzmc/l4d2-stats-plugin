@@ -2,7 +2,7 @@
 #pragma newdecls required
 
 // Don't change
-#define PLUGIN_VERSION "3.0.0"
+#define PLUGIN_VERSION "3.0.1"
 #define STAT_METRIC_VERSION 1 // for stat_version 
 #define DEBUG 1
 

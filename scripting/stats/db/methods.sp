@@ -362,6 +362,7 @@ void FlushPlayer(int client) {
     if(game.finished) return; // game over, don't record
     LogDebug("Flush Player %d [u=%s] [s=%s]", client, g_players[client].session.steamid, g_players[client].user.steamid);
     if(g_players[client].user.steamid[0] != '\0') {
+		g_players[client].Calculate();
         // only flush if user is initalized.
         // after a FlushPlayer, user.steamid is cleared
         // only until Load() is called is it restored

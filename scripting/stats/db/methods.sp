@@ -194,7 +194,8 @@ void RecordSessionStats() {
 			saveData.flags |= view_as<int>(Session_PresentInfinale);
 		RecordPlayerSession(saveData);
 	} 
-
+	// Clear out, don't want to resubmit
+	g_sessionDataStorage.Clear();
 	delete snapshot;
 }
 

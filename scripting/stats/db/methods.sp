@@ -152,6 +152,7 @@ void CreateGame() {
 		STAT_METRIC_VERSION     //stat_version
 	);
 	g_db.Query(DBCT_CreateGame, query, _, DBPrio_Low);
+	LogTrace("CreateGame %s", query);
 }
 
 void UpdateGame() {
@@ -169,6 +170,7 @@ void UpdateGame() {
 		game.id 				//id
 	);
 	g_db.Query(DBCT_Generic, query, QUERY_UPDATE_GAME);
+	LogTrace("UpdateGame %d %s", game.id, query);
 }
 
 
@@ -184,6 +186,7 @@ void SubmitMapInfo() {
 
 // Creates new game sessions for every stored user
 void RecordSessionStats() {
+	LogDebug("RecordSessionStats %d stored sessions", g_sessionDataStorage.Size);
 	AnyMapSnapshot snapshot = g_sessionDataStorage.Snapshot();
 	SessionData saveData;
 	for(int i = 0; i < snapshot.Length; i++) {
@@ -294,7 +297,7 @@ void RecordPlayerSession(SessionData session) {
 	if(session.steamid[0] == '\0') ThrowError("steamid is empty");
 	// size of just INSERT (...) VALUES (...) template is ~811 characters
 	// steamid is +32 char, every int is maybe 4-8 chars
-	char query[2048];
+	char query[4096];
 	g_db.Format(query, sizeof(query), 
 		"INSERT INTO stats_sessions" ... 
 		"(game_id,steamid,flags,join_time,character_type,ping,kills_common,kills_melee,damage_dealt,damage_taken,damage_dealt_friendly_count,damage_taken_friendly_count,damage_dealt_friendly,damage_taken_friendly,used_kit_self,used_kit_other,used_defib,used_molotov,used_pipebomb,used_bile,used_pills,used_adrenaline,times_revived_other,times_incapped,times_hanging,deaths,kills_boomer,kills_smoker,kills_jockey,kills_hunter,kills_spitter,kills_charger,kills_tank,kills_witch,kills_fire,kills_pipebomb,kills_minigun,honks,top_weapon,seconds_alive,seconds_idle,seconds_dead,witches_crowned,smokers_selfcleared,rocks_hitby,rocks_dodged,hunters_deadstopped,times_pinned,times_cleared_pinned,times_boomed_teammates,times_boomed,damage_dealt_tank,damage_dealt_witch,caralarms_activated,longest_shot_distance,damage_taken_fall,times_shove,times_jumped,bullets_fired)" ...
@@ -360,7 +363,7 @@ void RecordPlayerSession(SessionData session) {
 		session.common.times_jumped,
 		session.common.bullets_fired
 	);
-	LogTrace("QUERY_INSERT_SESSION %s %s", session.steamid, query);
+	LogTrace("QUERY_INSERT_SESSION flags=%d steamid=%s %s", session.flags, session.steamid, query);
 	g_db.Query(DBCT_Generic, query, QUERY_INSERT_SESSION);
 }
 

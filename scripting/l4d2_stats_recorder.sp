@@ -242,6 +242,7 @@ public void OnPluginStart() {
 
 //When plugin is being unloaded: flush all user's statistics.
 public void OnPluginEnd() {
+	LogDebug("plugin ending, flushing all players");
 	for(int i=1; i<=MaxClients;i++) {
 		if(IsClientInGame(i) && !IsFakeClient(i) && g_players[i].user.steamid[0] != '\0') {
 			// Update user stats, save session to store
@@ -249,8 +250,10 @@ public void OnPluginEnd() {
 		}
 	}
 	// Flush store
-	if(game.id)
+	if(game.id) {
+		LogDebug("plugin ending, flushing active session");
 		RecordSessionStats();
+	}
 
 	ClearHeatMapEntities();
 }
@@ -852,6 +855,7 @@ finale_win: Record all stats (game + user)
 void Event_FinaleStart(Event event, const char[] name, bool dontBroadcast) {
 	game.finaleStartTime = GetTime();
 	game.difficulty = GetDifficultyInt();
+	LogDebug("finale start, creating game");
 	CreateGame();
 	SubmitMapInfo();
 }
@@ -860,6 +864,10 @@ void Event_FinaleVehicleReady(Event event, const char[] name, bool dontBroadcast
 	if(L4D_IsMissionFinalMap()) {
 		game.difficulty = GetDifficultyInt();
 		game.finished = true;
+		if(!game.id) {
+			LogWarn("game id missing. finale vehicle ready. shouldn't happen, creating game");
+			CreateGame();
+		}
 	}
 }
 
@@ -936,6 +944,7 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 		delete winners;
 	}
 	
+	LogDebug("finale win. update game & record sessions");
 	// Send ALL player data
 	UpdateGame(); // update date_end
 	RecordSessionStats();

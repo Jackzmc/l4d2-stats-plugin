@@ -2,7 +2,7 @@
     #endinput
 #endif
 #define _log_included
-#define LOG_BUFFER_SIZE 256
+#define LOG_BUFFER_SIZE 1024
 
 int LOG_LEVEL = Log_Info;
 

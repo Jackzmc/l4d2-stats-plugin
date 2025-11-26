@@ -224,7 +224,9 @@ enum struct PlayerDataContainer {
     }
 
     void LoadSession() {
-        g_sessionDataStorage.GetArray(this.userid, this.session, sizeof(this.session));
+        if(g_sessionDataStorage.GetArray(this.userid, this.session, sizeof(this.session))) {
+            LogDebug("%s had session", this.session.steamid);
+        }
     }
 
     // Calculates any values

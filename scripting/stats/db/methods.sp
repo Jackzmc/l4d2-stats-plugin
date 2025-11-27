@@ -187,6 +187,10 @@ void SubmitMapInfo() {
 // Creates new game sessions for every stored user
 void RecordSessionStats() {
 	LogDebug("RecordSessionStats %d stored sessions", g_sessionDataStorage.Size);
+	if(!game.id) {
+		LogError("Not recording sessions (game not initalized)");
+		return;
+	}
 	AnyMapSnapshot snapshot = g_sessionDataStorage.Snapshot();
 	SessionData saveData;
 	for(int i = 0; i < snapshot.Length; i++) {

@@ -404,6 +404,10 @@ public void OnMapStart() {
 		game.difficulty = GetDifficultyInt();
 	}
 	game.GetMap();
+	if(!game.startTime) {
+		LogDebug("GameInit wasn't called and map is starting, initializing game");
+		game.Init();
+	}
 }
 
 void Event_VersusRoundStart(Event event, const char[] name, bool dontBroadcast) {
@@ -892,16 +896,15 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 			if(g_players[client].user.steamid[0]) {
 				g_players[client].RecordPoint(PType_FinishCampaign);
 				g_players[i].user.user.finales_won++;
-				if(game.id > 0)
-					PrintToChat(client, "View this game's statistics at %s%d", websiteUrlPrefix, game.id);
-				if(game.clownHonks > 0) {
-					PrintToChat(client, "%d clowns were honked this session, you honked %d", game.clownHonks, g_players[client].session.common.honks);
-				}
-
 				// Store it as we will iterate _all_ stored players for recording
 				g_players[i].SaveSession();
 			}
 
+			if(game.id > 0)
+				PrintToChat(client, "View this game's statistics at %s%d", websiteUrlPrefix, game.id);
+			if(game.clownHonks > 0) {
+				PrintToChat(client, "%d clowns were honked this session, you honked %d", game.clownHonks, g_players[client].session.common.honks);
+			}
 		}
 	}	
 
@@ -950,8 +953,9 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	LogDebug("finale win. update game & record sessions");
 	// Send ALL player data
 	UpdateGame(); // update date_end
-	RecordSessionStats();
+	RecordSessionStats(); // records _all_ sessions, even if they left
 
+	// want to send this at the end
 	for(int i = 1; i <= MaxClients; i++) {
 		g_players[i].session.common.honks = 0;
 		if(IsClientInGame(i) && !IsFakeClient(i)) {

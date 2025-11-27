@@ -83,7 +83,6 @@ enum struct Game {
 		this.startTime = GetTime();
 		this.clownHonks = 0;
 		this.submitted = false;
-
 		LogInfo("Started recording statistics for new session");
 	}
 
@@ -203,7 +202,7 @@ public void OnPluginStart() {
 	HookEvent("finale_vehicle_ready", Event_FinaleVehicleReady);
 	HookEvent("finale_win", Event_FinaleWin);
 	//Used to transition checkpoint statistics for stats_games
-	HookEvent("game_init", Event_GameStart);
+	HookEvent("game_init", Event_GameInit);
 	HookEvent("game_end", Event_GameEnd);
 	HookEvent("round_end", Event_RoundEnd);
 
@@ -391,8 +390,12 @@ public Action Command_DebugStats(int client, int args) {
 ////////////////////////////
 // MAP EVENTS 
 ////////////////////////////
-void Event_GameStart(Event event, const char[] name, bool dontBroadcast) {
+void Event_GameInit(Event event, const char[] name, bool dontBroadcast) {
 	game.Init();
+	for(int i = 1; i <= MaxClients; i++) {
+		g_players[i].Reset();
+	}
+	g_sessionDataStorage.Clear();
 }
 public void OnMapStart() {
 	if(isTransition) {

@@ -15,7 +15,7 @@ create table stats_games
     stat_version      tinyint unsigned    not null comment 'version of metrics',
     index stats_games_gamemode_index (gamemode),
     index stats_games_map_id_index (map_id)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 insert into stats_games (uuid, date_start, date_start_finale, date_end, map_id, gamemode, difficulty, server_tags, stat_version)
 # add stats_games data from session data
 SELECT campaignID, date_start, date_end-finale_time, date_end, map, gamemode, difficulty, server_tags, 0

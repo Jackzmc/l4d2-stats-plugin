@@ -308,7 +308,7 @@ enum struct PlayerDataContainer {
 			if(prevIndex != -1) {
 				int mult = this.pointsQueue.Get(prevIndex, 3);
 				// Multiplier is unsigned tiny int, don't merge if it's over capacity
-				if(mult <= 255) {
+				if(mult < 255) {
 					int timestamp = GetTime();
 					int prevTimestamp = this.pointsQueue.Get(prevIndex, 2);
 					// If merge window is unlimited, or record in timespan then merge

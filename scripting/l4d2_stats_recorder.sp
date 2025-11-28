@@ -895,6 +895,7 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 			if(IsFakeClient(i)) {
 				if(!HasEntProp(i, Prop_Send, "m_humanSpectatorUserID")) continue;
 				client = GetClientOfUserId(GetEntPropEnt(i, Prop_Send, "m_humanSpectatorUserID"));
+				if(client == 0) continue;
 			}
 
 			if(g_players[client].user.steamid[0]) {
@@ -902,13 +903,13 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 				g_players[i].user.user.finales_won++;
 				// Store it as we will iterate _all_ stored players for recording
 				g_players[i].SaveSession();
+				if(game.id > 0)
+					PrintToChat(client, "View this game's statistics at %s%d", websiteUrlPrefix, game.id);
+				if(game.clownHonks > 0) {
+					PrintToChat(client, "%d clowns were honked this session, you honked %d", game.clownHonks, g_players[client].session.common.honks);
+				}
 			}
 
-			if(game.id > 0)
-				PrintToChat(client, "View this game's statistics at %s%d", websiteUrlPrefix, game.id);
-			if(game.clownHonks > 0) {
-				PrintToChat(client, "%d clowns were honked this session, you honked %d", game.clownHonks, g_players[client].session.common.honks);
-			}
 		}
 	}	
 

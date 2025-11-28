@@ -297,6 +297,7 @@ public void OnClientDisconnect(int client) {
 			FlushPlayer(client);
 			// clear out session data, it gets loaded
 			g_players[client].Reset();
+			LogDebug("disconnect; flushed player and reset %d", client);
 		}
 
 	}
@@ -395,6 +396,7 @@ void Event_GameInit(Event event, const char[] name, bool dontBroadcast) {
 	for(int i = 1; i <= MaxClients; i++) {
 		g_players[i].Reset();
 	}
+	LogDebug("game init; reset");
 	g_sessionDataStorage.Clear();
 }
 public void OnMapStart() {
@@ -467,6 +469,7 @@ public void OnMapEnd() {
 }
 
 void Event_GameEnd(Event event, const char[] name, bool dontBroadcast) {
+	LogDebug("game end; reset");
 	for(int i = 1; i <= MaxClients; i++) {
 		g_players[i].Reset();
 	}

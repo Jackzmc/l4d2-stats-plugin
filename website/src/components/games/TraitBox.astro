@@ -14,7 +14,7 @@ interface TraitConfig {
 
 const TRAIT_CONFIG: Record<string, TraitConfig> = {
     deaths: { label: "Most Deaths", class: "has-background-danger", format: (value) => `${value} deaths` },
-    damage_taken: { label: "Least Damage Taken", class: "has-background-success", format: (value) => `${value} hp`},
+    damage_taken: { label: "Least Damage Taken", class: "has-background-success", format: (value) => `${value} HP`},
     rocks_hitby: { label: "Most Rocks Hitby", class: "has-background-primary", format: (value) => `${value} rocks`},
     rocks_dodged: { label: "Most Rocks Dodged", class: "has-background-success", format: (value) => `${value} rocks`},
     kills_common: { label: "Most Commons Killed", class: "has-background-info", format: (value) => `${value} zombies killed`, textClass: "has-text-black"},

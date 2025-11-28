@@ -107,6 +107,10 @@ export async function getMapPoster(mapId: string): Promise<ImageProperties> {
   return (await (MAP_POSTERS[mapId].image())).default
 }
 export async function getPortrait(survivorType: Survivor): Promise<ImageProperties> {
+  if(survivorType < 0 || survivorType >= 8) {
+    console.warn("invalid survivor type:", survivorType)
+    return DefaultUserImage
+  }
   if(survivorType == undefined) return DefaultUserImage
   return (await (SURVIVOR_PORTRAITS[SURVIVOR_DEFS[survivorType].model].image())).default
 }

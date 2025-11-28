@@ -799,12 +799,12 @@ public void L4D_OnSwingStart(int client, int weapon) {
 ///THROWABLE TRACKING
 //This is used to track throwable throws 
 public void OnEntityCreated(int entity, const char[] classname) {
-	if(IsValidEntity(entity) && StrContains(classname, "_projectile", true) > -1 && HasEntProp(entity, Prop_Send, "m_hOwnerEntity")) {
+	if(IsValidEntity(entity) && StrContains(classname, "_projectile", true) > -1) {
 		RequestFrame(EntityCreateCallback, entity);
 	}
 }
 void EntityCreateCallback(int entity) {
-	if(!HasEntProp(entity, Prop_Send, "m_hOwnerEntity") || !IsValidEntity(entity)) return;
+	if(!IsValidEntity(entity) || !HasEntProp(entity, Prop_Send, "m_hOwnerEntity") || !IsValidEntity(entity)) return;
 	char class[32];
 
 	GetEntityClassname(entity, class, sizeof(class));

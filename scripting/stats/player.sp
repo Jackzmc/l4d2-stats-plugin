@@ -232,8 +232,11 @@ enum struct PlayerDataContainer {
     // Calculates any values
     void Calculate() {
         int client = GetClientOfUserId(this.userid);
-        if(client > 0 ){ 
-		    this.session.lastSurvivorType = GetEntProp(client, Prop_Send, "m_survivorCharacter");
+        if(client > 0 ) { 
+            // Get last good survivor type, incase some plugin (probably my own) messes it up:
+		    int lastSurvivorType = GetEntProp(client, Prop_Send, "m_survivorCharacter");
+            if(lastSurvivorType >= 0 && lastSurvivorType < 8) this.session.lastSurvivorType = lastSurvivorType;
+            
             this.CalculateTime(client);
             this.MeasureDistance(client);
         }

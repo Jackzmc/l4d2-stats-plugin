@@ -83,7 +83,8 @@ enum struct Game {
 		this.startTime = GetTime();
 		this.clownHonks = 0;
 		this.submitted = false;
-		LogInfo("Started recording statistics for new session");
+		this.finished = false;
+		LogInfo("Started recording statistics for new session (%d)", this.startTime);
 	}
 
 	bool IsVersusMode() {
@@ -290,16 +291,11 @@ public void OnClientPutInServer(int client) {
 public void OnClientDisconnect(int client) {
 	//Check if any pending stats to send.
 	if(IsClientInGame(client) && !IsFakeClient(client)) {
-		if(game.finished) {
-			g_players[client].RecordPoint(PType_FinishCampaign);
-		} else {
-			// Record user stats, merge to session, and save session
-			FlushPlayer(client);
-			// clear out session data, it gets loaded
-			g_players[client].Reset();
-			LogDebug("disconnect; flushed player and reset %d", client);
-		}
-
+		// Record user stats, merge to session, and save session
+		FlushPlayer(client);
+		// clear out session data, it gets loaded
+		g_players[client].Reset();
+		LogDebug("disconnect; flushed player and reset %d", client);
 	}
 }
 
@@ -443,6 +439,7 @@ void Event_MapTransition(Event event, const char[] name, bool dontBroadcast) {
 	isTransition = true;
 	// Technically not necessary as OnClientDisconnect will trigger this
 	// But just to be on the safe side, why not
+	LogDebug("map transition; flushing players");
 	for(int i = 1; i <= MaxClients; i++) {
 		if(IsClientInGame(i) && GetClientTeam(i) == 2 && IsPlayerAlive(i) && !IsFakeClient(i)) {
 			FlushPlayer(i);

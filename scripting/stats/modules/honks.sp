@@ -23,15 +23,16 @@ void CVC_ClownModeChanged(ConVar convar, const char[] oldValue, const char[] new
 }
 Action Timer_HonkCounter(Handle h) { 
 	int honks, honker = -1;
+	// the in game checks shouldn't be necessary as .honks should be 0 on disconnect _but_ it is.
 	for(int j = 1; j <= MaxClients; j++) {
-		if(g_players[j].user.common.honks > 0 && (g_players[j].user.common.honks > honks || honker == -1) && !IsFakeClient(j)) {
+		if(g_players[j].user.common.honks > 0 && (g_players[j].user.common.honks > honks || honker == -1) && IsClientInGame(j) && !IsFakeClient(j)) {
 			honker = j;
 			honks = g_players[j].user.common.honks;
 		}
 	}
 	if(honker > 0) {
 		for(int i = 1; i <= MaxClients; i++) {
-			if(g_players[i].user.common.honks > 0 && IsClientConnected(i) && IsClientInGame(i) && !IsFakeClient(i) && GetClientTeam(i) == 2) {
+			if(g_players[i].user.common.honks > 0 && IsClientInGame(i) && !IsFakeClient(i) && GetClientTeam(i) == 2) {
 				PrintHintText(i, "Top Honker: %N (%d honks)\nYou: %d honks", honker, honks, g_players[i].user.common.honks);
 			}
 		}

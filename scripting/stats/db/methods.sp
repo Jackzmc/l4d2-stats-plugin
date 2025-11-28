@@ -291,7 +291,8 @@ void RecordUserStats(UserData user) {
 		user.common.damage_taken_fall,
 		user.steamid
 	);
-	LogTrace("QUERY_USER_STATS %s %s", user.steamid, query);
+	LogTrace("QUERY_USER_STATS %s", user.steamid);
+	PrintToServer("%s", query);
 	g_db.Query(DBCT_Generic, query, QUERY_UPDATE_USER_STATS);
 }
 
@@ -367,7 +368,8 @@ void RecordPlayerSession(SessionData session) {
 		session.common.times_jumped,
 		session.common.bullets_fired
 	);
-	LogTrace("QUERY_INSERT_SESSION flags=%d steamid=%s %s", session.flags, session.steamid, query);
+	LogTrace("QUERY_INSERT_SESSION flags=%d steamid=%s", session.flags, session.steamid);
+	PrintToServer("%s", query);
 	g_db.Query(DBCT_Generic, query, QUERY_INSERT_SESSION);
 }
 
@@ -386,9 +388,8 @@ void FlushPlayer(int client) {
         SubmitPoints(client);
         SubmitWeaponStats(client);
         SubmitHeatmaps(client);
+		MergeUserToSession(g_players[client]);
+    	g_players[client].SaveSession();
     }
-
-    MergeUserToSession(g_players[client]);
-    g_players[client].SaveSession();
-    g_players[client].ClearUser();
+    g_players[client].ResetUserStats();
 }

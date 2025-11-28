@@ -194,7 +194,7 @@ enum struct PlayerDataContainer {
     void Load(int client, const char[] steamid) {
         this.userid = GetClientUserId(client);
         this.session.userid = this.userid;
-        LogTrace("Load %d %d", this.userid, client);
+        LogTrace("Load userid=%d index=%d name=%N steamid=%s", this.userid, client, client, steamid);
         this.LoadSession(); //writes over this.session
         strcopy(this.session.steamid, sizeof(this.session.steamid), steamid);
         strcopy(this.user.steamid, sizeof(this.user.steamid), steamid);
@@ -252,15 +252,21 @@ enum struct PlayerDataContainer {
         g_sessionDataStorage.SetArray(this.userid, this.session, sizeof(this.session));
     }
 
-    // Clears user data
-    void ClearUser() {
-        UserData newUser;
-        this.user = newUser;
+    // Resets user data, but keeps steamid
+    void ResetUserStats() {
+        // we just wipe the actual stat data, but keep steamid
+        // steamid should only be wiped when player has disconnected
+        CommonPlayerStats common;
+        UserPlayerStats user;
+        this.user.common = common;
+        this.user.user = user;
     }
 
     // Clears user + session data + any other data
     void Reset() {
-        this.ClearUser();
+        this.ResetUserStats();
+        this.user.steamid[0] = '\0'; // remove steamid
+        
         SessionData newSess;
         this.session = newSess;
         this.userid = 0;

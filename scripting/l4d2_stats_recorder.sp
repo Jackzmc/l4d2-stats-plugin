@@ -885,6 +885,7 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	if(!L4D_IsMissionFinalMap() || game.submitted) return;
 
 	game.difficulty = event.GetInt("difficulty");
+	UpdateGame(); // update date_end
 
 	for(int i = 1; i <= MaxClients; i++) {
 		if(IsClientInGame(i) && GetClientTeam(i) == 2) {
@@ -955,7 +956,6 @@ void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast) {
 	
 	LogDebug("finale win. update game & record sessions");
 	// Send ALL player data
-	UpdateGame(); // update date_end
 	RecordSessionStats(); // records _all_ sessions, even if they left
 
 	// want to send this at the end

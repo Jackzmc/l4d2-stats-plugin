@@ -151,7 +151,7 @@ export const GET: APIRoute = async ({ params, request, url }) => {
   startPos[1] += lineHeight
   drawText(ctx, `${stats?.kills_common.toLocaleString() ?? 0} zombies killed`, startPos[0], startPos[1], { font: statFont })  
   startPos[1] += lineHeight
-  drawText(ctx, `Farthest Shot of ${topStats?.longest_shot_distance.value ? parseFloat(topStats.longest_shot_distance.value)*UNITS_TO_METERS : 0} meters`, startPos[0], startPos[1], { font: statFont })  
+  drawText(ctx, `Farthest Shot of ${topStats?.longest_shot_distance.value ? MathRound(parseFloat(topStats.longest_shot_distance.value)*UNITS_TO_METERS) : 0} meters`, startPos[0], startPos[1], { font: statFont })  
   startPos[1] += lineHeight
 
   // TODO: calculate best stats (highest number for them )

@@ -44,7 +44,7 @@ if(query) {
                                     <td>{user.points.toLocaleString()}</td>
                                 </tr><tr>
                                     <th>Playtime</th>
-                                    <td>{user.minutes_played ? formatHumanDuration(user.minutes_played*60) : "-" }</td>
+                                    <td>{user.seconds_total ? formatHumanDuration(user.seconds_total*60) : "-" }</td>
                                 </tr>
                                 <tr>
                                     <th>Last Seen</th>

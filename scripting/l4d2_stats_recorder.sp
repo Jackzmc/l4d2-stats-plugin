@@ -289,9 +289,9 @@ public void OnClientPutInServer(int client) {
 	}
 }
 public void OnClientDisconnect(int client) {
-	//Check if any pending stats to send.
-	if(IsClientInGame(client) && !IsFakeClient(client)) {
-		// Record user stats, merge to session, and save session
+	// Check that player is valid (wasn't already resetted / early disconnect)
+	if(IsClientInGame(client) && !IsFakeClient(client) && g_players[client].user.steamid[0] != '\0') {
+		// Record their current user stats, merge them to session, and save session
 		FlushPlayer(client);
 		// clear out session data, it gets loaded
 		g_players[client].Reset();

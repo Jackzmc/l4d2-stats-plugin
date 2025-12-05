@@ -214,7 +214,7 @@ export async function getUserTopStats(steamid: string): Promise<UserTopStats | n
     return out as unknown as UserTopStats
 }
 
-export type PlayerSearchResult = Player & { minutes_played: number, last_join_date: number, points: number }
+export type PlayerSearchResult = Player & { seconds_total: number, last_join_date: number, points: number }
 /**
  * Search for users
  * @param query steamid or name
@@ -223,7 +223,7 @@ export type PlayerSearchResult = Player & { minutes_played: number, last_join_da
 export async function searchUsers(query: string, limit = 20): Promise<PlayerSearchResult[]> {
     query = `%${query}%`
     const [rows] = await db.execute<RowDataPacket[]>(
-        "SELECT steamid, last_alias name, minutes_played, last_join_date, points FROM stats_users WHERE steamid LIKE :query OR last_alias LIKE :query ORDER BY points DESC LIMIT :limit",
+        "SELECT steamid, last_alias name, seconds_total, last_join_date, points FROM stats_users WHERE steamid LIKE :query OR last_alias LIKE :query ORDER BY points DESC LIMIT :limit",
         { query, limit }
     )
 
@@ -231,7 +231,7 @@ export async function searchUsers(query: string, limit = 20): Promise<PlayerSear
         return {
             steamid: row.steamid,
             name: row.name,
-            minutes_played: row.minutes_played,
+            seconds_total: row.seconds_total,
             last_join_date: row.last_join_date,
             points: row.points
         }

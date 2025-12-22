@@ -4,3 +4,4 @@ node_modules
 *.sh
 !compile_all.sh
 plugins/
+.idea

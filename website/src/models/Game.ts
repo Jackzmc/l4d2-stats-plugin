@@ -83,7 +83,7 @@ export async function getFilteredGames(opts: FilterOptions = {}, page = 1, limit
     if(opts.difficulty != undefined) builder.push("difficulty = ?", opts.difficulty)
     if(opts.map_type) builder.push("i.flags = ?", opts.map_type)
     if(opts.tag) builder.push("FIND_IN_SET(?, server_tags)", opts.tag)
-    if(opts.map) builder.push("map LIKE ?", `${opts.map}%`)
+    if(opts.map) builder.push("g.map_id LIKE ?", `${opts.map}%`)
     if(opts.steamid) builder.push("steamid = ?", opts.steamid)
 
     const [whereClause, data] = builder.buildFullWhere()

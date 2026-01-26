@@ -333,8 +333,8 @@ const AVERAGE_PRECISION = 3
                             <tr>
                                 <td>Time Spent Idle</td>
                                 <td align="center">{formatHumanDuration(user.seconds_idle, undefined, ["hour","minute"])}</td>
-                                <td align="center">{averages.per_game.seconds_idle.toFixed(AVERAGE_PRECISION)}s</td>
-                                <td align="center">{averages.per_hour.seconds_idle.toFixed(AVERAGE_PRECISION)}s</td>
+                                <td align="center">{(averages.per_game.seconds_idle ?? 0)?.toFixed(AVERAGE_PRECISION)}s</td>
+                                <td align="center">{(averages.per_hour.seconds_idle ?? 0)?.toFixed(AVERAGE_PRECISION)}s</td>
                             </tr>
                         </tbody>
                     </table>

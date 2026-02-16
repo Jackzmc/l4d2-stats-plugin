@@ -112,7 +112,7 @@ export const prerender = false
                         {otherSessions.map(player => (
                             <li>
                                 <b>
-                                    <a href={`/sessions/${player.steamid}/overview`}>
+                                    <a href={`/users/${player.steamid}/overview`}>
                                         {trimText(player.name, 23)}
                                     </a>
                                 </b>

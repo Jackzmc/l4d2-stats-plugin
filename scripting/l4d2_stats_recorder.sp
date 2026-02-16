@@ -809,16 +809,16 @@ void EntityCreateCallback(int entity) {
 	if(entOwner > 0 && entOwner <= MaxClients) {
 		if(StrEqual(class, "vomitjar_projectile", true)) {
 			LogAction(entOwner, -1, "\"%L\" threw vomit jar", entOwner);
-			PrintToChatAdmins("%N threw a vomit jar");
+			PrintToChatAdmins("%N threw a vomit jar", entOwner);
 			g_players[entOwner].user.common.used_bile++;
 		} else if(StrEqual(class, "molotov_projectile", true)) {
 			g_players[entOwner].user.common.used_molotov++;
 			LogAction(entOwner, -1, "\"%L\" threw molotov", entOwner);
-			PrintToChatAdmins("%N threw a molotov");
+			PrintToChatAdmins("%N threw a molotov", entOwner);
 		} else if(StrEqual(class, "pipe_bomb_projectile", true)) {
 			g_players[entOwner].user.common.used_pipebomb++;
 			LogAction(entOwner, -1, "\"%L\" threw pipebomb", entOwner);
-			PrintToChatAdmins("%N threw a pipebomb");
+			PrintToChatAdmins("%N threw a pipebomb", entOwner);
 		}
 	}
 }

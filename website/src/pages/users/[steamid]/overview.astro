@@ -14,16 +14,16 @@ import LevelItem from '@/components/bulma/LevelItem.astro'
 import CountUp from '@/components/CountUp.astro'
 import { Survivor } from '@/types/game.ts'
 import { getMapPoster, getPortrait, getWeaponImage, UNITS_TO_METERS } from '@/utils/index.ts'
-import { BANNER_SIZE } from '@/pages/api/users/[id]/banner.png.ts' 
+import { BANNER_SIZE } from '@/pages/api/users/[id]/banner.png.ts'
 import UserHero from '@/components/misc/UserHero.astro'
 
 const user = await getUser(params.steamid)
 if(!user) return Astro.rewrite(`/404?obj=user&id=${Astro.params.steamid}`)
 const [topStats, averages] = await Promise.all([
-    getUserTopStats(params.steamid), 
+    getUserTopStats(params.steamid),
     getUserAverages(params.steamid)
 ])
-if(topStats == null) throw new Error("unreachable: top stats null") 
+if(topStats == null) throw new Error("unreachable: top stats null")
 const totalMaps = topStats.played_any.count
 const mapPercents = [ Number(topStats.played_official.count) / totalMaps * 100, Number(topStats.played_custom.count) / totalMaps * 100 ]
 
@@ -64,11 +64,11 @@ const AVERAGE_PRECISION = 3
     <div class="container">
         <div class="columns">
             <div class="column">
-                
+
                 <h4 class="title is-4">Stats Overview</h4>
-                <Image width={BANNER_SIZE[0] * BANNER_SCALE} height={BANNER_SIZE[1] * BANNER_SCALE} 
-                    class="has-background-dark has-text-white" style="border-radius: 8px; font-size: 24px" 
-                    src={`/api/users/${user.steamid}/banner.png`} alt={`Profile banner for ${user.last_alias} with a list of some of their statistics`} 
+                <Image width={BANNER_SIZE[0] * BANNER_SCALE} height={BANNER_SIZE[1] * BANNER_SCALE}
+                    class="has-background-dark has-text-white" style="border-radius: 8px; font-size: 24px"
+                    src={`/api/users/${user.steamid}/banner.png`} alt={`Profile banner for ${user.last_alias} with a list of some of their statistics`}
                     priority
                 />
 
@@ -108,7 +108,7 @@ const AVERAGE_PRECISION = 3
                             <tr>
                                 <th>Total Playtime</th>
                                 <td>
-                                    {formatHumanDuration(user.seconds_total)} 
+                                    {formatHumanDuration(user.seconds_total)}
                                 </td>
                             </tr>
                             <tr>
@@ -459,7 +459,7 @@ const AVERAGE_PRECISION = 3
                 {topStats.longest_shot_distance?.value && <div class="box has-background-link has-text-white has-text-centered">
                     <h4 class="title is-4 has-text-white">Longest Shot Distance</h4>
                     <p  class="subtitle is-5 my-3 has-text-white">
-                        {(parseFloat(topStats!.longest_shot_distance.value) * UNITS_TO_METERS).toFixed(1) } meters away
+                        {(parseFloat(topStats!.longest_shot_distance.value ?? 0) * UNITS_TO_METERS).toFixed(1) } meters away
                     </p>
                 </div>}
             </div>
